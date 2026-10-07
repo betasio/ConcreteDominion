@@ -41,6 +41,14 @@ const CHAPTER_5_TASKS := [
 	"win_financial"
 ]
 
+const CHAPTER_6_TASKS := [
+	"reach_level_7",
+	"discover_industrial",
+	"chapter_6_choice",
+	"clear_serpent_convoys",
+	"win_industrial"
+]
+
 const STORY_BEATS := {
 	"recruit_crew": {"speaker":"Vex","portrait":"vex","line":"A city does not fear one name. Build the crew first. Then we give it a reason to remember ours."},
 	"win_downtown": {"speaker":"Mia","portrait":"mia","line":"Downtown moves money before it moves muscle. Hit the bank clean, fast, and leave them guessing."},
@@ -71,7 +79,13 @@ const STORY_BEATS := {
 	"chapter_5_choice": {"speaker":"Vex","portrait":"vex","line":"We can hit their balance sheets in public or cut their confidence in private. Pick the pressure that makes the whole district move."},
 	"capture_faction_objective": {"speaker":"Noah","portrait":"noah","line":"Before we touch the Tower, prove our Faction can hold something together. Shared ground means shared leverage."},
 	"win_financial": {"speaker":"Kira","portrait":"kira","line":"The Tower is isolated. Accounts are frozen, exits are mapped, and their security teams are watching the wrong floors."},
-	"chapter_5_complete": {"speaker":"Mia","portrait":"mia","line":"We did not just take a building. We took the place where everyone kept score."}
+	"chapter_5_complete": {"speaker":"Mia","portrait":"mia","line":"We did not just take a building. We took the place where everyone kept score."},
+	"reach_level_7": {"speaker":"Mia","portrait":"driver","line":"The Industrial Belt runs on trucks, fuel, and fear. Viktor Sable built the Iron Serpents around movement. We beat him by owning the road."},
+	"discover_industrial": {"speaker":"Kira","portrait":"kira","line":"The Depot is only the center. The real system is the convoy network around it. Reveal every route before we commit."},
+	"chapter_6_choice": {"speaker":"Vex","portrait":"vex","line":"We can choke their supply lines or hijack them and turn their own network into ours. Either way, the Serpents stop moving on their terms."},
+	"clear_serpent_convoys": {"speaker":"Mia","portrait":"driver","line":"Two convoy wins. No shortcuts. Make their drivers second-guess every route into the Belt."},
+	"win_industrial": {"speaker":"Viktor Sable","portrait":"driver","line":"Roads belong to whoever can keep them. Come prove you can."},
+	"chapter_6_complete": {"speaker":"Vex","portrait":"vex","line":"The Serpents lost the roads, the Depot, and the myth that nobody could stop them. Supply now answers to us."}
 }
 
 signal changed
@@ -91,6 +105,7 @@ var chapter_2_choice := ""
 var chapter_3_choice := ""
 var chapter_4_choice := ""
 var chapter_5_choice := ""
+var chapter_6_choice := ""
 
 var missions: Dictionary = {
 	"recruit_crew":{"title":"Grow the Crew","description":"Recruit 5 troops.","goal":5,"progress":0,"completed":false,"reward_xp":60,"reward_cash":1500},
@@ -127,7 +142,13 @@ var missions: Dictionary = {
 	"capture_faction_objective":{"title":"Prove Shared Control","description":"Capture a Faction territory objective.","goal":1,"progress":0,"completed":false,"reward_xp":160,"reward_cash":6500,"reward_gold":5},
 	"win_financial":{"title":"Own the Skyline","description":"Capture Financial Tower.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000},
 	"chapter_5_complete":{"title":"The Ledger Burns","description":"Complete the five Chapter 5 operations.","goal":5,"progress":0,"completed":false,"reward_xp":550,"reward_cash":22000,"reward_gold":25},
-	"win_industrial":{"title":"Control the Supply","description":"Defeat Industrial Depot.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000}
+
+	"reach_level_7":{"title":"Build a War Machine","description":"Reach account level 7.","goal":7,"progress":1,"completed":false,"reward_xp":140,"reward_cash":6000},
+	"discover_industrial":{"title":"Map the Supply Lines","description":"Reveal Industrial Belt.","goal":1,"progress":0,"completed":false,"reward_xp":150,"reward_cash":6500},
+	"chapter_6_choice":{"title":"Choose the Road War","description":"Choose Blockade or Hijack against the Iron Serpents.","goal":1,"progress":0,"completed":false,"reward_xp":130,"reward_cash":0},
+	"clear_serpent_convoys":{"title":"Break the Convoys","description":"Win 2 Iron Serpent convoy ambush encounters.","goal":2,"progress":0,"completed":false,"reward_xp":220,"reward_cash":9000,"reward_gold":5},
+	"win_industrial":{"title":"Control the Supply","description":"Capture Industrial Depot from Viktor Sable.","goal":1,"progress":0,"completed":false,"reward_xp":360,"reward_cash":15000},
+	"chapter_6_complete":{"title":"Roads of Iron","description":"Complete the five Chapter 6 operations.","goal":5,"progress":0,"completed":false,"reward_xp":700,"reward_cash":30000,"reward_gold":30}
 }
 
 
@@ -156,6 +177,7 @@ func setup(
 	if world_control != null:
 		world_control.district_discovered.connect(_on_district_discovered)
 		world_control.district_captured.connect(_on_district_captured)
+		world_control.family_encounter_resolved.connect(_on_family_encounter_resolved)
 	if faction != null:
 		faction.faction_created.connect(_on_faction_joined)
 		faction.faction_joined.connect(_on_faction_joined)
@@ -202,6 +224,10 @@ func _refresh_existing_world_state() -> void:
 		_set_progress("discover_financial", 1)
 	if world_control.is_owned("financial_tower"):
 		_set_progress("win_financial", 1)
+	if world_control.is_discovered("industrial_depot"):
+		_set_progress("discover_industrial", 1)
+	if world_control.is_owned("industrial_depot"):
+		_set_progress("win_industrial", 1)
 
 
 func _on_district_discovered(district_id: String) -> void:
@@ -216,6 +242,8 @@ func _on_district_discovered(district_id: String) -> void:
 			_set_progress("discover_casino", 1)
 		"financial_tower":
 			_set_progress("discover_financial", 1)
+		"industrial_depot":
+			_set_progress("discover_industrial", 1)
 
 
 func _on_district_captured(district_id: String) -> void:
@@ -230,6 +258,8 @@ func _on_district_captured(district_id: String) -> void:
 			_set_progress("win_casino", 1)
 		"financial_tower":
 			_set_progress("win_financial", 1)
+		"industrial_depot":
+			_set_progress("win_industrial", 1)
 
 
 func choose_chapter_2_approach(choice_id: String) -> bool:
@@ -324,6 +354,29 @@ func get_chapter_5_choice() -> String:
 	return chapter_5_choice
 
 
+func choose_chapter_6_approach(choice_id: String) -> bool:
+	if bool(missions["chapter_6_choice"]["completed"]):
+		return false
+	if not bool(missions["discover_industrial"]["completed"]):
+		return false
+	if choice_id != "blockade" and choice_id != "hijack":
+		return false
+
+	chapter_6_choice = choice_id
+	if choice_id == "blockade":
+		_apply_bonus_reward({"cash":10000,"loot":{"Parts":5}})
+	else:
+		_apply_bonus_reward({"gold":8,"loot":{"Intel":3,"Parts":3}})
+
+	_set_progress("chapter_6_choice", 1)
+	strategic_choice_made.emit(choice_id)
+	return true
+
+
+func get_chapter_6_choice() -> String:
+	return chapter_6_choice
+
+
 func _refresh_faction_state() -> void:
 	if faction == null:
 		return
@@ -339,6 +392,14 @@ func _on_faction_joined(_faction_name: String) -> void:
 
 func _on_faction_territory_captured(_territory_id: String) -> void:
 	_set_progress("capture_faction_objective", 1)
+
+
+func _on_family_encounter_resolved(district_id: String, encounter_type: String, victory: bool) -> void:
+	if not victory or encounter_type != "convoy_ambush" or world_control == null:
+		return
+	if world_control.get_rival_family_id(district_id) != "iron_serpents":
+		return
+	_add_progress("clear_serpent_convoys", 1)
 
 
 func _on_recruitment_completed(_troop_type: StringName, amount: int) -> void:
@@ -390,6 +451,7 @@ func _refresh_level_mission() -> void:
 	_set_progress("reach_level_4", mini(progression.account_level, 4))
 	_set_progress("reach_level_5", mini(progression.account_level, 5))
 	_set_progress("reach_level_6", mini(progression.account_level, 6))
+	_set_progress("reach_level_7", mini(progression.account_level, 7))
 
 
 func _add_progress(mission_id: String, amount: int) -> void:
@@ -427,7 +489,7 @@ func _check_complete(mission_id: String) -> void:
 		economy.add_gold(int(mission.get("reward_gold", 0)))
 
 	mission_completed.emit(mission_id)
-	if mission_id != "chapter_1_complete" and mission_id != "chapter_2_complete" and mission_id != "chapter_3_complete" and mission_id != "chapter_4_complete" and mission_id != "chapter_5_complete":
+	if mission_id != "chapter_1_complete" and mission_id != "chapter_2_complete" and mission_id != "chapter_3_complete" and mission_id != "chapter_4_complete" and mission_id != "chapter_5_complete" and mission_id != "chapter_6_complete":
 		_refresh_chapter_progress()
 	changed.emit()
 
@@ -448,6 +510,9 @@ func _refresh_chapter_progress() -> void:
 
 	var chapter_5_count := _count_completed(CHAPTER_5_TASKS)
 	_set_progress("chapter_5_complete", chapter_5_count)
+
+	var chapter_6_count := _count_completed(CHAPTER_6_TASKS)
+	_set_progress("chapter_6_complete", chapter_6_count)
 
 
 func _count_completed(task_ids: Array) -> int:
@@ -485,6 +550,8 @@ func _apply_bonus_reward(reward: Dictionary) -> void:
 
 
 func get_story_chapter_status() -> Dictionary:
+	if bool(missions["chapter_5_complete"]["completed"]):
+		return _build_chapter_status(6, "Roads of Iron", CHAPTER_6_TASKS, "chapter_6_complete", "$30,000 + 30 Gold + 700 XP")
 	if bool(missions["chapter_4_complete"]["completed"]):
 		return _build_chapter_status(5, "The Ledger Burns", CHAPTER_5_TASKS, "chapter_5_complete", "$22,000 + 25 Gold + 550 XP")
 	if bool(missions["chapter_3_complete"]["completed"]):
@@ -528,15 +595,17 @@ func _build_chapter_status(chapter: int, title: String, task_ids: Array, complet
 		"story_line": String(beat["line"]),
 		"milestone_2_claimed": bool(chapter_milestones_claimed["2"]),
 		"milestone_4_claimed": bool(chapter_milestones_claimed["4"]),
-		"choice_required": (chapter == 2 and next_id == "chapter_2_choice") or (chapter == 3 and next_id == "chapter_3_choice") or (chapter == 4 and next_id == "chapter_4_choice") or (chapter == 5 and next_id == "chapter_5_choice"),
-		"choice": chapter_5_choice if chapter == 5 else (chapter_4_choice if chapter == 4 else (chapter_3_choice if chapter == 3 else chapter_2_choice)),
+		"choice_required": (chapter == 2 and next_id == "chapter_2_choice") or (chapter == 3 and next_id == "chapter_3_choice") or (chapter == 4 and next_id == "chapter_4_choice") or (chapter == 5 and next_id == "chapter_5_choice") or (chapter == 6 and next_id == "chapter_6_choice"),
+		"choice": chapter_6_choice if chapter == 6 else (chapter_5_choice if chapter == 5 else (chapter_4_choice if chapter == 4 else (chapter_3_choice if chapter == 3 else chapter_2_choice))),
 		"completion_reward": completion_reward
 	}
 
 
 func get_mission_lines() -> PackedStringArray:
 	var active_tasks: Array = CHAPTER_1_TASKS
-	if bool(missions["chapter_4_complete"]["completed"]):
+	if bool(missions["chapter_5_complete"]["completed"]):
+		active_tasks = CHAPTER_6_TASKS
+	elif bool(missions["chapter_4_complete"]["completed"]):
 		active_tasks = CHAPTER_5_TASKS
 	elif bool(missions["chapter_3_complete"]["completed"]):
 		active_tasks = CHAPTER_4_TASKS
@@ -559,7 +628,8 @@ func get_save_data() -> Dictionary:
 			"chapter_2_choice": chapter_2_choice,
 			"chapter_3_choice": chapter_3_choice,
 			"chapter_4_choice": chapter_4_choice,
-			"chapter_5_choice": chapter_5_choice
+			"chapter_5_choice": chapter_5_choice,
+			"chapter_6_choice": chapter_6_choice
 		}
 	}
 	for mission_id in missions.keys():
@@ -590,5 +660,6 @@ func load_save_data(data: Dictionary) -> void:
 		chapter_3_choice = String(meta.get("chapter_3_choice", chapter_3_choice))
 		chapter_4_choice = String(meta.get("chapter_4_choice", chapter_4_choice))
 		chapter_5_choice = String(meta.get("chapter_5_choice", chapter_5_choice))
+		chapter_6_choice = String(meta.get("chapter_6_choice", chapter_6_choice))
 
 	changed.emit()
