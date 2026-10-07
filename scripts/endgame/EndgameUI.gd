@@ -3,9 +3,11 @@ extends CanvasLayer
 
 var endgame: EndgameManager
 var faction: FactionManager
+var presentation: PresentationCatalog
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var summary: Label = $Root/Panel/Margin/Scroll/VBox/Summary
+@onready var season_banner: TextureRect = $Root/Panel/Margin/Scroll/VBox/SeasonBanner
 @onready var season_identity_label: Label = $Root/Panel/Margin/Scroll/VBox/SeasonIdentity
 @onready var season_label: Label = $Root/Panel/Margin/Scroll/VBox/Season
 @onready var featured_label: Label = $Root/Panel/Margin/Scroll/VBox/Featured
@@ -26,6 +28,7 @@ var faction: FactionManager
 func setup(endgame_manager: EndgameManager, faction_manager: FactionManager) -> void:
 	endgame = endgame_manager
 	faction = faction_manager
+	presentation = get_parent().get_node_or_null("PresentationCatalog") as PresentationCatalog
 	endgame.changed.connect(_refresh)
 	faction.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
@@ -86,6 +89,22 @@ func _equip_next_prestige() -> void:
 	_refresh()
 
 
+func _apply_season_banner() -> void:
+	season_banner.texture = null
+	if presentation == null:
+		return
+	var modifier := endgame.get_current_modifier()
+	match String(modifier.get("district_id", "")):
+		"industrial_depot":
+			season_banner.texture = presentation.get_character_portrait("driver")
+		"financial_tower":
+			season_banner.texture = presentation.get_campaign_art("celeste")
+		"northside_hq":
+			season_banner.texture = presentation.get_campaign_art("northside")
+		"midtown_exchange":
+			season_banner.texture = presentation.get_character_portrait("spy")
+
+
 func _refresh() -> void:
 	if endgame == null or faction == null:
 		return
@@ -103,6 +122,7 @@ func _refresh() -> void:
 		]
 	) if unlocked else "DOMINION LOCKED\nComplete Chapter 6 • Roads of Iron to unlock repeatable citywide operations."
 
+	_apply_season_banner()
 	season_identity_label.text = "%s\n%s" % [
 		String(status["season_name"]).to_upper(),
 		String(status["season_subtitle"])
@@ -125,6 +145,7 @@ func _refresh() -> void:
 	equip_prestige_button.disabled = endgame.prestige_badges.is_empty()
 	last_season_label.text = "LAST SEASON RESULT\n%s" % endgame.get_last_season_result_text()
 
+	season_banner.visible = unlocked
 	season_identity_label.visible = unlocked
 	season_label.visible = unlocked
 	featured_label.visible = unlocked
