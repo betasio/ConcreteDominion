@@ -11,6 +11,7 @@ func _ready() -> void:
 	_check_resource("res://scenes/ui/PauseMenu.tscn")
 	_check_resource("res://scenes/ui/SettingsDiagnosticsUI.tscn")
 	_check_resource("res://scenes/ui/CombatStrategyUI.tscn")
+	_check_resource("res://scenes/ui/EndgameUI.tscn")
 	_check_resource("res://scenes/ui/WorldControlUI.tscn")
 	_check_resource("res://scenes/tests/DataValidation.tscn")
 	_check_resource("res://scenes/tests/BalanceAudit.tscn")
@@ -50,6 +51,7 @@ func _ready() -> void:
 		"UIArtStyler",
 		"RivalFamilyRules",
 		"FactionManager",
+		"EndgameManager",
 		"AchievementManager",
 		"TutorialManager",
 		"AchievementUI",
@@ -59,7 +61,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 28:
+	if save == null or SaveManager.SAVE_VERSION < 29:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -225,6 +227,32 @@ func _ready() -> void:
 		_fail("Faction matchmaking preview UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward") == null:
 		_fail("Faction War reward claim UI is missing.")
+
+	var endgame := game.get_node_or_null("EndgameManager") as EndgameManager
+	if endgame == null:
+		_fail("Dominion endgame manager is missing.")
+	else:
+		var dominion_status := endgame.get_status()
+		if EndgameManager.WEEKLY_REQUIRED != 2:
+			_fail("Dominion weekly flexibility requirement is invalid.")
+		if endgame.get_contract_lines().size() != 3:
+			_fail("Dominion weekly contract tracks are incomplete.")
+		if int(dominion_status.get("dominion_marks", -1)) < 0:
+			_fail("Dominion marks are invalid.")
+		if endgame.get_dominion_rank().is_empty():
+			_fail("Dominion rank progression is invalid.")
+		if endgame.world_control != world_control or endgame.faction != faction_manager:
+			_fail("Dominion runtime dependencies are not wired.")
+		if world_control != null and not world_control.family_encounter_resolved.is_connected(endgame._on_family_encounter_resolved):
+			_fail("Dominion Rival Family operation tracking is not wired.")
+		if faction_manager != null and not faction_manager.war_completed.is_connected(endgame._on_faction_war_completed):
+			_fail("Dominion Faction War tracking is not wired.")
+	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/VBox/RivalOperation") == null:
+		_fail("Dominion Rival Family operation UI is missing.")
+	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/VBox/BossRematch") == null:
+		_fail("Dominion boss rematch UI is missing.")
+	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/VBox/ClaimCache") == null:
+		_fail("Dominion reward claim UI is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
