@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 24:
+	if save == null or SaveManager.SAVE_VERSION < 25:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -97,8 +97,12 @@ func _ready() -> void:
 			_fail("Chapter 2 objective chain is incomplete.")
 		if not missions.missions.has("win_harbor") or not missions.missions.has("win_midtown") or not missions.missions.has("chapter_2_complete"):
 			_fail("Chapter 2 Harbor/Midtown campaign missions are missing.")
+		if MissionTracker.CHAPTER_3_TASKS.size() != 5:
+			_fail("Chapter 3 objective chain is incomplete.")
+		if not missions.missions.has("discover_northside") or not missions.missions.has("chapter_3_choice") or not missions.missions.has("join_faction") or not missions.missions.has("chapter_3_complete"):
+			_fail("Chapter 3 Northside/Faction campaign missions are missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Force") == null or game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Intel") == null:
-			_fail("Chapter 2 strategic choice controls are missing.")
+			_fail("Chapter strategic choice controls are missing.")
 
 	var retention := game.get_node_or_null("RetentionManager") as RetentionManager
 	if retention == null:
@@ -175,6 +179,8 @@ func _ready() -> void:
 			_fail("Faction matchmaking rating is invalid.")
 		if faction_manager.get_territory_cash_multiplier() < 1.0:
 			_fail("Faction territory income objective multiplier is invalid.")
+		if missions.faction != faction_manager:
+			_fail("Chapter 3 Faction onboarding is not wired.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CreateBox/Create") == null:
 		_fail("Player Faction creation UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily") == null:
