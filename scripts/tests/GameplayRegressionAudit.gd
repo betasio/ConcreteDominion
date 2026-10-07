@@ -8,6 +8,7 @@ func _ready() -> void:
 	_test_resource_caps()
 	_test_reward_split_conservation()
 	_test_malformed_save_clamps()
+	_test_dominion_save_clamps()
 	_finish()
 
 
@@ -132,6 +133,29 @@ func _test_malformed_save_clamps() -> void:
 
 	economy.free()
 	loot.free()
+
+
+func _test_dominion_save_clamps() -> void:
+	var endgame := EndgameManager.new()
+	add_child(endgame)
+	endgame.load_save_data({
+		"family_operation_wins": 999,
+		"boss_rematch_wins": 99,
+		"faction_war_wins": 99,
+		"dominion_marks": -500,
+		"cycles_completed": -2,
+		"operation_cursor": -999,
+		"boss_cursor": 999
+	})
+	if endgame.family_operation_wins != EndgameManager.FAMILY_OPERATION_GOAL:
+		_fail("Dominion Family operation progress was not clamped.")
+	if endgame.boss_rematch_wins != EndgameManager.BOSS_REMATCH_GOAL:
+		_fail("Dominion boss rematch progress was not clamped.")
+	if endgame.faction_war_wins != EndgameManager.FACTION_WAR_GOAL:
+		_fail("Dominion Faction War progress was not clamped.")
+	if endgame.dominion_marks != 0 or endgame.cycles_completed != 0:
+		_fail("Malformed Dominion save produced negative progression.")
+	endgame.queue_free()
 
 
 func _fail(message: String) -> void:
