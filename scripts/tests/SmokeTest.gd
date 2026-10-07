@@ -58,7 +58,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 20:
+	if save == null or SaveManager.SAVE_VERSION < 21:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -92,6 +92,12 @@ func _ready() -> void:
 			_fail("Chapter 1 story portrait presentation is missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Milestones") == null:
 			_fail("Chapter 1 milestone reward presentation is missing.")
+		if MissionTracker.CHAPTER_2_TASKS.size() != 5:
+			_fail("Chapter 2 objective chain is incomplete.")
+		if not missions.missions.has("win_harbor") or not missions.missions.has("win_midtown") or not missions.missions.has("chapter_2_complete"):
+			_fail("Chapter 2 Harbor/Midtown campaign missions are missing.")
+		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Force") == null or game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Intel") == null:
+			_fail("Chapter 2 strategic choice controls are missing.")
 
 	var retention := game.get_node_or_null("RetentionManager") as RetentionManager
 	if retention == null:
@@ -113,6 +119,10 @@ func _ready() -> void:
 	var world_control := game.get_node_or_null("WorldControlManager") as WorldControlManager
 	if world_control == null or not world_control.is_discovered("downtown_bank"):
 		_fail("World-control discovery defaults are invalid.")
+	elif world_control.get_rivalry_label("harbor_bank") != "COLD":
+		_fail("Faction rivalry baseline is invalid.")
+	elif world_control.get_rivalry_reward_multiplier("harbor_bank") < 1.0:
+		_fail("Faction rivalry reward scaling is invalid.")
 
 	var resources := game.get_node_or_null("ResourceProductionManager") as ResourceProductionManager
 	if resources == null:
