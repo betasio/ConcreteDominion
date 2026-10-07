@@ -394,6 +394,6 @@ offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Recruit support → Launch raid → Heal wounds\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
+text = "Click Banks/Turf HQs → Add support → Raid\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2

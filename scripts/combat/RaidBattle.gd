@@ -10,30 +10,25 @@ var economy: PlayerEconomy
 var roster: TroopRoster
 var hospital: HospitalQueue
 var synergy: SynergyRaid
+var city_map: Node
 
 var active_battle: Dictionary = {}
 var last_result: Dictionary = {}
 var _last_displayed_second := -1
-
-const TARGET := {
-	"id": "downtown_bank",
-	"name": "Downtown Bank",
-	"hp": 9000.0,
-	"reward_cash": 7500,
-	"difficulty": "Medium"
-}
 
 
 func setup(
 	player_economy: PlayerEconomy,
 	troop_roster: TroopRoster,
 	hospital_queue: HospitalQueue,
-	synergy_raid: SynergyRaid
+	synergy_raid: SynergyRaid,
+	world: Node
 ) -> void:
 	economy = player_economy
 	roster = troop_roster
 	hospital = hospital_queue
 	synergy = synergy_raid
+	city_map = world
 
 
 func _process(delta: float) -> void:
@@ -58,8 +53,11 @@ func is_active() -> bool:
 	return not active_battle.is_empty()
 
 
-func start_battle(driver_count: int, spy_count: int) -> bool:
-	if is_active() or economy == null or roster == null or hospital == null or synergy == null:
+func start_battle(target: RaidTarget, driver_count: int, spy_count: int) -> bool:
+	if is_active() or target == null or not target.is_available():
+		return false
+
+	if economy == null or roster == null or hospital == null or synergy == null:
 		return false
 
 	driver_count = clampi(driver_count, 0, roster.get_count(&"Driver"))
@@ -74,16 +72,19 @@ func start_battle(driver_count: int, spy_count: int) -> bool:
 	for i in range(spy_count):
 		synergy.join_raid("Spy_%d" % (i + 1), 14, 0.0, &"spy")
 
+	var target_data := target.get_battle_data()
+
 	active_battle = {
-		"target_id": TARGET["id"],
-		"target_name": TARGET["name"],
-		"target_hp": TARGET["hp"],
-		"reward_cash": TARGET["reward_cash"],
-		"difficulty": TARGET["difficulty"],
+		"target_id": String(target_data["id"]),
+		"target_name": String(target_data["name"]),
+		"target_hp": float(target_data["hp"]),
+		"reward_cash": int(target_data["reward_cash"]),
+		"difficulty": String(target_data["difficulty"]),
 		"drivers": driver_count,
 		"spies": spy_count,
 		"seconds_remaining": launch_countdown_seconds
 	}
+
 	last_result.clear()
 	_last_displayed_second = -1
 	changed.emit()
@@ -103,6 +104,12 @@ func _resolve_active_battle() -> void:
 	if victory:
 		economy.add_cash(reward_cash)
 
+		var defeated_target: RaidTarget = city_map.get_raid_target_by_id(
+			String(active_battle["target_id"])
+		)
+		if defeated_target != null:
+			defeated_target.start_cooldown()
+
 	var enforcers_available := roster.get_count(&"Enforcer")
 	var base_wound_rate := 0.10 if victory else 0.22
 	var support_protection := minf(
@@ -120,18 +127,22 @@ func _resolve_active_battle() -> void:
 
 	if not victory and int(active_battle["drivers"]) > 0:
 		wounded_drivers = 1
+
 	if not victory and int(active_battle["spies"]) > 0:
 		wounded_spies = 1
 
 	if wounded_enforcers > 0:
 		hospital.send_to_hospital(&"Enforcer", wounded_enforcers)
+
 	if wounded_drivers > 0:
 		hospital.send_to_hospital(&"Driver", wounded_drivers)
+
 	if wounded_spies > 0:
 		hospital.send_to_hospital(&"Spy", wounded_spies)
 
 	last_result = {
 		"victory": victory,
+		"target_id": String(active_battle["target_id"]),
 		"target_name": String(active_battle["target_name"]),
 		"target_hp": target_hp,
 		"damage": damage,
@@ -149,15 +160,8 @@ func _resolve_active_battle() -> void:
 
 
 func get_save_data() -> Dictionary:
-	if active_battle.is_empty():
-		return {
-			"active": {},
-			"last_result": last_result.duplicate(true)
-		}
-
-	var saved := active_battle.duplicate(true)
 	return {
-		"active": saved,
+		"active": active_battle.duplicate(true),
 		"last_result": last_result.duplicate(true)
 	}
 

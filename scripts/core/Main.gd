@@ -16,7 +16,7 @@ func _ready() -> void:
 	hospital_queue.setup(economy, troop_roster)
 	construction_queue.setup(economy)
 	recruitment_queue.setup(economy, troop_roster)
-	raid_battle.setup(economy, troop_roster, hospital_queue, synergy_raid)
+	raid_battle.setup(economy, troop_roster, hospital_queue, synergy_raid, city_map)
 
 	save_manager.setup(
 		economy,
@@ -41,6 +41,7 @@ func _ready() -> void:
 
 	city_map.building_selected.connect(_on_building_selected)
 	city_map.lot_selected.connect(_on_lot_selected)
+	city_map.raid_target_selected.connect(_on_raid_target_selected)
 	hud.focus_building_requested.connect(city_map.focus_building)
 
 
@@ -50,3 +51,7 @@ func _on_building_selected(building: Building) -> void:
 
 func _on_lot_selected(lot: BuildLot) -> void:
 	hud.show_lot(lot)
+
+
+func _on_raid_target_selected(target: RaidTarget) -> void:
+	hud.show_raid_target(target)

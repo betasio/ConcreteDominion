@@ -5,7 +5,7 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 var economy: PlayerEconomy
 var roster: TroopRoster
@@ -48,6 +48,9 @@ func setup(
 
 	for building in city_map.get_persistent_buildings():
 		building.changed.connect(mark_dirty)
+
+	for target in city_map.get_raid_targets():
+		target.changed.connect(mark_dirty)
 
 
 func _process(delta: float) -> void:
@@ -123,7 +126,7 @@ func load_game() -> bool:
 
 	economy.load_save_data(data.get("economy", {}))
 	roster.load_save_data(data.get("roster", {}))
-	city_map.load_save_data(data.get("world", {}))
+	city_map.load_save_data(data.get("world", {}), elapsed)
 	hospital.load_save_data(data.get("hospital", {}), elapsed)
 	construction.load_save_data(data.get("construction", {}), elapsed, city_map)
 	recruitment.load_save_data(data.get("recruitment", {}), elapsed)

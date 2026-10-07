@@ -2,77 +2,79 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## End-to-end playable loop
+## World raid targets
 
-The project now has a complete prototype progression/combat loop:
+Raids are now launched from clickable targets placed directly on the isometric city map.
 
-1. Earn/spend shared Cash and Gold.
-2. Upgrade buildings or construct the Garage/Intel Office.
-3. Recruit Enforcers, Drivers, and Spies.
-4. Open **Alliance Raid** and configure support.
-5. Preview expected raid damage.
-6. Launch against the **Downtown Bank**.
-7. Wait through the raid launch countdown.
-8. Resolve victory or defeat automatically.
-9. Receive Cash on victory.
-10. Wounded crew are removed from the active roster and sent to the Clinic.
-11. Heal them over time or spend Gold for instant recovery.
-12. Progress and active timers persist across restarts.
+Current targets:
 
-## Downtown Bank raid
+| Target | Difficulty | HP | Cash reward | Respawn |
+| --- | --- | ---: | ---: | ---: |
+| Downtown Bank | Medium | 9,000 | $7,500 | 30 sec |
+| Harbor Bank | Hard | 11,500 | $10,500 | 45 sec |
+| Northside Turf HQ | Elite | 14,500 | $15,000 | 60 sec |
 
-Current prototype target:
+Click a target to open its raid lobby. Each location carries its own HP, difficulty, reward, availability, and cooldown.
 
-- Target: Downtown Bank
-- HP: 9,000
-- Difficulty: Medium
-- Reward: $7,500 Cash
-- Frontline ally: AllianceBoss, 6,000 power
+A defeated target enters a visible respawn cooldown. Other targets remain available, so the player can move around the city instead of waiting on one global encounter.
+
+## Full prototype loop
+
+1. Upgrade city buildings and construct specialist facilities.
+2. Recruit Enforcers, Drivers, and Spies.
+3. Pan around the city and click a Bank or Turf HQ.
+4. Inspect its HP, difficulty, reward, and respawn status.
+5. Add Driver and Spy support.
+6. Preview the alliance damage.
+7. Launch the raid.
+8. Resolve victory or defeat after the launch countdown.
+9. Earn Cash on victory.
+10. The defeated target enters cooldown.
+11. Wounded crew move from the active roster into the Underground Clinic.
+12. Heal them over time or spend Gold.
+13. Continue raiding other available targets.
+
+## Alliance synergy
+
+The prototype alliance boss contributes 6,000 frontline power.
+
 - Driver support: +10% each
 - Spy support: +12% each
+- Support bonuses multiply the frontline contribution
 
-This intentionally makes support meaningful. A powerful frontline account alone does not clear the target; alliance support must multiply its contribution.
+This is the core anti-solo-stomp loop: raw power is valuable, but high-power players need specialist support to clear tougher targets.
 
-### Battle wounds
-
-There is still **no permanent troop death**.
-
-After raid resolution:
-- some Enforcers may be wounded;
-- a defeat can also wound participating Drivers and Spies;
-- wounded units immediately leave the active troop roster;
-- the Underground Clinic restores them after treatment.
+For example, the Downtown Bank can be cleared with enough support, while Harbor Bank and Northside Turf HQ require progressively stronger alliance coordination.
 
 ## Persistence
 
-The local save tracks:
+The local save now tracks:
 
 - Cash and Gold
 - troop roster
-- building levels and built lots
-- construction timer
-- recruitment timer
+- building levels
+- constructed lots
+- construction queue
+- recruitment queue
 - Clinic queue
-- active raid countdown
-- most recent raid result
+- active raid
+- last raid result
+- per-target respawn cooldowns
 
-Offline time advances construction, recruitment, healing, and an active raid countdown.
-
-The save is stored under Godot's `user://` application-data folder.
+Offline time advances construction, recruitment, healing, raid countdowns, and target respawn cooldowns.
 
 ## Suggested test
 
-1. Pull the latest `main` and run the game.
-2. Open **Alliance Raid**.
-3. Preview with no support.
-4. Add Drivers and Spies and preview again.
-5. Recruit more specialists if you need more support.
-6. Launch the raid.
-7. Watch the countdown resolve into victory/defeat.
-8. Check Cash after a victory.
-9. Open **Crew** and notice wounded units are absent.
-10. Open **Clinic** and heal them.
-11. Close/reopen the game during a raid or healing timer to test persistence.
+1. Pull the latest `main`.
+2. Run the project.
+3. Pan around the city until you see the labeled raid targets.
+4. Click **Downtown Bank**.
+5. Preview damage without support.
+6. Add Drivers and Spies until the preview exceeds 9,000.
+7. Launch and win the raid.
+8. Close the raid panel and see the Bank display its respawn countdown on the map.
+9. Click **Harbor Bank** or **Northside Turf HQ** while Downtown Bank is unavailable.
+10. Close/reopen the game and confirm target cooldowns persist.
 
 ## Architecture
 
@@ -83,24 +85,31 @@ Main
 ├── HospitalQueue
 ├── ConstructionQueue
 ├── RecruitmentQueue
-├── SynergyRaid        # contribution math
-├── RaidBattle         # target/countdown/outcome/rewards/wounds
+├── SynergyRaid
+├── RaidBattle
 ├── SaveManager
 ├── CityMap
+│   ├── Buildings
+│   └── RaidTargets
+│       ├── DowntownBank
+│       ├── HarborBank
+│       └── NorthsideHQ
 └── HUD
 ```
 
-`SynergyRaid` only calculates alliance contribution math. `RaidBattle` owns encounter state and resolution. That separation lets us add multiple target types later without duplicating alliance-support logic.
+`RaidTarget.gd` owns target-specific map state and cooldowns. `SynergyRaid.gd` owns alliance contribution math. `RaidBattle.gd` owns encounter launch and resolution.
 
-## Production security note
+## Production note
 
-This remains a client-side prototype. Local saves and the system clock can be manipulated. Before a real F2P economy or multiplayer launch, currency, inventories, timers, raid rosters, battle resolution, and rewards must become server-authoritative.
+This is still a local prototype. Before live multiplayer or monetization, raid availability, timers, participants, battle results, rewards, currency, and troop state must become server-authoritative.
 
 ## Next milestone
 
-Strong next additions are:
-- multiple world-map raid targets with different HP/rewards;
-- target cooldowns and respawns;
-- alliance lobby/player list rather than simulated members;
-- combat animations and result presentation;
-- data-driven balance resources for troops/buildings/targets.
+Good next steps are:
+
+- a dedicated world-map mode with a larger district;
+- target tiers generated from data instead of scene constants;
+- alliance member slots instead of simulated support IDs;
+- visible convoy/unit movement toward raid targets;
+- reward crates and target drop tables;
+- polished raid result presentation and combat VFX.

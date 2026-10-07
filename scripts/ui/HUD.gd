@@ -12,6 +12,7 @@ var raid_battle: RaidBattle
 
 var selected_building: Building
 var selected_lot: BuildLot
+var selected_raid_target: RaidTarget
 var raid_drivers := 0
 var raid_spies := 0
 
@@ -135,6 +136,7 @@ func show_building(building: Building) -> void:
 func show_lot(lot: BuildLot) -> void:
 	selected_lot = lot
 	selected_building = null
+	selected_raid_target = null
 	selection_title.text = lot.building_name if lot.is_built else "Empty Build Lot"
 	selection_description.text = lot.description
 	level_label.visible = lot.is_built
@@ -335,13 +337,42 @@ func _refresh_recruitment() -> void:
 		finish_recruitment_button.disabled = economy.gold < finish_cost
 
 
-func _open_raid() -> void:
+func show_raid_target(target: RaidTarget) -> void:
+	selected_building = null
+	selected_lot = null
+	selected_raid_target = target
 	raid_panel.visible = true
+
 	if raid_battle.is_active():
 		raid_drivers = int(raid_battle.active_battle.get("drivers", 0))
 		raid_spies = int(raid_battle.active_battle.get("spies", 0))
 	else:
 		_prepare_raid()
+
+	_refresh_raid()
+
+
+func _open_raid() -> void:
+	raid_panel.visible = true
+
+	if raid_battle.is_active():
+		selected_raid_target = get_node("/root/Main/CityMap").get_raid_target_by_id(
+			String(raid_battle.active_battle.get("target_id", ""))
+		)
+		raid_drivers = int(raid_battle.active_battle.get("drivers", 0))
+		raid_spies = int(raid_battle.active_battle.get("spies", 0))
+	elif selected_raid_target == null:
+		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
+		for target in targets:
+			if target.is_available():
+				selected_raid_target = target
+				break
+		if selected_raid_target == null and not targets.is_empty():
+			selected_raid_target = targets[0]
+		_prepare_raid()
+	else:
+		_prepare_raid()
+
 	_refresh_raid()
 
 
@@ -380,7 +411,29 @@ func _refresh_raid() -> void:
 	if synergy_raid == null or troop_roster == null or raid_battle == null:
 		return
 
-	raid_target_label.text = "TARGET: Downtown Bank\nHP: 9,000   Difficulty: Medium   Reward: $7,500"
+	var active := raid_battle.is_active()
+
+	if active:
+		var active_id := String(raid_battle.active_battle.get("target_id", ""))
+		selected_raid_target = get_node("/root/Main/CityMap").get_raid_target_by_id(active_id)
+
+	if selected_raid_target == null:
+		raid_target_label.text = "No raid target selected."
+		raid_status_label.text = "Click a Bank or Turf HQ on the city map."
+		add_driver_button.disabled = true
+		add_spy_button.disabled = true
+		preview_raid_button.disabled = true
+		launch_raid_button.disabled = true
+		$Root/RaidPanel/Margin/VBox/Reset.disabled = true
+		return
+
+	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s" % [
+		selected_raid_target.display_name,
+		_format_number(roundi(selected_raid_target.max_hp)),
+		selected_raid_target.difficulty,
+		_format_number(selected_raid_target.reward_cash)
+	]
+
 	raid_roster_label.text = "Frontline: AllianceBoss (6,000 power)\nYour support: %d Driver(s), %d Spy(s)\nAvailable: %d Drivers, %d Spies" % [
 		raid_drivers,
 		raid_spies,
@@ -388,16 +441,19 @@ func _refresh_raid() -> void:
 		troop_roster.get_count(&"Spy")
 	]
 
-	var active := raid_battle.is_active()
-	add_driver_button.disabled = active or raid_drivers >= troop_roster.get_count(&"Driver")
-	add_spy_button.disabled = active or raid_spies >= troop_roster.get_count(&"Spy")
-	preview_raid_button.disabled = active
-	launch_raid_button.disabled = active
-	$Root/RaidPanel/Margin/VBox/Reset.disabled = active
+	var target_available := selected_raid_target.is_available()
+	add_driver_button.disabled = active or not target_available or raid_drivers >= troop_roster.get_count(&"Driver")
+	add_spy_button.disabled = active or not target_available or raid_spies >= troop_roster.get_count(&"Spy")
+	preview_raid_button.disabled = active or not target_available
+	launch_raid_button.disabled = active or not target_available
+	$Root/RaidPanel/Margin/VBox/Reset.disabled = active or not target_available
 
 	if active:
 		raid_status_label.text = "Raid convoy launching... %s" % _format_time(float(raid_battle.active_battle["seconds_remaining"]))
 		launch_raid_button.text = "Raid In Progress"
+	elif not target_available:
+		raid_status_label.text = "Target respawning in %s" % _format_time(selected_raid_target.cooldown_remaining)
+		launch_raid_button.text = "Target Unavailable"
 	else:
 		raid_status_label.text = "Ready to launch."
 		launch_raid_button.text = "Launch Raid"
@@ -407,9 +463,13 @@ func _refresh_raid() -> void:
 
 
 func _calculate_raid() -> void:
+	if selected_raid_target == null:
+		return
+
 	var result := synergy_raid.calculate_raid_damage()
-	raid_result_label.text = "Preview damage: %s / 9,000 HP\nDriver speed bonus: +%d%%\nSpy defense break: +%d%%\nTotal support: +%d%%" % [
+	raid_result_label.text = "Preview damage: %s / %s HP\nDriver speed bonus: +%d%%\nSpy defense break: +%d%%\nTotal support: +%d%%" % [
 		_format_number(roundi(float(result["damage"]))),
+		_format_number(roundi(selected_raid_target.max_hp)),
 		roundi(float(result["speed_bonus"]) * 100.0),
 		roundi(float(result["defense_break_bonus"]) * 100.0),
 		roundi(float(result["support_bonus"]) * 100.0)
@@ -417,8 +477,11 @@ func _calculate_raid() -> void:
 
 
 func _launch_raid() -> void:
-	if raid_battle.start_battle(raid_drivers, raid_spies):
-		raid_result_label.text = "The crew is moving on the Downtown Bank..."
+	if selected_raid_target == null:
+		return
+
+	if raid_battle.start_battle(selected_raid_target, raid_drivers, raid_spies):
+		raid_result_label.text = "The crew is moving on %s..." % selected_raid_target.display_name
 		_refresh_raid()
 
 
