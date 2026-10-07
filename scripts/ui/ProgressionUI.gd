@@ -68,7 +68,9 @@ func _upgrade(role: StringName) -> void:
 func _choose_approach(choice_id: String) -> void:
 	var chapter := missions.get_story_chapter_status()
 	var chapter_number := int(chapter.get("chapter", 1))
-	if chapter_number == 4:
+	if chapter_number == 5:
+		missions.choose_chapter_5_approach("takeover" if choice_id == "force" else "market_leak")
+	elif chapter_number == 4:
 		missions.choose_chapter_4_approach("buy_in" if choice_id == "force" else "blackmail")
 	elif chapter_number == 3:
 		missions.choose_chapter_3_approach("pressure" if choice_id == "force" else "patience")
@@ -102,7 +104,10 @@ func _refresh() -> void:
 	approach_box.visible = bool(chapter.get("choice_required", false))
 	force_button.disabled = not approach_box.visible
 	intel_button.disabled = not approach_box.visible
-	if int(chapter["chapter"]) == 4:
+	if int(chapter["chapter"]) == 5:
+		force_button.text = "HOSTILE TAKEOVER • $8,000 + Parts x4"
+		intel_button.text = "MARKET LEAK • 6 Gold + Intel x5"
+	elif int(chapter["chapter"]) == 4:
 		force_button.text = "BUY IN • $6,000 + 3 Gold"
 		intel_button.text = "BLACKMAIL • 5 Gold + Intel x4"
 	elif int(chapter["chapter"]) == 3:
@@ -129,10 +134,16 @@ func _refresh() -> void:
 			"UNDECIDED" if chapter_3_choice.is_empty() else chapter_3_choice.to_upper(),
 			String(chapter["completion_reward"])
 		]
-	else:
+	elif int(chapter["chapter"]) == 4:
 		var chapter_4_choice := String(chapter.get("choice", ""))
 		milestones_label.text = "VELVET CIRCLE CAMPAIGN\nCeleste Marrow • Casino Vault\nLeverage: %s • Data Hub required before the final score\nChapter reward: %s" % [
 			"UNDECIDED" if chapter_4_choice.is_empty() else chapter_4_choice.to_upper().replace("_", " "),
+			String(chapter["completion_reward"])
+		]
+	else:
+		var chapter_5_choice := String(chapter.get("choice", ""))
+		milestones_label.text = "FINANCIAL DISTRICT CAMPAIGN\nVelvet Circle • Financial Tower\nPressure: %s • Capture one Faction territory objective before the Tower hit\nChapter reward: %s" % [
+			"UNDECIDED" if chapter_5_choice.is_empty() else chapter_5_choice.to_upper().replace("_", " "),
 			String(chapter["completion_reward"])
 		]
 
