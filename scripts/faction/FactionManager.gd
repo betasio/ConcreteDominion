@@ -14,6 +14,7 @@ signal war_started(opponent_name: String)
 signal territory_captured(territory_id: String)
 signal member_role_changed(member_id: String, role: String)
 signal member_removed(member_id: String)
+signal war_completed(won: bool, season_points_awarded: int)
 
 const ROLE_LEADER := "Leader"
 const ROLE_UNDERBOSS := "Underboss"
@@ -737,14 +738,17 @@ func _complete_war() -> void:
 	active_war["status"] = "complete"
 	var won := int(active_war.get("our_score", 0)) > int(active_war.get("their_score", 0))
 	active_war["result"] = "VICTORY" if won else "DEFEAT"
+	var awarded_points := 35
 	if won:
 		season_wins += 1
-		season_points += 120
+		awarded_points = 120
+		season_points += awarded_points
 		active_war["reward_tier"] = "GOLD" if int(active_war.get("our_score", 0)) >= 450 else "SILVER"
 	else:
-		season_points += 35
+		season_points += awarded_points
 		active_war["reward_tier"] = "BRONZE"
 	war_reward_claimed = false
+	war_completed.emit(won, awarded_points)
 
 
 func can_claim_war_reward() -> bool:
