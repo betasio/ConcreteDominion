@@ -532,7 +532,7 @@ func _prepare_raid() -> void:
 	raid_spies = 0
 	alliance_manager.clear_local_player()
 	_rebuild_synergy_from_alliance()
-	raid_result_label.text = "Choose your role, review the alliance slots, then launch."
+	raid_result_label.text = "Choose your role, review the crew-support slots, then launch."
 	_refresh_raid()
 
 
@@ -664,7 +664,7 @@ func _refresh_raid() -> void:
 		launch_raid_button.text = "Target Unavailable"
 	else:
 		raid_status_label.text = "Ready to launch."
-		launch_raid_button.text = "Launch Alliance Raid"
+		launch_raid_button.text = "Launch Crew Raid"
 
 	if not active and not raid_battle.last_result.is_empty():
 		_show_raid_result(raid_battle.last_result)
@@ -682,7 +682,7 @@ func _refresh_alliance_labels() -> void:
 			state
 		])
 
-	alliance_roster_label.text = "ALLIANCE\n" + "\n".join(member_lines)
+	alliance_roster_label.text = "CREW SUPPORT\n" + "\n".join(member_lines)
 
 	var slot_lines: PackedStringArray = []
 	for slot in alliance_manager.get_raid_slots():
@@ -744,7 +744,7 @@ func _launch_raid() -> void:
 		return
 
 	if raid_battle.start_battle(selected_raid_target, raid_drivers, raid_spies):
-		raid_result_label.text = "Alliance convoy moving on %s..." % selected_raid_target.get_display_name()
+		raid_result_label.text = "Crew convoy moving on %s..." % selected_raid_target.get_display_name()
 		_refresh_raid()
 
 
@@ -763,7 +763,7 @@ func _show_raid_result(result: Dictionary) -> void:
 		result.get("participants", [])
 	)
 
-	raid_result_label.text = "%s — Grade %s — %s\nDamage: %s / %s HP\nPlan: %s   Consumable: %s\nCounter: %s   Injury severity: %s\nAlliance reward pool: $%s\nYour Cash: $%s   XP: +%d   Loot: %s\n%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)" % [
+	raid_result_label.text = "%s — Grade %s — %s\nDamage: %s / %s HP\nPlan: %s   Consumable: %s\nCounter: %s   Injury severity: %s\nCrew reward pool: $%s\nYour Cash: $%s   XP: +%d   Loot: %s\n%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)" % [
 		outcome,
 		String(result.get("grade", "D")),
 		String(result.get("target_name", "Target")),
