@@ -68,3 +68,42 @@ func instant_heal() -> bool:
 	_last_displayed_second = -1
 	queue_changed.emit()
 	return true
+
+
+func get_save_data() -> Dictionary:
+	var saved_queue: Array = []
+	for entry in wounded_queue:
+		saved_queue.append({
+			"troop_type": String(entry["troop_type"]),
+			"amount": int(entry["amount"]),
+			"seconds_remaining": float(entry["seconds_remaining"])
+		})
+	return {"queue": saved_queue}
+
+
+func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
+	wounded_queue.clear()
+
+	for raw_entry in data.get("queue", []):
+		if raw_entry is Dictionary:
+			wounded_queue.append({
+				"troop_type": StringName(raw_entry.get("troop_type", "Enforcer")),
+				"amount": int(raw_entry.get("amount", 0)),
+				"seconds_remaining": float(raw_entry.get("seconds_remaining", 0.0))
+			})
+
+	var remaining_offline := maxf(0.0, offline_seconds)
+
+	while remaining_offline > 0.0 and not wounded_queue.is_empty():
+		var current_time := float(wounded_queue[0]["seconds_remaining"])
+		if remaining_offline >= current_time:
+			remaining_offline -= current_time
+			var completed := wounded_queue.pop_front()
+			completed["seconds_remaining"] = 0.0
+			treatment_completed.emit(completed)
+		else:
+			wounded_queue[0]["seconds_remaining"] = current_time - remaining_offline
+			remaining_offline = 0.0
+
+	_last_displayed_second = -1
+	queue_changed.emit()

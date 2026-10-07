@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/units/TroopRoster.gd" id="7_roster"]
 [ext_resource type="Script" path="res://scripts/units/RecruitmentQueue.gd" id="8_recruit"]
 [ext_resource type="Script" path="res://scripts/combat/SynergyRaid.gd" id="9_raid"]
+[ext_resource type="Script" path="res://scripts/core/SaveManager.gd" id="10_save"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -30,6 +31,9 @@ script = ExtResource("8_recruit")
 
 [node name="SynergyRaid" type="Node" parent="."]
 script = ExtResource("9_raid")
+
+[node name="SaveManager" type="Node" parent="."]
+script = ExtResource("10_save")
 
 [node name="CityMap" parent="." instance=ExtResource("2_city")]
 

@@ -37,3 +37,16 @@ func add_cash(amount: int) -> void:
 func add_gold(amount: int) -> void:
 	gold += maxi(0, amount)
 	changed.emit()
+
+
+func get_save_data() -> Dictionary:
+	return {
+		"cash": cash,
+		"gold": gold
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	cash = int(data.get("cash", cash))
+	gold = int(data.get("gold", gold))
+	changed.emit()

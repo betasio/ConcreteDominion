@@ -35,6 +35,53 @@ func _ready() -> void:
 	lot_b.selected.connect(_select_lot)
 	queue_redraw()
 
+func get_persistent_buildings() -> Array:
+	return [safehouse, hospital, barracks, lot_a, lot_b]
+
+func get_persistent_target(target_id: String) -> Node:
+	match target_id:
+		"safehouse":
+			return safehouse
+		"hospital":
+			return hospital
+		"barracks":
+			return barracks
+		"lot_garage":
+			return lot_a
+		"lot_intel":
+			return lot_b
+		_:
+			return null
+
+func get_target_id(target: Node) -> String:
+	if target == safehouse:
+		return "safehouse"
+	if target == hospital:
+		return "hospital"
+	if target == barracks:
+		return "barracks"
+	if target == lot_a:
+		return "lot_garage"
+	if target == lot_b:
+		return "lot_intel"
+	return ""
+
+func get_save_data() -> Dictionary:
+	return {
+		"safehouse_level": safehouse.level,
+		"hospital_level": hospital.level,
+		"barracks_level": barracks.level,
+		"garage_built": lot_a.is_built,
+		"intel_built": lot_b.is_built
+	}
+
+func load_save_data(data: Dictionary) -> void:
+	safehouse.restore_progress(int(data.get("safehouse_level", safehouse.level)))
+	hospital.restore_progress(int(data.get("hospital_level", hospital.level)))
+	barracks.restore_progress(int(data.get("barracks_level", barracks.level)))
+	lot_a.restore_progress(bool(data.get("garage_built", lot_a.is_built)))
+	lot_b.restore_progress(bool(data.get("intel_built", lot_b.is_built)))
+
 func _draw() -> void:
 	for y in range(grid_height):
 		for x in range(grid_width):

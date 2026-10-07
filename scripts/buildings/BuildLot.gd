@@ -2,6 +2,7 @@ class_name BuildLot
 extends Area2D
 
 signal selected(lot: BuildLot)
+signal changed
 
 @export var building_name: String = "Garage"
 @export var build_cash_cost: int = 12000
@@ -25,12 +26,21 @@ func set_selected(value: bool) -> void:
 
 func begin_construction() -> void:
 	is_constructing = true
+	changed.emit()
 	queue_redraw()
 
 
 func complete_construction(_target_level: int = 1) -> void:
 	is_constructing = false
 	is_built = true
+	changed.emit()
+	queue_redraw()
+
+
+func restore_progress(built: bool) -> void:
+	is_built = built
+	is_constructing = false
+	changed.emit()
 	queue_redraw()
 
 

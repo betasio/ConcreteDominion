@@ -17,9 +17,11 @@ var definitions := {
 	&"Spy": {"cash_each": 500, "seconds_each": 2.4}
 }
 
+
 func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster) -> void:
 	economy = player_economy
 	roster = troop_roster
+
 
 func _process(delta: float) -> void:
 	if active_job.is_empty():
@@ -32,18 +34,22 @@ func _process(delta: float) -> void:
 	if float(active_job["seconds_remaining"]) <= 0.0:
 		_complete_job()
 
+
 func is_busy() -> bool:
 	return not active_job.is_empty()
+
 
 func get_cash_cost(troop_type: StringName, amount: int) -> int:
 	if not definitions.has(troop_type):
 		return 0
 	return int(definitions[troop_type]["cash_each"]) * maxi(0, amount)
 
+
 func get_duration(troop_type: StringName, amount: int) -> float:
 	if not definitions.has(troop_type):
 		return 0.0
 	return float(definitions[troop_type]["seconds_each"]) * float(maxi(0, amount))
+
 
 func recruit(troop_type: StringName, amount: int) -> bool:
 	if is_busy() or amount <= 0 or not definitions.has(troop_type):
@@ -61,10 +67,12 @@ func recruit(troop_type: StringName, amount: int) -> bool:
 	queue_changed.emit()
 	return true
 
+
 func get_finish_now_cost() -> int:
 	if active_job.is_empty():
 		return 0
 	return ceili(float(active_job["seconds_remaining"]) / 60.0) * gold_per_minute
+
 
 func finish_now() -> bool:
 	if active_job.is_empty() or economy == null:
@@ -73,6 +81,7 @@ func finish_now() -> bool:
 		return false
 	_complete_job()
 	return true
+
 
 func _complete_job() -> void:
 	if active_job.is_empty() or roster == null:
@@ -83,4 +92,43 @@ func _complete_job() -> void:
 	active_job.clear()
 	_last_displayed_second = -1
 	recruitment_completed.emit(troop_type, amount)
+	queue_changed.emit()
+
+
+func get_save_data() -> Dictionary:
+	if active_job.is_empty():
+		return {}
+
+	return {
+		"troop_type": String(active_job["troop_type"]),
+		"amount": int(active_job["amount"]),
+		"cash_cost": int(active_job.get("cash_cost", 0)),
+		"seconds_remaining": float(active_job["seconds_remaining"])
+	}
+
+
+func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
+	active_job.clear()
+	_last_displayed_second = -1
+
+	if data.is_empty():
+		queue_changed.emit()
+		return
+
+	var troop_type := StringName(data.get("troop_type", "Enforcer"))
+	var amount := int(data.get("amount", 0))
+	var remaining := maxf(0.0, float(data.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
+
+	if remaining <= 0.0:
+		if roster != null and amount > 0:
+			roster.add_troops(troop_type, amount)
+			recruitment_completed.emit(troop_type, amount)
+	else:
+		active_job = {
+			"troop_type": troop_type,
+			"amount": amount,
+			"cash_cost": int(data.get("cash_cost", 0)),
+			"seconds_remaining": remaining
+		}
+
 	queue_changed.emit()

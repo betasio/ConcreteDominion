@@ -50,6 +50,14 @@ func complete_construction(target_level: int) -> void:
 	queue_redraw()
 
 
+func restore_progress(saved_level: int) -> void:
+	level = maxi(1, saved_level)
+	pending_level = 0
+	is_constructing = false
+	changed.emit()
+	queue_redraw()
+
+
 func _draw() -> void:
 	var footprint := PackedVector2Array([
 		Vector2(0, -58),

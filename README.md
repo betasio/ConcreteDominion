@@ -4,48 +4,52 @@ A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScrip
 
 ## Current playable loops
 
+### Persistent progression
+The prototype now saves to Godot's per-user `user://` storage automatically.
+
+Saved state includes:
+- Cash and Gold
+- Enforcer, Driver, and Spy counts
+- Safehouse, Clinic, and Barracks levels
+- Garage and Intel Office construction state
+- Active building upgrade/construction timer
+- Active troop recruitment timer
+- Hospital healing queue
+
+The save file records a real-world timestamp. When the game reopens, elapsed offline time is applied to construction, recruitment, and healing. Jobs that should have completed while the game was closed complete during loading.
+
+Autosaves are debounced so timer updates do not write to disk every frame.
+
 ### City progression
-- Upgrade the Safehouse through timed levels.
+- Upgrade the Safehouse, Clinic, and Crew Barracks.
 - Build the Garage and Intel Office on empty lots.
-- Spend shared Cash to construct and shared Gold to finish timers early.
+- Spend Cash to construct and Gold to finish timers early.
 
 ### Crew recruitment
-- Open the **Crew Barracks** from the map or the **Crew** shortcut.
 - Recruit Enforcers, Drivers, and Spies.
-- Recruitment has its own timed queue.
+- Recruitment uses a timed queue.
 - Spend Gold to finish training immediately.
-- Your troop roster updates when training completes.
+- Recruited units persist across restarts.
 
 ### Underground Clinic
-- Simulate wounded troops after battle.
 - Wounded crew recover instead of being permanently lost.
-- Healing runs on timers or can be completed instantly with Gold.
+- Healing timers persist and continue while offline.
 
 ### Synergy Raid prototype
-- Open **Alliance Raid**.
-- A high-level alliance boss provides 6,000 frontline power.
-- Your Drivers add +10% raid support each.
-- Your Spies add +12% raid support each.
-- Support bonuses multiply the frontline contribution instead of trying to replace it.
-- The raid panel limits support slots to specialists you actually own.
+- A high-level alliance member provides frontline power.
+- Drivers and Spies provide multiplicative support bonuses.
+- Support availability is limited by the specialists you own.
 
-This is the first playable proof of the game's core anti-solo-stomp idea: raw power matters, but specialist support has direct multiplicative value.
+## Persistence test
 
-## Controls
+1. Run the game.
+2. Spend some Cash, recruit troops, start a building upgrade, or add wounded troops.
+3. Close the game before the timers finish.
+4. Reopen it.
+5. Your currency, roster, buildings, and queues should restore.
+6. Leave it closed longer than a timer and reopen it; that job should be completed.
 
-- PC: WASD/arrows, edge pan, right/middle drag, mouse-wheel zoom.
-- Mobile: one-finger pan and two-finger pinch zoom.
-
-## Suggested test sequence
-
-1. Open **Crew**.
-2. Recruit Drivers or Spies and watch the training timer.
-3. Use **Finish Training** to test premium acceleration.
-4. Open **Alliance Raid**.
-5. Add Driver and Spy support.
-6. Calculate the raid and compare the result before/after adding specialists.
-7. Upgrade the Safehouse or build one of the empty lots.
-8. Open the Clinic and confirm Cash/Gold remain shared across all progression systems.
+The local save lives under Godot's `user://` path, which maps to the platform's normal application-data location.
 
 ## Architecture
 
@@ -57,6 +61,7 @@ Main
 ├── ConstructionQueue
 ├── RecruitmentQueue
 ├── SynergyRaid
+├── SaveManager
 ├── CityMap
 │   ├── Safehouse
 │   ├── Hospital
@@ -66,11 +71,18 @@ Main
 └── HUD
 ```
 
-The prototype is still intentionally client-side for fast iteration. Before multiplayer or real-money purchases, currency balances, construction, healing, recruitment, raid participants, and raid outcomes must become server-authoritative.
+Each gameplay system exposes explicit save/load data instead of serializing Godot Nodes. This keeps save files versionable and prepares the project for eventually replacing local persistence with server-authoritative player state.
+
+## Important production note
+
+The current save is deliberately local for prototyping. It is not secure against editing or clock manipulation. Before multiplayer, competitive raids, premium purchases, or a real economy, currency, timers, troop inventories, healing, and raid results must be validated by the server.
 
 ## Next milestone
 
-The next strong step is **persistence + progression data**:
-- save/load player Cash, Gold, troop counts, building levels, and active queues;
-- move balance numbers into data resources rather than hard-coding them;
-- then add a proper Alliance Raid target with HP, rewards, and wounded troop results.
+The next strong gameplay step is a real raid target:
+- target HP and difficulty;
+- raid countdown and resolution;
+- Cash/reward payout;
+- troop wounds generated from the result;
+- Clinic integration;
+- victory/defeat feedback.
