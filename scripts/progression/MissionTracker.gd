@@ -85,7 +85,6 @@ var missions: Dictionary = {
 	"chapter_3_complete":{"title":"No Longer Small","description":"Complete the five Chapter 3 operations.","goal":5,"progress":0,"completed":false,"reward_xp":350,"reward_cash":12000,"reward_gold":15},
 
 	"win_casino":{"title":"Break the House","description":"Defeat Casino Vault.","goal":1,"progress":0,"completed":false,"reward_xp":180,"reward_cash":7000},
-	"win_casino":{"title":"Break the House","description":"Defeat Casino Vault.","goal":1,"progress":0,"completed":false,"reward_xp":180,"reward_cash":7000},
 	"win_financial":{"title":"Own the Skyline","description":"Defeat Financial Tower.","goal":1,"progress":0,"completed":false,"reward_xp":220,"reward_cash":9000},
 	"win_industrial":{"title":"Control the Supply","description":"Defeat Industrial Depot.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000}
 }
