@@ -139,13 +139,20 @@ func _test_dominion_save_clamps() -> void:
 	var endgame := EndgameManager.new()
 	add_child(endgame)
 	var current_week := floori(float(floori(Time.get_unix_time_from_system() / 86400.0)) / 7.0)
+	var current_season := floori(float(current_week) / float(EndgameManager.SEASON_WEEKS))
 	endgame.load_save_data({
 		"weekly_period": current_week,
+		"season_period": current_season,
 		"family_operation_wins": 999,
 		"boss_rematch_wins": 99,
 		"faction_war_wins": 99,
 		"dominion_marks": -500,
 		"cycles_completed": -2,
+		"season_points": -900,
+		"featured_wins": -3,
+		"scored_operation_wins": 999,
+		"claimed_season_tiers": ["SILVER","INVALID","SILVER"],
+		"pending_season_tiers": ["GOLD","INVALID","GOLD"],
 		"operation_cursor": -999,
 		"boss_cursor": 999
 	})
@@ -155,8 +162,14 @@ func _test_dominion_save_clamps() -> void:
 		_fail("Dominion boss rematch progress was not clamped.")
 	if endgame.faction_war_wins != EndgameManager.FACTION_WAR_GOAL:
 		_fail("Dominion Faction War progress was not clamped.")
-	if endgame.dominion_marks != 0 or endgame.cycles_completed != 0:
+	if endgame.dominion_marks != 0 or endgame.cycles_completed != 0 or endgame.season_points != 0:
 		_fail("Malformed Dominion save produced negative progression.")
+	if endgame.featured_wins != 0:
+		_fail("Malformed Dominion save produced negative featured wins.")
+	if endgame.scored_operation_wins != 5:
+		_fail("Dominion weekly seasonal scoring cap was not enforced.")
+	if endgame.claimed_season_tiers != ["SILVER"] or endgame.pending_season_tiers != ["GOLD"]:
+		_fail("Dominion seasonal tier save sanitization failed.")
 	endgame.queue_free()
 
 
