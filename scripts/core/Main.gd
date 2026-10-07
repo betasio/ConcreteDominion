@@ -12,6 +12,7 @@ extends Node
 @onready var mailbox: MailboxManager = $MailboxManager
 @onready var alliance_manager: AllianceManager = $AllianceManager
 @onready var alliance_social: AllianceSocial = $AllianceSocial
+@onready var faction_manager: FactionManager = $FactionManager
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
@@ -25,7 +26,7 @@ extends Node
 @onready var resource_production: ResourceProductionManager = $ResourceProductionManager
 @onready var localized_text: LocalizedText = $LocalizedText
 @onready var presentation_catalog: PresentationCatalog = $PresentationCatalog
-@onready var faction_rules: FactionRules = $FactionRules
+@onready var rival_family_rules: RivalFamilyRules = $RivalFamilyRules
 @onready var achievements: AchievementManager = $AchievementManager
 @onready var tutorial: TutorialManager = $TutorialManager
 @onready var save_manager: SaveManager = $SaveManager
@@ -34,6 +35,7 @@ extends Node
 @onready var progression_ui: ProgressionUI = $ProgressionUI
 @onready var retention_ui: RetentionUI = $RetentionUI
 @onready var profile_ui: ProfileUI = $ProfileUI
+@onready var faction_ui: FactionUI = $FactionUI
 @onready var event_ui: EventUI = $EventUI
 @onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 @onready var safe_area_manager: SafeAreaManager = $SafeAreaManager
@@ -75,7 +77,7 @@ func _ready() -> void:
 	)
 
 	resource_production.setup(city_map.lot_c, city_map.lot_d, loot_inventory)
-	faction_rules.setup(localized_text)
+	rival_family_rules.setup(localized_text)
 	presentation_catalog.apply_to_city(city_map)
 
 	world_control.setup(
@@ -87,7 +89,7 @@ func _ready() -> void:
 		alliance_manager,
 		city_map,
 		core_building_effects,
-		faction_rules,
+		rival_family_rules,
 		raid_battle
 	)
 
@@ -138,6 +140,7 @@ func _ready() -> void:
 		mailbox,
 		alliance_manager,
 		alliance_social,
+		faction_manager,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
@@ -172,6 +175,7 @@ func _ready() -> void:
 	progression_ui.setup(progression, mission_tracker, loot_inventory, localized_text)
 	retention_ui.setup(retention, localized_text)
 	profile_ui.setup(player_profile, mailbox, progression, localized_text)
+	faction_ui.setup(faction_manager, economy)
 	event_ui.setup(event_manager, localized_text)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map, localized_text)
 	store_ui.setup(store_manager, localized_text)
@@ -188,6 +192,7 @@ func _ready() -> void:
 		progression_ui.get_node("Root") as Control,
 		retention_ui.get_node("Root") as Control,
 		profile_ui.get_node("Root") as Control,
+		faction_ui.get_node("Root") as Control,
 		event_ui.get_node("Root") as Control,
 		combat_strategy_ui.get_node("Root") as Control,
 		settings_ui.get_node("Root") as Control,
