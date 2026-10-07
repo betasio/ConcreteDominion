@@ -79,7 +79,7 @@ offset_left = 24.0
 offset_top = 92.0
 offset_right = 196.0
 offset_bottom = 142.0
-text = "Alliance"
+text = "Crew Support"
 
 [node name="HospitalShortcut" type="Button" parent="Root"]
 layout_mode = 1
@@ -115,7 +115,7 @@ offset_top = 208.0
 offset_right = -24.0
 offset_bottom = 258.0
 grow_horizontal = 0
-text = "Alliance Raid"
+text = "Crew Raid"
 
 [node name="AlliancePanel" type="PanelContainer" parent="Root"]
 visible = false
@@ -143,12 +143,12 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="Root/AlliancePanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
-text = "ALLIANCE HUB"
+text = "CREW SUPPORT"
 
 [node name="Feed" type="Label" parent="Root/AlliancePanel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 135)
 layout_mode = 2
-text = "Alliance channel connected."
+text = "Crew Support channel connected."
 autowrap_mode = 2
 
 [node name="Profiles" type="HFlowContainer" parent="Root/AlliancePanel/Margin/VBox"]
@@ -164,7 +164,7 @@ autowrap_mode = 2
 
 [node name="CreateInvite" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
 layout_mode = 2
-text = "Invite Alliance to Selected Target"
+text = "Invite Crew Support to Selected Target"
 
 [node name="JoinDriver" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
 layout_mode = 2
@@ -398,7 +398,7 @@ text = "SYNERGY RAID"
 
 [node name="Explanation" type="Label" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "The alliance boss supplies frontline power. Your Drivers and Spies multiply that power through essential support roles."
+text = "Your story crew supplies frontline power. Your Drivers and Spies multiply that power through essential support roles."
 autowrap_mode = 2
 
 [node name="Target" type="Label" parent="Root/RaidPanel/Margin/VBox"]
@@ -410,7 +410,7 @@ autowrap_mode = 2
 [node name="AllianceRoster" type="Label" parent="Root/RaidPanel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
-text = "ALLIANCE"
+text = "CREW SUPPORT"
 autowrap_mode = 2
 
 [node name="AllianceSlots" type="Label" parent="Root/RaidPanel/Margin/VBox"]
@@ -439,7 +439,7 @@ text = "Toggle Kira Online / Offline"
 
 [node name="Calculate" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Preview Alliance Damage"
+text = "Preview Crew Damage"
 
 [node name="Launch" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
@@ -553,6 +553,6 @@ offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "BASE ↔ WORLD • Alliance invites on the left\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
+text = "BASE ↔ WORLD • Crew Support + player Faction on the left\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2
