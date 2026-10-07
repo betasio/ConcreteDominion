@@ -1,6 +1,14 @@
 class_name MissionTracker
 extends Node
 
+const CHAPTER_1_TASKS := [
+	"recruit_crew",
+	"win_downtown",
+	"reach_level_2",
+	"build_garage",
+	"build_intel"
+]
+
 signal changed
 signal mission_completed(mission_id: String)
 
@@ -98,6 +106,15 @@ var missions: Dictionary = {
 		"completed": false,
 		"reward_xp": 280,
 		"reward_cash": 12000
+	},
+	"chapter_1_complete": {
+		"title": "A Higher Kingdom",
+		"description": "Complete the five Chapter 1 operations.",
+		"goal": 5,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 150,
+		"reward_cash": 5000
 	}
 }
 
@@ -121,6 +138,7 @@ func setup(
 
 	_refresh_level_mission()
 	_refresh_existing_buildings()
+	_refresh_chapter_progress()
 
 
 func _refresh_existing_buildings() -> void:
@@ -143,6 +161,7 @@ func _on_construction_completed(target: Node) -> void:
 			_set_progress("build_garage", 1)
 		elif lot.is_built and lot.building_name == "Intel Office":
 			_set_progress("build_intel", 1)
+	_refresh_chapter_progress()
 	changed.emit()
 
 
@@ -210,7 +229,44 @@ func _check_complete(mission_id: String) -> void:
 		economy.add_cash(int(mission["reward_cash"]))
 
 	mission_completed.emit(mission_id)
+	if mission_id != "chapter_1_complete":
+		_refresh_chapter_progress()
 	changed.emit()
+
+
+func _refresh_chapter_progress() -> void:
+	var completed_count := 0
+	for mission_id in CHAPTER_1_TASKS:
+		if missions.has(mission_id) and bool(missions[mission_id]["completed"]):
+			completed_count += 1
+	_set_progress("chapter_1_complete", completed_count)
+
+
+func get_story_chapter_status() -> Dictionary:
+	var completed_count := 0
+	var next_title := "Chapter complete"
+	var next_description := "Your crew is established. Push deeper into the city and take territory."
+
+	for mission_id in CHAPTER_1_TASKS:
+		if not missions.has(mission_id):
+			continue
+		var mission: Dictionary = missions[mission_id]
+		if bool(mission["completed"]):
+			completed_count += 1
+		elif next_title == "Chapter complete":
+			next_title = String(mission["title"])
+			next_description = String(mission["description"])
+
+	return {
+		"title": "A Higher Kingdom",
+		"chapter": 1,
+		"progress": completed_count,
+		"goal": CHAPTER_1_TASKS.size(),
+		"complete": bool(missions["chapter_1_complete"]["completed"]),
+		"next_title": next_title,
+		"next_description": next_description,
+		"completion_reward": "$5,000 + 150 XP"
+	}
 
 
 func get_mission_lines() -> PackedStringArray:
