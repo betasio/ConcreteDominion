@@ -82,7 +82,7 @@ func _check_character_art(presentation: PresentationCatalog) -> void:
 		_fail("Character/unit portrait atlas failed to load.")
 		return
 
-	if presentation.get_character_atlas_size() != Vector2i(512, 256):
+	if presentation.get_character_atlas_size() != Vector2i(128, 64):
 		_fail("Character/unit portrait atlas size changed unexpectedly: %s" % presentation.get_character_atlas_size())
 
 	for key in ["vex", "mia", "noah", "kira", "enforcer", "driver", "spy"]:
