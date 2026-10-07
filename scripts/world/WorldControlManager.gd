@@ -6,6 +6,7 @@ signal district_discovered(district_id: String)
 signal district_captured(district_id: String)
 signal patrol_spawned(district_id: String)
 signal patrol_resolved(district_id: String, victory: bool)
+signal family_encounter_resolved(district_id: String, encounter_type: String, victory: bool)
 signal alliance_task_completed(task_id: String)
 signal task_cycle_refreshed
 
@@ -200,6 +201,10 @@ func get_rival_faction(target_id: String) -> String:
 	if family_rules != null:
 		return family_rules.get_faction_name(target_id)
 	return String(factions.get(target_id, "Rival Crew"))
+
+
+func get_rival_family_id(target_id: String) -> String:
+	return family_rules.get_faction_id(target_id) if family_rules != null else ""
 
 
 func get_rival_trait(target_id: String) -> String:
@@ -401,6 +406,7 @@ func resolve_patrol() -> Dictionary:
 	active_patrol.clear()
 	patrol_elapsed = 0.0
 	patrol_resolved.emit(target_id, victory)
+	family_encounter_resolved.emit(target_id, encounter_type, victory)
 	changed.emit()
 
 	return {
