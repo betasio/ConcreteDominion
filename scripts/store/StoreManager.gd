@@ -9,7 +9,7 @@ var catalog: Array[Dictionary] = [
 		"title": "Gold Starter",
 		"price_label": "$0.99 example",
 		"description": "80 Gold. Designed for small timer skips.",
-		"contents": {"Gold": 40}
+		"contents": {"Gold": 80}
 	},
 	{
 		"id": "builder_pack",
