@@ -302,5 +302,4 @@ func load_save_data(data: Dictionary) -> void:
 		if saved is Dictionary:
 			missions[mission_id]["progress"] = int(saved.get("progress", missions[mission_id]["progress"]))
 			missions[mission_id]["completed"] = bool(saved.get("completed", missions[mission_id]["completed"]))
-	_refresh_chapter_progress()
 	changed.emit()
