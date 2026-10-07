@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 15
+const SAVE_VERSION := 16
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -25,6 +25,7 @@ var construction: ConstructionQueue
 var recruitment: RecruitmentQueue
 var raid_battle: RaidBattle
 var world_control: WorldControlManager
+var resource_production: ResourceProductionManager
 var city_map: Node
 
 var _autosave_timer := 0.0
@@ -53,6 +54,7 @@ func setup(
 	recruitment_queue: RecruitmentQueue,
 	battle: RaidBattle,
 	control: WorldControlManager,
+	resources: ResourceProductionManager,
 	world: Node
 ) -> void:
 	economy = player_economy
@@ -72,6 +74,7 @@ func setup(
 	recruitment = recruitment_queue
 	raid_battle = battle
 	world_control = control
+	resource_production = resources
 	city_map = world
 
 	economy.changed.connect(mark_dirty)
@@ -91,6 +94,7 @@ func setup(
 	recruitment.queue_changed.connect(mark_dirty)
 	raid_battle.changed.connect(mark_dirty)
 	world_control.changed.connect(mark_dirty)
+	resource_production.changed.connect(mark_dirty)
 	city_map.view_mode_changed.connect(func(_mode): mark_dirty())
 
 	for building in city_map.get_persistent_buildings():
@@ -138,6 +142,7 @@ func save_game() -> bool:
 		"recruitment": recruitment.get_save_data(),
 		"raid_battle": raid_battle.get_save_data(),
 		"world_control": world_control.get_save_data(),
+		"resource_production": resource_production.get_save_data(),
 		"world": city_map.get_save_data()
 	}
 
@@ -191,6 +196,7 @@ func load_game() -> bool:
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	world_control.load_save_data(data.get("world_control", {}), elapsed)
+	resource_production.load_save_data(data.get("resource_production", {}), elapsed)
 	hospital.load_save_data(data.get("hospital", {}), elapsed)
 	construction.load_save_data(data.get("construction", {}), elapsed, city_map)
 	recruitment.load_save_data(data.get("recruitment", {}), elapsed)
@@ -284,6 +290,9 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 			"discovered": migrated_discovered,
 			"owned": {}
 		}
+
+	if version < 16 and not data.has("resource_production"):
+		data["resource_production"] = {}
 
 	data["schema_meta"] = {
 		"migrated_from": version,

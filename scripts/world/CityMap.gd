@@ -23,6 +23,9 @@ const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 @onready var barracks: Building = $Buildings/Barracks
 @onready var lot_a: BuildLot = $Buildings/BuildLotA
 @onready var lot_b: BuildLot = $Buildings/BuildLotB
+@onready var lot_c: BuildLot = $Buildings/BuildLotC
+@onready var lot_d: BuildLot = $Buildings/BuildLotD
+@onready var turf_overlay: TurfOverlay = $TurfOverlay
 @onready var downtown_bank: RaidTarget = $RaidTargets/DowntownBank
 @onready var harbor_bank: RaidTarget = $RaidTargets/HarborBank
 @onready var northside_hq: RaidTarget = $RaidTargets/NorthsideHQ
@@ -54,6 +57,8 @@ func _ready() -> void:
 	barracks.position = iso_to_screen(Vector2i(10, 7))
 	lot_a.position = iso_to_screen(Vector2i(10, 13))
 	lot_b.position = iso_to_screen(Vector2i(13, 13))
+	lot_c.position = iso_to_screen(Vector2i(7, 13))
+	lot_d.position = iso_to_screen(Vector2i(16, 13))
 
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
@@ -68,6 +73,8 @@ func _ready() -> void:
 	barracks.selected.connect(_select_building)
 	lot_a.selected.connect(_select_lot)
 	lot_b.selected.connect(_select_lot)
+	lot_c.selected.connect(_select_lot)
+	lot_d.selected.connect(_select_lot)
 
 	for target in get_raid_targets():
 		target.selected.connect(_select_raid_target)
@@ -106,7 +113,7 @@ func get_view_mode() -> StringName:
 
 
 func get_persistent_buildings() -> Array:
-	return [safehouse, hospital, barracks, lot_a, lot_b]
+	return [safehouse, hospital, barracks, lot_a, lot_b, lot_c, lot_d]
 
 
 func get_raid_targets() -> Array:
@@ -207,6 +214,10 @@ func get_persistent_target(target_id: String) -> Node:
 			return lot_a
 		"lot_intel":
 			return lot_b
+		"lot_scrapyard":
+			return lot_c
+		"lot_datahub":
+			return lot_d
 		_:
 			return null
 
@@ -222,6 +233,10 @@ func get_target_id(target: Node) -> String:
 		return "lot_garage"
 	if target == lot_b:
 		return "lot_intel"
+	if target == lot_c:
+		return "lot_scrapyard"
+	if target == lot_d:
+		return "lot_datahub"
 	return ""
 
 
@@ -238,6 +253,10 @@ func get_save_data() -> Dictionary:
 		"garage_level": lot_a.level,
 		"intel_built": lot_b.is_built,
 		"intel_level": lot_b.level,
+		"scrapyard_built": lot_c.is_built,
+		"scrapyard_level": lot_c.level,
+		"datahub_built": lot_d.is_built,
+		"datahub_level": lot_d.level,
 		"raid_targets": raid_target_data,
 		"view_mode": String(view_mode)
 	}
@@ -249,6 +268,8 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	barracks.restore_progress(int(data.get("barracks_level", barracks.level)))
 	lot_a.restore_progress(bool(data.get("garage_built", lot_a.is_built)), int(data.get("garage_level", 1)))
 	lot_b.restore_progress(bool(data.get("intel_built", lot_b.is_built)), int(data.get("intel_level", 1)))
+	lot_c.restore_progress(bool(data.get("scrapyard_built", lot_c.is_built)), int(data.get("scrapyard_level", 1)))
+	lot_d.restore_progress(bool(data.get("datahub_built", lot_d.is_built)), int(data.get("datahub_level", 1)))
 
 	var raid_target_data = data.get("raid_targets", {})
 	if raid_target_data is Dictionary:

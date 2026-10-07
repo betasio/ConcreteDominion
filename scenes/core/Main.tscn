@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3]
+[gd_scene load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -39,6 +39,7 @@
 [ext_resource type="Script" path="res://scripts/buildings/CoreBuildingEffects.gd" id="37_core_effects"]
 [ext_resource type="Script" path="res://scripts/world/WorldControlManager.gd" id="38_world_control"]
 [ext_resource type="PackedScene" path="res://scenes/ui/WorldControlUI.tscn" id="39_world_control_ui"]
+[ext_resource type="Script" path="res://scripts/buildings/ResourceProductionManager.gd" id="40_resource_production"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -108,6 +109,9 @@ script = ExtResource("11_battle")
 
 [node name="WorldControlManager" type="Node" parent="."]
 script = ExtResource("38_world_control")
+
+[node name="ResourceProductionManager" type="Node" parent="."]
+script = ExtResource("40_resource_production")
 
 [node name="SaveManager" type="Node" parent="."]
 script = ExtResource("10_save")

@@ -7,10 +7,13 @@ signal district_captured(district_id: String)
 signal patrol_spawned(district_id: String)
 signal patrol_resolved(district_id: String, victory: bool)
 signal alliance_task_completed(task_id: String)
+signal task_cycle_refreshed
 
 const PRODUCTION_CAP_SECONDS := 8.0 * 60.0 * 60.0
 const PATROL_INTERVAL_SECONDS := 90.0
 const COMMAND_SCAN_COOLDOWN_SECONDS := 10.0 * 60.0
+const TASK_CYCLE_SECONDS := 24.0 * 60.0 * 60.0
+const PRESSURE_PER_SECOND := 0.0015
 
 var economy: PlayerEconomy
 var loot: LootInventory
@@ -23,11 +26,25 @@ var core_effects: CoreBuildingEffects
 
 var discovered: Dictionary = {"downtown_bank": true}
 var owned: Dictionary = {}
+var pressure: Dictionary = {}
+var contested: Dictionary = {}
 var production_bank: float = 0.0
 var production_elapsed: float = 0.0
 var patrol_elapsed: float = 0.0
 var command_scan_remaining: float = 0.0
+var task_cycle_remaining: float = TASK_CYCLE_SECONDS
 var active_patrol: Dictionary = {}
+var _encounter_cursor := 0
+
+var factions: Dictionary = {
+	"downtown_bank": "Dock Rats",
+	"harbor_bank": "Iron Serpents",
+	"midtown_exchange": "Meridian Boys",
+	"northside_hq": "Northside Crew",
+	"casino_vault": "Velvet Circle",
+	"financial_tower": "Velvet Circle",
+	"industrial_depot": "Iron Serpents"
+}
 
 var alliance_tasks: Dictionary = {
 	"raid_wins": {
@@ -98,12 +115,18 @@ func _process(delta: float) -> void:
 		return
 
 	var did_change := false
+
 	if command_scan_remaining > 0.0:
 		command_scan_remaining = maxf(0.0, command_scan_remaining - delta)
 
+	task_cycle_remaining -= delta
+	if task_cycle_remaining <= 0.0:
+		_reset_task_cycle()
+		did_change = true
+
 	if not owned.is_empty():
 		var before_bank := production_bank
-		var cap_amount := float(get_income_per_hour()) * (PRODUCTION_CAP_SECONDS / 3600.0)
+		var cap_amount := float(get_base_income_per_hour()) * (PRODUCTION_CAP_SECONDS / 3600.0)
 		production_bank = minf(
 			cap_amount,
 			production_bank + float(get_income_per_hour()) * (delta / 3600.0)
@@ -111,6 +134,19 @@ func _process(delta: float) -> void:
 		production_elapsed = minf(PRODUCTION_CAP_SECONDS, production_elapsed + delta)
 		if floori(before_bank) != floori(production_bank):
 			did_change = true
+
+		for target_id in owned.keys():
+			if not bool(owned[target_id]):
+				continue
+			var current := float(pressure.get(target_id, 0.0))
+			if not bool(contested.get(target_id, false)):
+				current = minf(1.0, current + delta * PRESSURE_PER_SECOND)
+				pressure[target_id] = current
+				if current >= 1.0:
+					contested[target_id] = true
+					if active_patrol.is_empty():
+						_spawn_contested_event(String(target_id))
+					did_change = true
 
 		if active_patrol.is_empty():
 			patrol_elapsed += delta
@@ -129,6 +165,24 @@ func is_discovered(target_id: String) -> bool:
 
 func is_owned(target_id: String) -> bool:
 	return bool(owned.get(target_id, false))
+
+
+func is_contested(target_id: String) -> bool:
+	return bool(contested.get(target_id, false))
+
+
+func get_pressure(target_id: String) -> float:
+	return clampf(float(pressure.get(target_id, 0.0)), 0.0, 1.0)
+
+
+func get_owner_label(target_id: String) -> String:
+	if is_owned(target_id):
+		return "YOUR TURF • CONTESTED" if is_contested(target_id) else "YOUR TURF"
+	return String(factions.get(target_id, "Rival Crew")).to_upper()
+
+
+func get_rival_faction(target_id: String) -> String:
+	return String(factions.get(target_id, "Rival Crew"))
 
 
 func can_discover(target_id: String) -> bool:
@@ -178,6 +232,17 @@ func get_income_per_hour() -> int:
 	var total := 0
 	for target_id in owned.keys():
 		if bool(owned[target_id]) and districts.has(target_id):
+			var rate := int((districts[target_id] as Dictionary)["cash_per_hour"])
+			if is_contested(String(target_id)):
+				rate = roundi(float(rate) * 0.65)
+			total += rate
+	return total
+
+
+func get_base_income_per_hour() -> int:
+	var total := 0
+	for target_id in owned.keys():
+		if bool(owned[target_id]) and districts.has(target_id):
 			total += int((districts[target_id] as Dictionary)["cash_per_hour"])
 	return total
 
@@ -187,24 +252,34 @@ func resolve_patrol() -> Dictionary:
 		return {}
 
 	var target_id := String(active_patrol["district_id"])
+	var encounter_type := String(active_patrol.get("type", "roadblock"))
 	var required_power := float(active_patrol["power"])
-	var available := roster.get_count(&"Enforcer")
-	var enforcer_power_each := 100.0
-	if progression != null:
-		enforcer_power_each = progression.get_enforcer_power_each()
-	var player_power := float(available) * enforcer_power_each
+	var role := StringName(active_patrol.get("role", "Enforcer"))
+	var count := roster.get_count(role)
+	var unit_power := _get_unit_power(role)
+	var player_power := float(count) * unit_power
 	var victory := player_power >= required_power
 	var cash_reward := int(active_patrol.get("cash_reward", 0)) if victory else 0
 
 	if victory:
 		economy.add_cash(cash_reward)
-		if loot != null and bool(active_patrol.get("intel_drop", false)):
-			loot.add_item("Intel", 1)
+		if loot != null:
+			if encounter_type == "surveillance":
+				loot.add_item("Intel", 1)
+			elif encounter_type == "convoy_ambush":
+				loot.add_item("Parts", 1)
+		if encounter_type == "turf_push":
+			contested[target_id] = false
+			pressure[target_id] = 0.15
+		else:
+			pressure[target_id] = maxf(0.0, get_pressure(target_id) - 0.20)
 		_add_task_progress("clear_patrols", 1)
 	else:
-		var wounded := mini(1, available)
+		var wounded := mini(1, count)
 		if wounded > 0 and hospital != null:
-			hospital.send_to_hospital(&"Enforcer", wounded, 1.1, "Standard")
+			hospital.send_to_hospital(role, wounded, 1.1 if encounter_type != "turf_push" else 1.3, "Standard")
+		if encounter_type == "turf_push":
+			pressure[target_id] = 0.80
 
 	active_patrol.clear()
 	patrol_elapsed = 0.0
@@ -214,6 +289,8 @@ func resolve_patrol() -> Dictionary:
 	return {
 		"victory": victory,
 		"district_id": target_id,
+		"encounter_type": encounter_type,
+		"role": String(role),
 		"player_power": player_power,
 		"required_power": required_power,
 		"cash_reward": cash_reward
@@ -226,9 +303,9 @@ func get_district_lines() -> PackedStringArray:
 		var data: Dictionary = districts[target_id]
 		var state := "FOG"
 		if is_owned(target_id):
-			state = "OWNED"
+			state = "CONTESTED %d%%" % roundi(get_pressure(target_id) * 100.0) if is_contested(target_id) else "OWNED %d%%" % roundi(get_pressure(target_id) * 100.0)
 		elif is_discovered(target_id):
-			state = "DISCOVERED"
+			state = "RIVAL: %s" % get_rival_faction(target_id)
 		lines.append("%s — %s — $%d/hr" % [
 			String(data["name"]),
 			state,
@@ -249,12 +326,20 @@ func get_task_lines() -> PackedStringArray:
 	return lines
 
 
+func get_task_cycle_remaining() -> float:
+	return maxf(0.0, task_cycle_remaining)
+
+
 func get_next_discovery_summary() -> String:
 	var target_id := _get_next_discoverable_target()
 	if target_id == "":
 		return "No eligible fogged district."
 	var data: Dictionary = districts[target_id]
-	return "%s — Intel x%d" % [String(data["name"]), int(data["intel"])]
+	return "%s — %s — Intel x%d" % [
+		String(data["name"]),
+		get_rival_faction(target_id),
+		int(data["intel"])
+	]
 
 
 func discover_next_with_intel() -> bool:
@@ -272,6 +357,8 @@ func _on_raid_resolved(result: Dictionary) -> void:
 	_add_task_progress("raid_wins", 1)
 	if not is_owned(target_id):
 		owned[target_id] = true
+		pressure[target_id] = 0.0
+		contested[target_id] = false
 		if not is_discovered(target_id):
 			discovered[target_id] = true
 		district_captured.emit(target_id)
@@ -282,25 +369,57 @@ func _on_raid_resolved(result: Dictionary) -> void:
 func _spawn_patrol() -> void:
 	var owned_ids: Array[String] = []
 	for target_id in _ordered_ids():
-		if is_owned(target_id):
+		if is_owned(target_id) and not is_contested(target_id):
 			owned_ids.append(target_id)
 	if owned_ids.is_empty():
 		return
 
-	var target_id := owned_ids[int(Time.get_ticks_msec() / 1000) % owned_ids.size()]
+	var target_id := owned_ids[_encounter_cursor % owned_ids.size()]
+	var types := ["roadblock", "surveillance", "convoy_ambush"]
+	var encounter_type := types[_encounter_cursor % types.size()]
+	_encounter_cursor += 1
+	_create_encounter(target_id, encounter_type, 1.0)
+
+
+func _spawn_contested_event(target_id: String) -> void:
+	_create_encounter(target_id, "turf_push", 1.25)
+
+
+func _create_encounter(target_id: String, encounter_type: String, power_multiplier: float) -> void:
+	if not districts.has(target_id):
+		return
 	var data: Dictionary = districts[target_id]
+	var role := &"Enforcer"
+	match encounter_type:
+		"surveillance":
+			role = &"Spy"
+		"convoy_ambush":
+			role = &"Driver"
+		_:
+			role = &"Enforcer"
+
 	active_patrol = {
 		"district_id": target_id,
 		"district_name": String(data["name"]),
-		"power": int(data["patrol_power"]),
-		"cash_reward": roundi(float(data["cash_per_hour"]) * 0.75),
-		"intel_drop": int(data["level"]) >= 4
+		"faction": get_rival_faction(target_id),
+		"type": encounter_type,
+		"role": role,
+		"power": roundi(float(data["patrol_power"]) * power_multiplier),
+		"cash_reward": roundi(float(data["cash_per_hour"]) * (1.0 if encounter_type == "turf_push" else 0.75))
 	}
 	patrol_spawned.emit(target_id)
 
 
-func _calculate_banked_income(elapsed: float) -> float:
-	return float(get_income_per_hour()) * (elapsed / 3600.0)
+func _get_unit_power(role: StringName) -> float:
+	match role:
+		&"Enforcer":
+			return progression.get_enforcer_power_each() if progression != null else 100.0
+		&"Driver":
+			return 240.0 + float(progression.get_specialist_level(&"Driver") - 1) * 35.0 if progression != null else 240.0
+		&"Spy":
+			return 260.0 + float(progression.get_specialist_level(&"Spy") - 1) * 40.0 if progression != null else 260.0
+		_:
+			return 100.0
 
 
 func _discover(target_id: String) -> void:
@@ -360,15 +479,27 @@ func _add_task_progress(task_id: String, amount: int) -> void:
 		alliance_task_completed.emit(task_id)
 
 
+func _reset_task_cycle() -> void:
+	for task_id in alliance_tasks.keys():
+		alliance_tasks[task_id]["progress"] = 0
+		alliance_tasks[task_id]["completed"] = false
+	task_cycle_remaining = TASK_CYCLE_SECONDS
+	task_cycle_refreshed.emit()
+
+
 func get_save_data() -> Dictionary:
 	return {
 		"discovered": discovered.duplicate(true),
 		"owned": owned.duplicate(true),
+		"pressure": pressure.duplicate(true),
+		"contested": contested.duplicate(true),
 		"production_elapsed": production_elapsed,
 		"production_bank": production_bank,
 		"patrol_elapsed": patrol_elapsed,
 		"command_scan_remaining": command_scan_remaining,
+		"task_cycle_remaining": task_cycle_remaining,
 		"active_patrol": active_patrol.duplicate(true),
+		"encounter_cursor": _encounter_cursor,
 		"alliance_tasks": _get_task_save()
 	}
 
@@ -394,19 +525,30 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	if saved_owned is Dictionary:
 		owned = saved_owned.duplicate(true)
 
+	var saved_pressure = data.get("pressure", {})
+	if saved_pressure is Dictionary:
+		pressure = saved_pressure.duplicate(true)
+	var saved_contested = data.get("contested", {})
+	if saved_contested is Dictionary:
+		contested = saved_contested.duplicate(true)
+
 	production_elapsed = minf(
 		PRODUCTION_CAP_SECONDS,
 		float(data.get("production_elapsed", 0.0)) + maxf(0.0, offline_seconds)
 	)
 	production_bank = maxf(0.0, float(data.get("production_bank", 0.0)))
 	var offline_income := float(get_income_per_hour()) * (minf(PRODUCTION_CAP_SECONDS, maxf(0.0, offline_seconds)) / 3600.0)
-	var cap_amount := float(get_income_per_hour()) * (PRODUCTION_CAP_SECONDS / 3600.0)
+	var cap_amount := float(get_base_income_per_hour()) * (PRODUCTION_CAP_SECONDS / 3600.0)
 	production_bank = minf(cap_amount, production_bank + offline_income)
 	patrol_elapsed = fmod(float(data.get("patrol_elapsed", 0.0)) + maxf(0.0, offline_seconds), PATROL_INTERVAL_SECONDS)
 	command_scan_remaining = maxf(0.0, float(data.get("command_scan_remaining", 0.0)) - maxf(0.0, offline_seconds))
 
-	var saved_patrol = data.get("active_patrol", {})
-	active_patrol = saved_patrol.duplicate(true) if saved_patrol is Dictionary else {}
+	var offline := maxf(0.0, offline_seconds)
+	for target_id in owned.keys():
+		if not bool(owned[target_id]) or bool(contested.get(target_id, false)):
+			continue
+		var offline_pressure := minf(0.99, float(pressure.get(target_id, 0.0)) + minf(offline, 4.0 * 60.0 * 60.0) * PRESSURE_PER_SECOND)
+		pressure[target_id] = offline_pressure
 
 	var saved_tasks = data.get("alliance_tasks", {})
 	if saved_tasks is Dictionary:
@@ -414,6 +556,20 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			if saved_tasks.has(task_id) and saved_tasks[task_id] is Dictionary:
 				alliance_tasks[task_id]["progress"] = int(saved_tasks[task_id].get("progress", alliance_tasks[task_id]["progress"]))
 				alliance_tasks[task_id]["completed"] = bool(saved_tasks[task_id].get("completed", alliance_tasks[task_id]["completed"]))
+
+	task_cycle_remaining = float(data.get("task_cycle_remaining", TASK_CYCLE_SECONDS)) - offline
+	if task_cycle_remaining <= 0.0:
+		_reset_task_cycle()
+
+	var saved_patrol = data.get("active_patrol", {})
+	active_patrol = saved_patrol.duplicate(true) if saved_patrol is Dictionary else {}
+	_encounter_cursor = maxi(0, int(data.get("encounter_cursor", 0)))
+
+	if active_patrol.is_empty():
+		for target_id in _ordered_ids():
+			if is_owned(target_id) and is_contested(target_id):
+				_spawn_contested_event(target_id)
+				break
 
 	_apply_discovery_visibility()
 	changed.emit()

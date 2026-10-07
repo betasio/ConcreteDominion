@@ -111,6 +111,10 @@ func is_building_unlocked(building_name: String) -> bool:
 			return account_level >= 2
 		"Intel Office":
 			return account_level >= 3
+		"Scrapyard":
+			return account_level >= 4
+		"Data Hub":
+			return account_level >= 5
 		_:
 			return true
 
@@ -121,6 +125,10 @@ func get_building_unlock_level(building_name: String) -> int:
 			return 2
 		"Intel Office":
 			return 3
+		"Scrapyard":
+			return 4
+		"Data Hub":
+			return 5
 		_:
 			return 1
 

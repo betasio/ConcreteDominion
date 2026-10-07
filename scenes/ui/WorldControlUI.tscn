@@ -84,6 +84,14 @@ text = "Reveal with Intel"
 layout_mode = 2
 text = "Safehouse Command Scan"
 
+[node name="Resources" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "RESOURCE FACILITIES"
+
+[node name="CollectResources" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Collect Parts / Intel"
+
 [node name="Patrol" type="Label" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
 text = "PATROL"

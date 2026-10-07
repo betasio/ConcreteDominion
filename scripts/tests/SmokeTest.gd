@@ -37,13 +37,14 @@ func _ready() -> void:
 		"StoreManager",
 		"StoreUI",
 		"WorldControlManager",
-		"WorldControlUI"
+		"WorldControlUI",
+		"ResourceProductionManager"
 	]:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 15:
+	if save == null or SaveManager.SAVE_VERSION < 16:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -65,6 +66,16 @@ func _ready() -> void:
 	var world_control := game.get_node_or_null("WorldControlManager") as WorldControlManager
 	if world_control == null or not world_control.is_discovered("downtown_bank"):
 		_fail("World-control discovery defaults are invalid.")
+
+	var resources := game.get_node_or_null("ResourceProductionManager") as ResourceProductionManager
+	if resources == null:
+		_fail("Resource production manager is missing.")
+
+	var city := game.get_node_or_null("CityMap")
+	if city == null or city.get_node_or_null("TurfOverlay") == null:
+		_fail("Turf ownership overlay is missing.")
+	elif city.lot_c == null or city.lot_d == null:
+		_fail("Resource-production build lots are missing.")
 
 	_finish()
 

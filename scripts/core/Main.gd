@@ -22,6 +22,7 @@ extends Node
 @onready var combat_loadout: CombatLoadout = $CombatLoadout
 @onready var raid_battle: RaidBattle = $RaidBattle
 @onready var world_control: WorldControlManager = $WorldControlManager
+@onready var resource_production: ResourceProductionManager = $ResourceProductionManager
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
 @onready var hud = $HUD
@@ -64,6 +65,8 @@ func _ready() -> void:
 		core_building_effects,
 		city_map
 	)
+
+	resource_production.setup(city_map.lot_c, city_map.lot_d, loot_inventory)
 
 	world_control.setup(
 		economy,
@@ -127,6 +130,7 @@ func _ready() -> void:
 		recruitment_queue,
 		raid_battle,
 		world_control,
+		resource_production,
 		city_map
 	)
 	save_manager.load_game()
@@ -151,7 +155,8 @@ func _ready() -> void:
 	event_ui.setup(event_manager)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
 	store_ui.setup(store_manager)
-	world_control_ui.setup(world_control, city_map)
+	world_control_ui.setup(world_control, city_map, resource_production)
+	city_map.turf_overlay.setup(world_control, city_map)
 
 	settings.changed.connect(_apply_runtime_settings)
 	_apply_runtime_settings()

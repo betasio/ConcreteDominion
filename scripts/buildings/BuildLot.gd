@@ -72,6 +72,10 @@ func get_effect_summary() -> String:
 				float(level) * 2.5,
 				level * 5
 			]
+		"Scrapyard":
+			return "Parts production +%d/hr" % (level * 2)
+		"Data Hub":
+			return "Intel production +%d/hr" % level
 		_:
 			return "Facility Lv.%d operational." % level
 
