@@ -2,85 +2,90 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## World raid targets
+## District-map milestone
 
-Raids are now launched from clickable targets placed directly on the isometric city map.
+The city has been expanded into a larger raid district and the raid system is now data-driven.
+
+### Data-driven targets
+
+Raid balance lives in reusable Godot resources under:
+
+`data/raids/`
+
+Each target resource defines:
+- target ID and display name
+- difficulty tier
+- HP
+- Cash reward
+- respawn cooldown
+- visual accent
+- guaranteed loot drops
 
 Current targets:
 
-| Target | Difficulty | HP | Cash reward | Respawn |
-| --- | --- | ---: | ---: | ---: |
-| Downtown Bank | Medium | 9,000 | $7,500 | 30 sec |
-| Harbor Bank | Hard | 11,500 | $10,500 | 45 sec |
-| Northside Turf HQ | Elite | 14,500 | $15,000 | 60 sec |
+| Target | Tier | HP | Cash | Loot | Respawn |
+| --- | --- | ---: | ---: | --- | ---: |
+| Downtown Bank | Medium | 9,000 | $7,500 | Parts x2 | 30s |
+| Harbor Bank | Hard | 11,500 | $10,500 | Parts x3, Intel x1 | 45s |
+| Northside Turf HQ | Elite | 14,500 | $15,000 | Parts x4, Intel x2, Contraband x1 | 60s |
 
-Click a target to open its raid lobby. Each location carries its own HP, difficulty, reward, availability, and cooldown.
+Adding another target now means creating a new `.tres` data resource and assigning it to a `RaidTarget` scene instance rather than rewriting combat logic.
 
-A defeated target enters a visible respawn cooldown. Other targets remain available, so the player can move around the city instead of waiting on one global encounter.
+## Visible raid convoys
 
-## Full prototype loop
+Launching a raid spawns a convoy at the Safehouse and visibly moves it across the isometric district toward the selected Bank or Turf HQ.
 
-1. Upgrade city buildings and construct specialist facilities.
+The convoy travel time matches the raid launch countdown. If the game closes mid-raid, reopening restores the active raid and recreates the convoy for the remaining travel time.
+
+## Persistent loot inventory
+
+Victory rewards now include persistent loot:
+
+- **Parts**
+- **Intel**
+- **Contraband**
+
+The top HUD shows compact loot totals as `P / I / C`.
+
+Cash and loot are both granted by the target's data resource. The raid result screen lists the drops earned.
+
+## Offline behavior
+
+Offline time now applies consistently to:
+- construction
+- recruitment
+- Clinic healing
+- raid travel/countdown
+- target respawn cooldowns
+
+If a raid finishes while the game is closed, any extra offline time after the battle also reduces the defeated target's respawn cooldown.
+
+## Core gameplay loop
+
+1. Develop the Safehouse district.
 2. Recruit Enforcers, Drivers, and Spies.
-3. Pan around the city and click a Bank or Turf HQ.
-4. Inspect its HP, difficulty, reward, and respawn status.
-5. Add Driver and Spy support.
-6. Preview the alliance damage.
+3. Pan across the larger city district.
+4. Click a data-driven Bank or Turf HQ.
+5. Add specialist alliance support.
+6. Preview damage.
 7. Launch the raid.
-8. Resolve victory or defeat after the launch countdown.
-9. Earn Cash on victory.
-10. The defeated target enters cooldown.
-11. Wounded crew move from the active roster into the Underground Clinic.
-12. Heal them over time or spend Gold.
-13. Continue raiding other available targets.
-
-## Alliance synergy
-
-The prototype alliance boss contributes 6,000 frontline power.
-
-- Driver support: +10% each
-- Spy support: +12% each
-- Support bonuses multiply the frontline contribution
-
-This is the core anti-solo-stomp loop: raw power is valuable, but high-power players need specialist support to clear tougher targets.
-
-For example, the Downtown Bank can be cleared with enough support, while Harbor Bank and Northside Turf HQ require progressively stronger alliance coordination.
-
-## Persistence
-
-The local save now tracks:
-
-- Cash and Gold
-- troop roster
-- building levels
-- constructed lots
-- construction queue
-- recruitment queue
-- Clinic queue
-- active raid
-- last raid result
-- per-target respawn cooldowns
-
-Offline time advances construction, recruitment, healing, raid countdowns, and target respawn cooldowns.
-
-## Suggested test
-
-1. Pull the latest `main`.
-2. Run the project.
-3. Pan around the city until you see the labeled raid targets.
-4. Click **Downtown Bank**.
-5. Preview damage without support.
-6. Add Drivers and Spies until the preview exceeds 9,000.
-7. Launch and win the raid.
-8. Close the raid panel and see the Bank display its respawn countdown on the map.
-9. Click **Harbor Bank** or **Northside Turf HQ** while Downtown Bank is unavailable.
-10. Close/reopen the game and confirm target cooldowns persist.
+8. Watch the convoy travel from the Safehouse.
+9. Resolve victory/defeat.
+10. Collect Cash and loot.
+11. Send wounded crew through the Clinic recovery loop.
+12. Move to another target while the defeated location respawns.
 
 ## Architecture
 
 ```text
+data/raids/
+├── downtown_bank.tres
+├── harbor_bank.tres
+└── northside_hq.tres
+
 Main
 ├── PlayerEconomy
+├── LootInventory
 ├── TroopRoster
 ├── HospitalQueue
 ├── ConstructionQueue
@@ -88,28 +93,28 @@ Main
 ├── SynergyRaid
 ├── RaidBattle
 ├── SaveManager
-├── CityMap
-│   ├── Buildings
-│   └── RaidTargets
-│       ├── DowntownBank
-│       ├── HarborBank
-│       └── NorthsideHQ
-└── HUD
+└── CityMap
+    ├── Buildings
+    ├── RaidTargets
+    ├── Convoys
+    └── StrategyCamera
 ```
 
-`RaidTarget.gd` owns target-specific map state and cooldowns. `SynergyRaid.gd` owns alliance contribution math. `RaidBattle.gd` owns encounter launch and resolution.
+`RaidTargetData.gd` defines balance/configuration.  
+`RaidTarget.gd` owns map availability and cooldown state.  
+`RaidBattle.gd` resolves the selected target.  
+`ConvoyVisual.gd` handles the current prototype travel visualization.
 
 ## Production note
 
-This is still a local prototype. Before live multiplayer or monetization, raid availability, timers, participants, battle results, rewards, currency, and troop state must become server-authoritative.
+The current prototype remains client-authoritative for development speed. Before live multiplayer or monetization, currencies, loot, timers, raid participants, target state, battle resolution, and rewards should move to server authority.
 
-## Next milestone
+## Next strong milestone
 
-Good next steps are:
-
-- a dedicated world-map mode with a larger district;
-- target tiers generated from data instead of scene constants;
-- alliance member slots instead of simulated support IDs;
-- visible convoy/unit movement toward raid targets;
-- reward crates and target drop tables;
-- polished raid result presentation and combat VFX.
+The next step should focus on presentation and real alliance structure:
+- alliance member roster and raid slots;
+- simulated online/offline members for prototype testing;
+- player contribution scores and reward sharing;
+- convoy paths instead of straight-line travel;
+- combat impact/VFX and a polished result overlay;
+- separate city/base view and larger world-map view.

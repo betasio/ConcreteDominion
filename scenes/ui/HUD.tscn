@@ -47,6 +47,10 @@ text = "Cash: $25,000"
 layout_mode = 2
 text = "Gold: 250"
 
+[node name="Loot" type="Label" parent="Root/TopBar/Panel/HBox"]
+layout_mode = 2
+text = "Loot P:0 I:0 C:0"
+
 [node name="HospitalShortcut" type="Button" parent="Root"]
 layout_mode = 1
 anchors_preset = 1

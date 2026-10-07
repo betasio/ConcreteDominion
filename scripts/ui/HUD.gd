@@ -3,6 +3,7 @@ extends CanvasLayer
 signal focus_building_requested(building_type: StringName)
 
 var economy: PlayerEconomy
+var loot_inventory: LootInventory
 var troop_roster: TroopRoster
 var hospital_queue: HospitalQueue
 var construction_queue: ConstructionQueue
@@ -18,6 +19,7 @@ var raid_spies := 0
 
 @onready var cash_label: Label = $Root/TopBar/Panel/HBox/Cash
 @onready var gold_label: Label = $Root/TopBar/Panel/HBox/Gold
+@onready var loot_label: Label = $Root/TopBar/Panel/HBox/Loot
 @onready var selection_panel: PanelContainer = $Root/SelectionPanel
 @onready var selection_title: Label = $Root/SelectionPanel/Margin/VBox/Title
 @onready var selection_description: Label = $Root/SelectionPanel/Margin/VBox/Description
@@ -57,6 +59,7 @@ var raid_spies := 0
 
 func setup(
 	player_economy: PlayerEconomy,
+	loot: LootInventory,
 	roster: TroopRoster,
 	clinic: HospitalQueue,
 	construction: ConstructionQueue,
@@ -65,6 +68,7 @@ func setup(
 	battle: RaidBattle
 ) -> void:
 	economy = player_economy
+	loot_inventory = loot
 	troop_roster = roster
 	hospital_queue = clinic
 	construction_queue = construction
@@ -73,6 +77,7 @@ func setup(
 	raid_battle = battle
 
 	economy.changed.connect(_refresh_all)
+	loot_inventory.changed.connect(_refresh_all)
 	troop_roster.changed.connect(_refresh_all)
 	hospital_queue.queue_changed.connect(_refresh_hospital)
 	construction_queue.queue_changed.connect(_refresh_construction)
@@ -154,6 +159,11 @@ func _refresh_all() -> void:
 		return
 	cash_label.text = "Cash: $%s" % _format_number(economy.cash)
 	gold_label.text = "Gold: %d" % economy.gold
+	loot_label.text = "Loot P:%d I:%d C:%d" % [
+		loot_inventory.get_count("Parts"),
+		loot_inventory.get_count("Intel"),
+		loot_inventory.get_count("Contraband")
+	]
 	_refresh_hospital()
 	_refresh_construction()
 	_refresh_recruitment()
@@ -431,11 +441,13 @@ func _refresh_raid() -> void:
 		$Root/RaidPanel/Margin/VBox/Reset.disabled = true
 		return
 
-	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s" % [
-		selected_raid_target.display_name,
-		_format_number(roundi(selected_raid_target.max_hp)),
-		selected_raid_target.difficulty,
-		_format_number(selected_raid_target.reward_cash)
+	var loot_preview := _format_loot(selected_raid_target.get_loot_preview())
+	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s + %s" % [
+		selected_raid_target.get_display_name(),
+		_format_number(roundi(selected_raid_target.get_max_hp())),
+		selected_raid_target.get_difficulty(),
+		_format_number(selected_raid_target.get_reward_cash()),
+		loot_preview
 	]
 
 	raid_roster_label.text = "Frontline: AllianceBoss (6,000 power)\nYour support: %d Driver(s), %d Spy(s)\nAvailable: %d Drivers, %d Spies" % [
@@ -497,12 +509,14 @@ func _on_raid_resolved(result: Dictionary) -> void:
 func _show_raid_result(result: Dictionary) -> void:
 	var victory := bool(result.get("victory", false))
 	var outcome := "VICTORY" if victory else "DEFEAT"
-	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nCash reward: $%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)\nWounded crew were sent to the Clinic." % [
+	var loot_text := _format_loot(result.get("loot", {}))
+	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nCash reward: $%s   Loot: %s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)\nWounded crew were sent to the Clinic." % [
 		outcome,
 		String(result.get("target_name", "Target")),
 		_format_number(roundi(float(result.get("damage", 0.0)))),
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),
 		_format_number(int(result.get("reward_cash", 0))),
+		loot_text,
 		int(result.get("wounded_enforcers", 0)),
 		int(result.get("wounded_drivers", 0)),
 		int(result.get("wounded_spies", 0))
@@ -525,3 +539,13 @@ func _format_number(value: int) -> String:
 		output = "," + text.right(3) + output
 		text = text.left(text.length() - 3)
 	return text + output
+
+
+func _format_loot(loot: Dictionary) -> String:
+	if loot.is_empty():
+		return "No loot"
+
+	var parts: PackedStringArray = []
+	for item_name in loot.keys():
+		parts.append("%s x%d" % [String(item_name), int(loot[item_name])])
+	return ", ".join(parts)

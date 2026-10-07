@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RaidTargetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RaidTargetData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_id = "downtown_bank"
+display_name = "Downtown Bank"
+difficulty = "Medium"
+max_hp = 9000.0
+reward_cash = 7500
+cooldown_seconds = 30.0
+accent_color = Color(0.72, 0.52, 0.18, 1)
+guaranteed_loot = {"Parts": 2}

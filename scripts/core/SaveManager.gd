@@ -5,9 +5,10 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 
 var economy: PlayerEconomy
+var loot_inventory: LootInventory
 var roster: TroopRoster
 var hospital: HospitalQueue
 var construction: ConstructionQueue
@@ -24,6 +25,7 @@ var _is_loading := false
 
 func setup(
 	player_economy: PlayerEconomy,
+	loot: LootInventory,
 	troop_roster: TroopRoster,
 	hospital_queue: HospitalQueue,
 	construction_queue: ConstructionQueue,
@@ -32,6 +34,7 @@ func setup(
 	world: Node
 ) -> void:
 	economy = player_economy
+	loot_inventory = loot
 	roster = troop_roster
 	hospital = hospital_queue
 	construction = construction_queue
@@ -40,6 +43,7 @@ func setup(
 	city_map = world
 
 	economy.changed.connect(mark_dirty)
+	loot_inventory.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
 	hospital.queue_changed.connect(mark_dirty)
 	construction.queue_changed.connect(mark_dirty)
@@ -77,6 +81,7 @@ func save_game() -> bool:
 		"version": SAVE_VERSION,
 		"saved_at_unix": Time.get_unix_time_from_system(),
 		"economy": economy.get_save_data(),
+		"loot": loot_inventory.get_save_data(),
 		"roster": roster.get_save_data(),
 		"hospital": hospital.get_save_data(),
 		"construction": construction.get_save_data(),
@@ -125,6 +130,7 @@ func load_game() -> bool:
 	_is_loading = true
 
 	economy.load_save_data(data.get("economy", {}))
+	loot_inventory.load_save_data(data.get("loot", {}))
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	hospital.load_save_data(data.get("hospital", {}), elapsed)

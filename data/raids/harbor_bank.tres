@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RaidTargetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RaidTargetData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_id = "harbor_bank"
+display_name = "Harbor Bank"
+difficulty = "Hard"
+max_hp = 11500.0
+reward_cash = 10500
+cooldown_seconds = 45.0
+accent_color = Color(0.35, 0.62, 0.78, 1)
+guaranteed_loot = {"Parts": 3, "Intel": 1}

@@ -4,8 +4,10 @@ signal building_selected(building: Building)
 signal lot_selected(lot: BuildLot)
 signal raid_target_selected(target: RaidTarget)
 
-@export var grid_width: int = 18
-@export var grid_height: int = 18
+const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
+
+@export var grid_width: int = 24
+@export var grid_height: int = 20
 @export var tile_width: float = 128.0
 @export var tile_height: float = 64.0
 
@@ -18,8 +20,11 @@ signal raid_target_selected(target: RaidTarget)
 @onready var downtown_bank: RaidTarget = $RaidTargets/DowntownBank
 @onready var harbor_bank: RaidTarget = $RaidTargets/HarborBank
 @onready var northside_hq: RaidTarget = $RaidTargets/NorthsideHQ
+@onready var convoy_layer: Node2D = $Convoys
 
 var selected_target: Node
+var active_convoy: ConvoyVisual
+
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
 var _lot_color_b := Color(0.25, 0.28, 0.26)
@@ -27,15 +32,15 @@ var _line_color := Color(0.38, 0.42, 0.39, 0.55)
 
 
 func _ready() -> void:
-	safehouse.position = iso_to_screen(Vector2i(8, 8))
-	hospital.position = iso_to_screen(Vector2i(11, 8))
-	barracks.position = iso_to_screen(Vector2i(8, 5))
-	lot_a.position = iso_to_screen(Vector2i(8, 11))
-	lot_b.position = iso_to_screen(Vector2i(11, 11))
+	safehouse.position = iso_to_screen(Vector2i(10, 10))
+	hospital.position = iso_to_screen(Vector2i(13, 10))
+	barracks.position = iso_to_screen(Vector2i(10, 7))
+	lot_a.position = iso_to_screen(Vector2i(10, 13))
+	lot_b.position = iso_to_screen(Vector2i(13, 13))
 
-	downtown_bank.position = iso_to_screen(Vector2i(3, 5))
-	harbor_bank.position = iso_to_screen(Vector2i(14, 5))
-	northside_hq.position = iso_to_screen(Vector2i(14, 12))
+	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
+	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
+	northside_hq.position = iso_to_screen(Vector2i(19, 15))
 
 	safehouse.selected.connect(_select_building)
 	hospital.selected.connect(_select_building)
@@ -59,9 +64,32 @@ func get_raid_targets() -> Array:
 
 func get_raid_target_by_id(target_id: String) -> RaidTarget:
 	for target in get_raid_targets():
-		if target.target_id == target_id:
+		if target.get_target_id() == target_id:
 			return target
 	return null
+
+
+func launch_convoy_to(target_id: String, travel_time: float) -> void:
+	var target := get_raid_target_by_id(target_id)
+	if target == null:
+		return
+
+	if active_convoy != null and is_instance_valid(active_convoy):
+		active_convoy.queue_free()
+
+	active_convoy = CONVOY_SCENE.instantiate()
+	convoy_layer.add_child(active_convoy)
+	active_convoy.setup(
+		safehouse.position + Vector2(0, -35),
+		target.position + Vector2(0, -35),
+		travel_time
+	)
+
+
+func restore_active_convoy(target_id: String, remaining_time: float) -> void:
+	if remaining_time <= 0.0:
+		return
+	launch_convoy_to(target_id, remaining_time)
 
 
 func get_persistent_target(target_id: String) -> Node:
@@ -97,7 +125,7 @@ func get_target_id(target: Node) -> String:
 func get_save_data() -> Dictionary:
 	var raid_target_data := {}
 	for target in get_raid_targets():
-		raid_target_data[target.target_id] = target.get_save_data()
+		raid_target_data[target.get_target_id()] = target.get_save_data()
 
 	return {
 		"safehouse_level": safehouse.level,
@@ -119,7 +147,10 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	var raid_target_data = data.get("raid_targets", {})
 	if raid_target_data is Dictionary:
 		for target in get_raid_targets():
-			target.load_save_data(raid_target_data.get(target.target_id, {}), offline_seconds)
+			target.load_save_data(
+				raid_target_data.get(target.get_target_id(), {}),
+				offline_seconds
+			)
 
 
 func _draw() -> void:
@@ -133,7 +164,10 @@ func _draw() -> void:
 
 func iso_to_screen(cell: Vector2i) -> Vector2:
 	var origin := Vector2(0.0, -grid_height * tile_height * 0.25)
-	return origin + Vector2((cell.x - cell.y) * tile_width * 0.5, (cell.x + cell.y) * tile_height * 0.5)
+	return origin + Vector2(
+		(cell.x - cell.y) * tile_width * 0.5,
+		(cell.x + cell.y) * tile_height * 0.5
+	)
 
 
 func focus_building(building_type: StringName) -> void:
@@ -192,4 +226,8 @@ func _draw_diamond(center: Vector2, fill: Color) -> void:
 		center + Vector2(-half_w, 0)
 	])
 	draw_colored_polygon(points, fill)
-	draw_polyline(PackedVector2Array([points[0], points[1], points[2], points[3], points[0]]), _line_color, 1.5)
+	draw_polyline(
+		PackedVector2Array([points[0], points[1], points[2], points[3], points[0]]),
+		_line_color,
+		1.5
+	)

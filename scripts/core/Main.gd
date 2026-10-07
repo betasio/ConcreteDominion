@@ -1,6 +1,7 @@
 extends Node
 
 @onready var economy: PlayerEconomy = $PlayerEconomy
+@onready var loot_inventory: LootInventory = $LootInventory
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
@@ -16,10 +17,20 @@ func _ready() -> void:
 	hospital_queue.setup(economy, troop_roster)
 	construction_queue.setup(economy)
 	recruitment_queue.setup(economy, troop_roster)
-	raid_battle.setup(economy, troop_roster, hospital_queue, synergy_raid, city_map)
+	raid_battle.setup(
+		economy,
+		troop_roster,
+		hospital_queue,
+		synergy_raid,
+		loot_inventory,
+		city_map
+	)
+
+	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 
 	save_manager.setup(
 		economy,
+		loot_inventory,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
@@ -29,8 +40,15 @@ func _ready() -> void:
 	)
 	save_manager.load_game()
 
+	if raid_battle.is_active():
+		city_map.restore_active_convoy(
+			String(raid_battle.active_battle.get("target_id", "")),
+			float(raid_battle.active_battle.get("seconds_remaining", 0.0))
+		)
+
 	hud.setup(
 		economy,
+		loot_inventory,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
