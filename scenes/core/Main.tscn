@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://scripts/combat/HospitalQueue.gd" id="4_hospital"]
 [ext_resource type="Script" path="res://scripts/core/PlayerEconomy.gd" id="5_economy"]
 [ext_resource type="Script" path="res://scripts/buildings/ConstructionQueue.gd" id="6_construction"]
+[ext_resource type="Script" path="res://scripts/units/TroopRoster.gd" id="7_roster"]
+[ext_resource type="Script" path="res://scripts/units/RecruitmentQueue.gd" id="8_recruit"]
+[ext_resource type="Script" path="res://scripts/combat/SynergyRaid.gd" id="9_raid"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -13,11 +16,20 @@ script = ExtResource("1_main")
 [node name="PlayerEconomy" type="Node" parent="."]
 script = ExtResource("5_economy")
 
+[node name="TroopRoster" type="Node" parent="."]
+script = ExtResource("7_roster")
+
 [node name="HospitalQueue" type="Node" parent="."]
 script = ExtResource("4_hospital")
 
 [node name="ConstructionQueue" type="Node" parent="."]
 script = ExtResource("6_construction")
+
+[node name="RecruitmentQueue" type="Node" parent="."]
+script = ExtResource("8_recruit")
+
+[node name="SynergyRaid" type="Node" parent="."]
+script = ExtResource("9_raid")
 
 [node name="CityMap" parent="." instance=ExtResource("2_city")]
 
