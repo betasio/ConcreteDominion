@@ -683,8 +683,8 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 
 	var saved_rivalry = data.get("faction_rivalry", {})
 	if saved_rivalry is Dictionary:
-		for faction_id in faction_rivalry.keys():
-			faction_rivalry[family_id] = clampi(int(saved_rivalry.get(faction_id, faction_rivalry[family_id])), 0, 10)
+		for family_id in faction_rivalry.keys():
+			faction_rivalry[family_id] = clampi(int(saved_rivalry.get(family_id, faction_rivalry[family_id])), 0, 10)
 
 	var saved_tasks = data.get("alliance_tasks", {})
 	if saved_tasks is Dictionary:
