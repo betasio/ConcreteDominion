@@ -5,28 +5,28 @@ var faction: FactionManager
 var economy: PlayerEconomy
 
 @onready var panel: PanelContainer = $Root/Panel
-@onready var summary_label: Label = $Root/Panel/Margin/VBox/Summary
-@onready var name_edit: LineEdit = $Root/Panel/Margin/VBox/CreateBox/Name
-@onready var tag_edit: LineEdit = $Root/Panel/Margin/VBox/CreateBox/Tag
-@onready var create_button: Button = $Root/Panel/Margin/VBox/CreateBox/Create
-@onready var join_button: Button = $Root/Panel/Margin/VBox/JoinPrototype
-@onready var permissions_label: Label = $Root/Panel/Margin/VBox/Permissions
-@onready var daily_label: Label = $Root/Panel/Margin/VBox/Daily
-@onready var claim_daily_button: Button = $Root/Panel/Margin/VBox/DailyButtons/ClaimDaily
-@onready var claim_mastery_button: Button = $Root/Panel/Margin/VBox/DailyButtons/ClaimMastery
-@onready var members_label: Label = $Root/Panel/Margin/VBox/Members
-@onready var research_label: Label = $Root/Panel/Margin/VBox/Research
-@onready var donate_button: Button = $Root/Panel/Margin/VBox/Donate
-@onready var research_button: Button = $Root/Panel/Margin/VBox/UpgradeResearch
-@onready var gift_button: Button = $Root/Panel/Margin/VBox/Gift
-@onready var rally_label: Label = $Root/Panel/Margin/VBox/Rally
-@onready var start_rally_button: Button = $Root/Panel/Margin/VBox/RallyButtons/StartRally
-@onready var clear_rally_button: Button = $Root/Panel/Margin/VBox/RallyButtons/ClearRally
-@onready var war_label: Label = $Root/Panel/Margin/VBox/War
-@onready var war_rules_label: Label = $Root/Panel/Margin/VBox/WarRules
-@onready var start_war_button: Button = $Root/Panel/Margin/VBox/WarButtons/StartWar
-@onready var war_attack_button: Button = $Root/Panel/Margin/VBox/WarButtons/WarAttack
-@onready var leave_button: Button = $Root/Panel/Margin/VBox/Leave
+@onready var summary_label: Label = $Root/Panel/Margin/Scroll/VBox/Summary
+@onready var name_edit: LineEdit = $Root/Panel/Margin/Scroll/VBox/CreateBox/Name
+@onready var tag_edit: LineEdit = $Root/Panel/Margin/Scroll/VBox/CreateBox/Tag
+@onready var create_button: Button = $Root/Panel/Margin/Scroll/VBox/CreateBox/Create
+@onready var join_button: Button = $Root/Panel/Margin/Scroll/VBox/JoinPrototype
+@onready var permissions_label: Label = $Root/Panel/Margin/Scroll/VBox/Permissions
+@onready var daily_label: Label = $Root/Panel/Margin/Scroll/VBox/Daily
+@onready var claim_daily_button: Button = $Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily
+@onready var claim_mastery_button: Button = $Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimMastery
+@onready var members_label: Label = $Root/Panel/Margin/Scroll/VBox/Members
+@onready var research_label: Label = $Root/Panel/Margin/Scroll/VBox/Research
+@onready var donate_button: Button = $Root/Panel/Margin/Scroll/VBox/Donate
+@onready var research_button: Button = $Root/Panel/Margin/Scroll/VBox/UpgradeResearch
+@onready var gift_button: Button = $Root/Panel/Margin/Scroll/VBox/Gift
+@onready var rally_label: Label = $Root/Panel/Margin/Scroll/VBox/Rally
+@onready var start_rally_button: Button = $Root/Panel/Margin/Scroll/VBox/RallyButtons/StartRally
+@onready var clear_rally_button: Button = $Root/Panel/Margin/Scroll/VBox/RallyButtons/ClearRally
+@onready var war_label: Label = $Root/Panel/Margin/Scroll/VBox/War
+@onready var war_rules_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRules
+@onready var start_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar
+@onready var war_attack_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/WarAttack
+@onready var leave_button: Button = $Root/Panel/Margin/Scroll/VBox/Leave
 
 
 func setup(faction_manager: FactionManager, player_economy: PlayerEconomy) -> void:
@@ -36,7 +36,7 @@ func setup(faction_manager: FactionManager, player_economy: PlayerEconomy) -> vo
 	faction.changed.connect(_refresh)
 	economy.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
-	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle)
+	$Root/Panel/Margin/Scroll/VBox/Close.pressed.connect(_toggle)
 	create_button.pressed.connect(_create)
 	join_button.pressed.connect(_join)
 	donate_button.pressed.connect(_donate)
@@ -133,21 +133,21 @@ func _refresh() -> void:
 	summary_label.text = faction.get_summary()
 
 	var has := faction.has_faction()
-	$Root/Panel/Margin/VBox/CreateBox.visible = not has
+	$Root/Panel/Margin/Scroll/VBox/CreateBox.visible = not has
 	join_button.visible = not has
 	permissions_label.visible = has
 	daily_label.visible = has
-	$Root/Panel/Margin/VBox/DailyButtons.visible = has
+	$Root/Panel/Margin/Scroll/VBox/DailyButtons.visible = has
 	members_label.visible = has
 	research_label.visible = has
 	donate_button.visible = has
 	research_button.visible = has
 	gift_button.visible = has
 	rally_label.visible = has
-	$Root/Panel/Margin/VBox/RallyButtons.visible = has
+	$Root/Panel/Margin/Scroll/VBox/RallyButtons.visible = has
 	war_label.visible = has
 	war_rules_label.visible = has
-	$Root/Panel/Margin/VBox/WarButtons.visible = has
+	$Root/Panel/Margin/Scroll/VBox/WarButtons.visible = has
 	leave_button.visible = has
 
 	if not has:
