@@ -46,6 +46,7 @@ extends Node
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var ui_focus_manager: UIFocusManager = $UIFocusManager
+@onready var ui_art_styler: UIArtStyler = $UIArtStyler
 
 
 func _ready() -> void:
@@ -216,6 +217,8 @@ func _ready() -> void:
 		raid_battle,
 		settings
 	)
+
+	ui_art_styler.setup(self, presentation_catalog)
 
 	city_map.building_selected.connect(_on_building_selected)
 	city_map.lot_selected.connect(_on_lot_selected)

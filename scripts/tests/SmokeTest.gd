@@ -43,6 +43,7 @@ func _ready() -> void:
 		"ResourceProductionManager",
 		"LocalizedText",
 		"PresentationCatalog",
+		"UIArtStyler",
 		"FactionRules",
 		"AchievementManager",
 		"TutorialManager",
@@ -113,6 +114,16 @@ func _ready() -> void:
 		for art_key in ["safehouse", "hospital", "barracks", "Garage", "Intel Office", "Scrapyard", "Data Hub", "raid_target"]:
 			if presentation.get_texture(art_key) == null:
 				_fail("Missing approved art slice: %s" % art_key)
+
+	if presentation != null:
+		if not presentation.is_decor_atlas_ready():
+			_fail("Approved UI/street presentation atlas failed to load.")
+		elif presentation.get_decor_atlas_size() != Vector2i(256, 160):
+			_fail("Approved UI/street presentation atlas has an unexpected size.")
+		else:
+			for decor_key in ["ui_panel", "ui_bar", "ui_button_dark", "ui_button_gold", "road_intersection", "road_straight"]:
+				if presentation.get_decor_texture(decor_key) == null:
+					_fail("Missing approved presentation slice: %s" % decor_key)
 
 	var city := game.get_node_or_null("CityMap")
 	if city == null or city.get_node_or_null("TurfOverlay") == null:

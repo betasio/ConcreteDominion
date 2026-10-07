@@ -32,6 +32,17 @@ const TEXTURE_OVERRIDE_PATHS := {
 	"raid_target": "res://assets/art/world/raid_target.png"
 }
 
+const DECOR_ATLAS_PATH := "res://assets/generated/presentation/presentation_atlas.webp"
+const DECOR_ATLAS_SIZE := Vector2i(256, 160)
+const DECOR_REGIONS := {
+	"ui_panel": Rect2(0, 0, 128, 85),
+	"road_intersection": Rect2(145, 0, 100, 66),
+	"road_straight": Rect2(145, 68, 100, 61),
+	"ui_bar": Rect2(0, 90, 140, 32),
+	"ui_button_dark": Rect2(0, 126, 48, 20),
+	"ui_button_gold": Rect2(52, 126, 50, 20)
+}
+
 const AUDIO_PATHS := {
 	"ui_click": "res://assets/audio/ui/click.ogg",
 	"reward": "res://assets/audio/ui/reward.ogg",
@@ -40,6 +51,7 @@ const AUDIO_PATHS := {
 }
 
 var _city_atlas: ImageTexture
+var _decor_atlas: Texture2D
 var _atlas_load_attempted := false
 var _atlas_error := ""
 
@@ -53,6 +65,10 @@ func apply_to_city(city_map: Node) -> void:
 		return
 
 	_ensure_city_atlas()
+	_ensure_decor_atlas()
+
+	if city_map.has_method("setup_presentation"):
+		city_map.setup_presentation(self)
 
 	for building in [city_map.safehouse, city_map.hospital, city_map.barracks]:
 		if building != null:
@@ -87,6 +103,30 @@ func get_texture(key: String) -> Texture2D:
 	return region
 
 
+func get_decor_texture(key: String) -> Texture2D:
+	_ensure_decor_atlas()
+	if _decor_atlas == null or not DECOR_REGIONS.has(key):
+		return null
+
+	var region := AtlasTexture.new()
+	region.atlas = _decor_atlas
+	region.region = DECOR_REGIONS[key]
+	region.filter_clip = true
+	return region
+
+
+func is_decor_atlas_ready() -> bool:
+	_ensure_decor_atlas()
+	return _decor_atlas != null
+
+
+func get_decor_atlas_size() -> Vector2i:
+	_ensure_decor_atlas()
+	if _decor_atlas == null:
+		return Vector2i.ZERO
+	return Vector2i(_decor_atlas.get_width(), _decor_atlas.get_height())
+
+
 func get_audio(key: String) -> AudioStream:
 	var path := String(AUDIO_PATHS.get(key, ""))
 	if path == "" or not ResourceLoader.exists(path):
@@ -115,6 +155,8 @@ func get_missing_asset_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
 	if not is_city_atlas_ready():
 		lines.append("City art atlas -> %s" % _atlas_error)
+	if not is_decor_atlas_ready():
+		lines.append("Presentation atlas -> %s" % DECOR_ATLAS_PATH)
 
 	for key in AUDIO_PATHS.keys():
 		var path := String(AUDIO_PATHS[key])
@@ -161,3 +203,12 @@ func _ensure_city_atlas() -> void:
 		return
 
 	_atlas_error = ""
+
+
+
+func _ensure_decor_atlas() -> void:
+	if _decor_atlas != null:
+		return
+	if not ResourceLoader.exists(DECOR_ATLAS_PATH):
+		return
+	_decor_atlas = load(DECOR_ATLAS_PATH) as Texture2D

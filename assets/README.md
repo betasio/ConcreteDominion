@@ -53,3 +53,25 @@ Current atlas layout:
 Loose PNG paths documented above remain supported as **per-asset overrides**. If an art director later replaces only one building, the loose PNG automatically wins over the embedded atlas slice.
 
 Procedural drawing remains the final fallback if neither the atlas nor an override is available.
+
+
+## Approved UI + street presentation atlas
+
+The approved dark-gold UI and urban street artwork is packed into:
+
+- `assets/generated/presentation/presentation_atlas.webp`
+
+Runtime slices include:
+
+- modal/panel frame;
+- compact top/status bar;
+- dark button;
+- gold highlighted button;
+- street intersection;
+- straight street detail.
+
+`UIArtStyler` applies the panel/button slices as nine-patch `StyleBoxTexture` overrides across the existing responsive Control hierarchy. This preserves anchors/containers while upgrading the visual language.
+
+`CityMap` overlays the approved road art on the existing procedural isometric road network. The procedural diamonds remain underneath as a navigation-safe fallback.
+
+The atlas is intentionally compact so mobile memory/package cost stays low.

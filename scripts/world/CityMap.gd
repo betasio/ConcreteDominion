@@ -38,6 +38,7 @@ var selected_target: Node
 var active_convoy: ConvoyVisual
 var view_mode: StringName = &"base"
 var progression: PlayerProgression
+var presentation: PresentationCatalog
 
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
@@ -49,6 +50,11 @@ func setup_progression(player_progression: PlayerProgression) -> void:
 	progression = player_progression
 	for target in get_raid_targets():
 		target.setup_progression(progression)
+
+
+func setup_presentation(catalog: PresentationCatalog) -> void:
+	presentation = catalog
+	queue_redraw()
 
 
 func _ready() -> void:
@@ -289,6 +295,53 @@ func _draw() -> void:
 			var is_road := x % 5 == 2 or y % 5 == 2
 			var color := _road_color if is_road else (_lot_color_a if (x + y) % 2 == 0 else _lot_color_b)
 			_draw_diamond(center, color)
+
+	_draw_street_art()
+
+
+func _draw_street_art() -> void:
+	if presentation == null:
+		return
+
+	var intersection := presentation.get_decor_texture("road_intersection")
+	var straight := presentation.get_decor_texture("road_straight")
+	if intersection == null:
+		return
+
+	# Decorative overlays sit on top of the procedural road diamonds. This keeps
+	# navigation readable while adding the approved asphalt/crosswalk language.
+	for y in range(2, grid_height, 5):
+		for x in range(2, grid_width, 5):
+			var center := iso_to_screen(Vector2i(x, y))
+			draw_texture_rect(
+				intersection,
+				Rect2(center - Vector2(60, 40), Vector2(120, 80)),
+				false,
+				Color(1, 1, 1, 0.92)
+			)
+
+	if straight == null:
+		return
+
+	for x in range(7, grid_width, 10):
+		var center := iso_to_screen(Vector2i(x, 2))
+		draw_texture_rect(
+			straight,
+			Rect2(center - Vector2(54, 33), Vector2(108, 66)),
+			false,
+			Color(1, 1, 1, 0.72)
+		)
+
+	for y in range(7, grid_height, 10):
+		var center := iso_to_screen(Vector2i(2, y))
+		draw_set_transform(center, PI * 0.5, Vector2.ONE)
+		draw_texture_rect(
+			straight,
+			Rect2(Vector2(-54, -33), Vector2(108, 66)),
+			false,
+			Color(1, 1, 1, 0.72)
+		)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func iso_to_screen(cell: Vector2i) -> Vector2:

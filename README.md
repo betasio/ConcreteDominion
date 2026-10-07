@@ -524,3 +524,47 @@ CI now verifies:
 - all eight named art slices resolve to valid textures.
 
 Individual loose PNGs can override atlas entries later without changing gameplay code.
+
+
+## Approved visual-art integration
+
+The approved Concrete Dominion art direction is now used at runtime rather than existing only as concept art.
+
+### City structures
+
+The generated isometric city atlas provides:
+
+- Safehouse
+- Underground Clinic
+- Crew Barracks
+- Garage
+- Intel Office
+- Scrapyard
+- Data Hub
+- raid target / fortified objective
+
+These replace the procedural building silhouettes when the atlas loads successfully, while procedural drawing remains the final fallback.
+
+### Streets
+
+The approved urban street artwork now overlays the logical isometric road grid at intersections and selected straight segments.
+
+Road gameplay and convoy routing remain driven by the existing grid coordinates, so presentation art cannot break navigation/path logic.
+
+### UI
+
+The approved dark-charcoal / warm-gold UI language is applied programmatically through `UIArtStyler`.
+
+It uses texture-based nine-patch styling for:
+
+- modal panels
+- status/top bars
+- normal buttons
+- highlighted/hovered buttons
+- focus/disabled states
+
+The existing Control/Container/Anchor hierarchy is unchanged, preserving mobile responsiveness and richer PC layouts.
+
+### Mobile package discipline
+
+The street/UI runtime atlas is only about 10 KB in WebP form and the city-building atlas is also compressed. The game therefore gains a substantially richer presentation without introducing a large texture-memory/package penalty at this stage.

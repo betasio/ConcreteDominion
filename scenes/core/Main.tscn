@@ -1,4 +1,4 @@
-[gd_scene load_steps=49 format=3]
+[gd_scene load_steps=50 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -47,6 +47,7 @@
 [ext_resource type="Script" path="res://scripts/content/PresentationCatalog.gd" id="45_presentation"]
 [ext_resource type="Script" path="res://scripts/tutorial/TutorialManager.gd" id="46_tutorial"]
 [ext_resource type="PackedScene" path="res://scenes/ui/TutorialUI.tscn" id="47_tutorial_ui"]
+[ext_resource type="Script" path="res://scripts/ui/UIArtStyler.gd" id="48_ui_art"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -149,6 +150,9 @@ script = ExtResource("32_audio")
 
 [node name="UIFocusManager" type="Node" parent="."]
 script = ExtResource("33_focus")
+
+[node name="UIArtStyler" type="Node" parent="."]
+script = ExtResource("48_ui_art")
 
 [node name="CityMap" parent="." instance=ExtResource("2_city")]
 

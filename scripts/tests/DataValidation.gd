@@ -127,6 +127,7 @@ func _validate_required_resources() -> void:
 		"res://scripts/world/FactionRules.gd",
 		"res://scripts/content/LocalizedText.gd",
 		"res://scripts/content/PresentationCatalog.gd",
+		"res://scripts/ui/UIArtStyler.gd",
 		"res://scripts/tutorial/TutorialManager.gd",
 		"res://scenes/ui/TutorialUI.tscn"
 	]:
@@ -143,7 +144,8 @@ func _validate_required_resources() -> void:
 		"res://assets/generated/city_atlas/base64/part_00.txt",
 		"res://assets/generated/city_atlas/base64/part_01.txt",
 		"res://assets/generated/city_atlas/base64/part_02.txt",
-		"res://assets/generated/city_atlas/README.md"
+		"res://assets/generated/city_atlas/README.md",
+		"res://assets/generated/presentation/presentation_atlas.webp"
 	]:
 		if not FileAccess.file_exists(path):
 			_fail("Release-readiness file is missing: %s" % path)
