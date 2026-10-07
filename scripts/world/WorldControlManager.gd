@@ -471,6 +471,7 @@ func _on_raid_resolved(result: Dictionary) -> void:
 		return
 
 	_add_task_progress("raid_wins", 1)
+	_increase_rivalry(target_id)
 	if not is_owned(target_id):
 		owned[target_id] = true
 		pressure[target_id] = 0.0
