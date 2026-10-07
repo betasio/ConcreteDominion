@@ -35,13 +35,15 @@ func _ready() -> void:
 		"FacilityEffects",
 		"CoreBuildingEffects",
 		"StoreManager",
-		"StoreUI"
+		"StoreUI",
+		"WorldControlManager",
+		"WorldControlUI"
 	]:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 12:
+	if save == null or SaveManager.SAVE_VERSION < 15:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -59,6 +61,10 @@ func _ready() -> void:
 	var alliance := game.get_node_or_null("AllianceManager") as AllianceManager
 	if alliance == null or alliance.get_xp_for_next_level() <= 0:
 		_fail("Alliance progression is invalid.")
+
+	var world_control := game.get_node_or_null("WorldControlManager") as WorldControlManager
+	if world_control == null or not world_control.is_discovered("downtown_bank"):
+		_fail("World-control discovery defaults are invalid.")
 
 	_finish()
 
