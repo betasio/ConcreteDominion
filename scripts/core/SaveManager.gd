@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 18
+const SAVE_VERSION := 19
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -311,6 +311,22 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 
 	if version < 18 and not data.has("tutorial"):
 		data["tutorial"] = {}
+
+	if version < 19:
+		var retention_data = data.get("retention", {})
+		if not (retention_data is Dictionary):
+			retention_data = {}
+		if not retention_data.has("daily_mastery_claimed"):
+			retention_data["daily_mastery_claimed"] = false
+		if not retention_data.has("weekly_mastery_claimed"):
+			retention_data["weekly_mastery_claimed"] = false
+		if not retention_data.has("pending_comeback_reward"):
+			retention_data["pending_comeback_reward"] = {}
+		if not retention_data.has("comeback_gap_days"):
+			retention_data["comeback_gap_days"] = 0
+		if not retention_data.has("lifetime_construction_completed"):
+			retention_data["lifetime_construction_completed"] = 0
+		data["retention"] = retention_data
 
 	data["schema_meta"] = {
 		"migrated_from": version,
