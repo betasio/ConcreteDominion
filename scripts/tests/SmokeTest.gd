@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 25:
+	if save == null or SaveManager.SAVE_VERSION < 26:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -101,6 +101,10 @@ func _ready() -> void:
 			_fail("Chapter 3 objective chain is incomplete.")
 		if not missions.missions.has("discover_northside") or not missions.missions.has("chapter_3_choice") or not missions.missions.has("join_faction") or not missions.missions.has("chapter_3_complete"):
 			_fail("Chapter 3 Northside/Faction campaign missions are missing.")
+		if MissionTracker.CHAPTER_4_TASKS.size() != 5:
+			_fail("Chapter 4 objective chain is incomplete.")
+		if not missions.missions.has("discover_casino") or not missions.missions.has("chapter_4_choice") or not missions.missions.has("build_data_hub") or not missions.missions.has("chapter_4_complete"):
+			_fail("Chapter 4 Velvet Circle campaign missions are missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Force") == null or game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Intel") == null:
 			_fail("Chapter strategic choice controls are missing.")
 
@@ -138,6 +142,8 @@ func _ready() -> void:
 			_fail("Rivalry dossier UI is missing.")
 		if game.get_node_or_null("WorldControlUI/Root/VictoryPanel/Margin/VBox/Summary") == null:
 			_fail("District victory presentation is missing.")
+		if game.get_node_or_null("WorldControlUI/Root/VictoryPanel/Margin/VBox/CampaignArt") == null:
+			_fail("District campaign art presentation is missing.")
 
 	var resources := game.get_node_or_null("ResourceProductionManager") as ResourceProductionManager
 	if resources == null:
@@ -223,6 +229,14 @@ func _ready() -> void:
 				_fail("Missing approved art slice: %s" % art_key)
 
 	if presentation != null:
+		if not presentation.is_campaign_atlas_ready():
+			_fail("Campaign art atlas failed to load.")
+		elif presentation.get_campaign_atlas_size() != Vector2i(256, 64):
+			_fail("Campaign art atlas has an unexpected size.")
+		else:
+			for campaign_key in ["darius", "northside", "celeste", "casino"]:
+				if presentation.get_campaign_art(campaign_key) == null:
+					_fail("Missing campaign art slice: %s" % campaign_key)
 		if not presentation.is_decor_atlas_ready():
 			_fail("Approved UI/street presentation atlas failed to load.")
 		elif presentation.get_decor_atlas_size() != Vector2i(256, 160):
