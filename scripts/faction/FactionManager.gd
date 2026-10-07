@@ -78,11 +78,11 @@ func _process(delta: float) -> void:
 			active_rally.clear()
 		did_change = true
 
-	if not active_war.is_empty():
+	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
 		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - delta)
 		if float(active_war["seconds_remaining"]) <= 0.0:
 			active_war["status"] = "complete"
-		did_change = true
+			did_change = true
 
 	if did_change:
 		changed.emit()
@@ -133,8 +133,8 @@ func join_prototype_faction() -> bool:
 	treasury_cash = 12500
 	members = [
 		{"id":"player_ace","name":"Ace","role":ROLE_LEADER,"power":12800,"contribution":420,"online":true},
-		{"id":"player_nova","name":"Nova","role":ROLE_UNDERBOSS,"power":9100,"contribution":310,"online":true},
-		{"id":local_member_id,"name":"You","role":ROLE_OFFICER,"power":0,"contribution":0,"online":true}
+		{"id":"player_nova","name":"Nova","role":ROLE_OFFICER,"power":9100,"contribution":310,"online":true},
+		{"id":local_member_id,"name":"You","role":ROLE_UNDERBOSS,"power":0,"contribution":0,"online":true}
 	]
 	_reset_faction_activity()
 	changed.emit()
@@ -574,7 +574,7 @@ func get_save_data() -> Dictionary:
 	}
 
 
-func load_save_data(data: Dictionary) -> void:
+func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	faction_id = String(data.get("faction_id", faction_id))
 	faction_name = String(data.get("faction_name", faction_name))
 	faction_tag = String(data.get("faction_tag", faction_tag))
@@ -610,8 +610,17 @@ func load_save_data(data: Dictionary) -> void:
 
 	var saved_rally = data.get("active_rally", {})
 	active_rally = saved_rally.duplicate(true) if saved_rally is Dictionary else {}
+	if not active_rally.is_empty():
+		active_rally["seconds_remaining"] = maxf(0.0, float(active_rally.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
+		if float(active_rally["seconds_remaining"]) <= 0.0:
+			active_rally.clear()
+
 	var saved_war = data.get("active_war", {})
 	active_war = saved_war.duplicate(true) if saved_war is Dictionary else {}
+	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
+		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
+		if float(active_war["seconds_remaining"]) <= 0.0:
+			active_war["status"] = "complete"
 
 	_refresh_daily_period()
 	changed.emit()
