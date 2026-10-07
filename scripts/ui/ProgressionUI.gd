@@ -18,6 +18,7 @@ var presentation_catalog: PresentationCatalog
 @onready var approach_box: HBoxContainer = $Root/Panel/Margin/VBox/Approach
 @onready var force_button: Button = $Root/Panel/Margin/VBox/Approach/Force
 @onready var intel_button: Button = $Root/Panel/Margin/VBox/Approach/Intel
+@onready var chapter_action_button: Button = $Root/Panel/Margin/VBox/ChapterAction
 @onready var milestones_label: Label = $Root/Panel/Margin/VBox/Milestones
 @onready var unlocks_label: Label = $Root/Panel/Margin/VBox/Unlocks
 @onready var missions_label: Label = $Root/Panel/Margin/VBox/Missions
@@ -51,6 +52,7 @@ func setup(
 	spy_button.pressed.connect(func(): _upgrade(&"Spy"))
 	force_button.pressed.connect(func(): _choose_approach("force"))
 	intel_button.pressed.connect(func(): _choose_approach("intel"))
+	chapter_action_button.pressed.connect(_run_chapter_action)
 
 	_refresh()
 
@@ -68,7 +70,9 @@ func _upgrade(role: StringName) -> void:
 func _choose_approach(choice_id: String) -> void:
 	var chapter := missions.get_story_chapter_status()
 	var chapter_number := int(chapter.get("chapter", 1))
-	if chapter_number == 5:
+	if chapter_number == 6:
+		missions.choose_chapter_6_approach("blockade" if choice_id == "force" else "hijack")
+	elif chapter_number == 5:
 		missions.choose_chapter_5_approach("takeover" if choice_id == "force" else "market_leak")
 	elif chapter_number == 4:
 		missions.choose_chapter_4_approach("buy_in" if choice_id == "force" else "blackmail")
@@ -76,6 +80,11 @@ func _choose_approach(choice_id: String) -> void:
 		missions.choose_chapter_3_approach("pressure" if choice_id == "force" else "patience")
 	else:
 		missions.choose_chapter_2_approach(choice_id)
+	_refresh()
+
+
+func _run_chapter_action() -> void:
+	missions.launch_chapter_6_convoy()
 	_refresh()
 
 
@@ -104,7 +113,15 @@ func _refresh() -> void:
 	approach_box.visible = bool(chapter.get("choice_required", false))
 	force_button.disabled = not approach_box.visible
 	intel_button.disabled = not approach_box.visible
-	if int(chapter["chapter"]) == 5:
+
+	var chapter_6_convoy_step := int(chapter["chapter"]) == 6 and String(chapter.get("next_id", "")) == "clear_serpent_convoys"
+	chapter_action_button.visible = chapter_6_convoy_step
+	chapter_action_button.text = "LAUNCH IRON SERPENT CONVOY INTERCEPT"
+	chapter_action_button.disabled = not missions.can_launch_chapter_6_convoy()
+	if int(chapter["chapter"]) == 6:
+		force_button.text = "BLOCKADE • $10,000 + Parts x5"
+		intel_button.text = "HIJACK • 8 Gold + Intel x3 + Parts x3"
+	elif int(chapter["chapter"]) == 5:
 		force_button.text = "HOSTILE TAKEOVER • $8,000 + Parts x4"
 		intel_button.text = "MARKET LEAK • 6 Gold + Intel x5"
 	elif int(chapter["chapter"]) == 4:
@@ -140,10 +157,16 @@ func _refresh() -> void:
 			"UNDECIDED" if chapter_4_choice.is_empty() else chapter_4_choice.to_upper().replace("_", " "),
 			String(chapter["completion_reward"])
 		]
-	else:
+	elif int(chapter["chapter"]) == 5:
 		var chapter_5_choice := String(chapter.get("choice", ""))
 		milestones_label.text = "FINANCIAL DISTRICT CAMPAIGN\nVelvet Circle • Financial Tower\nPressure: %s • Capture one Faction territory objective before the Tower hit\nChapter reward: %s" % [
 			"UNDECIDED" if chapter_5_choice.is_empty() else chapter_5_choice.to_upper().replace("_", " "),
+			String(chapter["completion_reward"])
+		]
+	else:
+		var chapter_6_choice := String(chapter.get("choice", ""))
+		milestones_label.text = "INDUSTRIAL BELT CAMPAIGN\nViktor Sable • Iron Serpents\nRoad war: %s • Win 2 convoy intercepts before the Depot assault\nDriver-heavy encounters • Chapter reward: %s" % [
+			"UNDECIDED" if chapter_6_choice.is_empty() else chapter_6_choice.to_upper(),
 			String(chapter["completion_reward"])
 		]
 
