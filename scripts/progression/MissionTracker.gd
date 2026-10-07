@@ -9,12 +9,52 @@ const CHAPTER_1_TASKS := [
 	"build_intel"
 ]
 
+const STORY_BEATS := {
+	"recruit_crew": {
+		"speaker": "Vex",
+		"portrait": "vex",
+		"line": "A city does not fear one name. Build the crew first. Then we give it a reason to remember ours."
+	},
+	"win_downtown": {
+		"speaker": "Mia",
+		"portrait": "mia",
+		"line": "Downtown moves money before it moves muscle. Hit the bank clean, fast, and leave them guessing."
+	},
+	"reach_level_2": {
+		"speaker": "Noah",
+		"portrait": "noah",
+		"line": "Noise gets attention. Reputation gets doors opened. Keep the wins coming and the city starts calling us first."
+	},
+	"build_garage": {
+		"speaker": "Mia",
+		"portrait": "mia",
+		"line": "We need wheels that belong to us. A Garage turns every future job into a choice instead of a gamble."
+	},
+	"build_intel": {
+		"speaker": "Kira",
+		"portrait": "kira",
+		"line": "Power without information is just a target. Give me an Intel Office and I will tell you where the city is weakest."
+	},
+	"chapter_complete": {
+		"speaker": "Vex",
+		"portrait": "vex",
+		"line": "Now we are not surviving the city. We are shaping it. Pick the next district and make them negotiate from below us."
+	}
+}
+
 signal changed
 signal mission_completed(mission_id: String)
+signal chapter_milestone_reached(milestone: int, reward: Dictionary)
 
 var progression: PlayerProgression
 var economy: PlayerEconomy
+var loot: LootInventory
 var city_map: Node
+
+var chapter_milestones_claimed: Dictionary = {
+	"2": false,
+	"4": false
+}
 
 var missions: Dictionary = {
 	"recruit_crew": {
@@ -122,6 +162,7 @@ var missions: Dictionary = {
 func setup(
 	player_progression: PlayerProgression,
 	player_economy: PlayerEconomy,
+	loot_inventory: LootInventory,
 	world: Node,
 	recruitment: RecruitmentQueue,
 	construction: ConstructionQueue,
@@ -129,6 +170,7 @@ func setup(
 ) -> void:
 	progression = player_progression
 	economy = player_economy
+	loot = loot_inventory
 	city_map = world
 
 	recruitment.recruitment_completed.connect(_on_recruitment_completed)
@@ -239,11 +281,40 @@ func _refresh_chapter_progress() -> void:
 	for mission_id in CHAPTER_1_TASKS:
 		if missions.has(mission_id) and bool(missions[mission_id]["completed"]):
 			completed_count += 1
+
+	_award_chapter_milestones(completed_count)
 	_set_progress("chapter_1_complete", completed_count)
+
+
+func _award_chapter_milestones(completed_count: int) -> void:
+	if completed_count >= 2 and not bool(chapter_milestones_claimed["2"]):
+		chapter_milestones_claimed["2"] = true
+		var reward_2 := {"cash": 2000, "gold": 3, "xp": 35, "loot": {"Parts": 1}}
+		_apply_bonus_reward(reward_2)
+		chapter_milestone_reached.emit(2, reward_2)
+
+	if completed_count >= 4 and not bool(chapter_milestones_claimed["4"]):
+		chapter_milestones_claimed["4"] = true
+		var reward_4 := {"cash": 3500, "gold": 5, "xp": 60, "loot": {"Intel": 1}}
+		_apply_bonus_reward(reward_4)
+		chapter_milestone_reached.emit(4, reward_4)
+
+
+func _apply_bonus_reward(reward: Dictionary) -> void:
+	if economy != null:
+		economy.add_cash(int(reward.get("cash", 0)))
+		economy.add_gold(int(reward.get("gold", 0)))
+	if progression != null:
+		progression.add_xp(int(reward.get("xp", 0)))
+	if loot != null:
+		var reward_loot = reward.get("loot", {})
+		if reward_loot is Dictionary:
+			loot.add_loot(reward_loot)
 
 
 func get_story_chapter_status() -> Dictionary:
 	var completed_count := 0
+	var next_id := ""
 	var next_title := "Chapter complete"
 	var next_description := "Your crew is established. Push deeper into the city and take territory."
 
@@ -253,9 +324,13 @@ func get_story_chapter_status() -> Dictionary:
 		var mission: Dictionary = missions[mission_id]
 		if bool(mission["completed"]):
 			completed_count += 1
-		elif next_title == "Chapter complete":
+		elif next_id.is_empty():
+			next_id = mission_id
 			next_title = String(mission["title"])
 			next_description = String(mission["description"])
+
+	var beat_key := "chapter_complete" if next_id.is_empty() else next_id
+	var beat: Dictionary = STORY_BEATS.get(beat_key, STORY_BEATS["chapter_complete"])
 
 	return {
 		"title": "A Higher Kingdom",
@@ -263,8 +338,14 @@ func get_story_chapter_status() -> Dictionary:
 		"progress": completed_count,
 		"goal": CHAPTER_1_TASKS.size(),
 		"complete": bool(missions["chapter_1_complete"]["completed"]),
+		"next_id": next_id,
 		"next_title": next_title,
 		"next_description": next_description,
+		"speaker": String(beat["speaker"]),
+		"portrait": String(beat["portrait"]),
+		"story_line": String(beat["line"]),
+		"milestone_2_claimed": bool(chapter_milestones_claimed["2"]),
+		"milestone_4_claimed": bool(chapter_milestones_claimed["4"]),
 		"completion_reward": "$5,000 + 150 XP"
 	}
 
@@ -284,7 +365,11 @@ func get_mission_lines() -> PackedStringArray:
 
 
 func get_save_data() -> Dictionary:
-	var saved := {}
+	var saved := {
+		"_chapter_meta": {
+			"milestones_claimed": chapter_milestones_claimed.duplicate(true)
+		}
+	}
 	for mission_id in missions.keys():
 		var mission: Dictionary = missions[mission_id]
 		saved[mission_id] = {
@@ -302,4 +387,12 @@ func load_save_data(data: Dictionary) -> void:
 		if saved is Dictionary:
 			missions[mission_id]["progress"] = int(saved.get("progress", missions[mission_id]["progress"]))
 			missions[mission_id]["completed"] = bool(saved.get("completed", missions[mission_id]["completed"]))
+
+	var meta = data.get("_chapter_meta", {})
+	if meta is Dictionary:
+		var claimed = meta.get("milestones_claimed", {})
+		if claimed is Dictionary:
+			for milestone in chapter_milestones_claimed.keys():
+				chapter_milestones_claimed[milestone] = bool(claimed.get(milestone, chapter_milestones_claimed[milestone]))
+
 	changed.emit()
