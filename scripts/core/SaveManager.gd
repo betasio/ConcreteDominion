@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 29
+const SAVE_VERSION := 30
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -466,6 +466,24 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 	if version < 29:
 		if not data.has("endgame"):
 			data["endgame"] = {}
+
+	if version < 30:
+		var endgame_data_v30 = data.get("endgame", {})
+		if not (endgame_data_v30 is Dictionary):
+			endgame_data_v30 = {}
+		if not endgame_data_v30.has("season_period"):
+			endgame_data_v30["season_period"] = -1
+		if not endgame_data_v30.has("season_points"):
+			endgame_data_v30["season_points"] = 0
+		if not endgame_data_v30.has("claimed_season_tiers"):
+			endgame_data_v30["claimed_season_tiers"] = []
+		if not endgame_data_v30.has("pending_season_tiers"):
+			endgame_data_v30["pending_season_tiers"] = []
+		if not endgame_data_v30.has("featured_wins"):
+			endgame_data_v30["featured_wins"] = 0
+		if not endgame_data_v30.has("scored_operation_wins"):
+			endgame_data_v30["scored_operation_wins"] = 0
+		data["endgame"] = endgame_data_v30
 
 	data["schema_meta"] = {
 		"migrated_from": version,
