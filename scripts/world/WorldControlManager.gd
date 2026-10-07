@@ -24,6 +24,7 @@ var alliance: AllianceManager
 var city_map: Node
 var core_effects: CoreBuildingEffects
 var family_rules: RivalFamilyRules
+var faction: FactionManager
 
 var discovered: Dictionary = {"downtown_bank": true}
 var owned: Dictionary = {}
@@ -103,6 +104,7 @@ func setup(
 	world: Node,
 	building_effects: CoreBuildingEffects,
 	rules: RivalFamilyRules,
+	faction_manager: FactionManager,
 	raid_battle: RaidBattle
 ) -> void:
 	economy = player_economy
@@ -114,6 +116,7 @@ func setup(
 	city_map = world
 	core_effects = building_effects
 	family_rules = rules
+	faction = faction_manager
 
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 	progression.leveled_up.connect(_on_progression_changed)
@@ -343,6 +346,8 @@ func get_income_per_hour() -> int:
 			if is_contested(String(target_id)):
 				rate = roundi(float(rate) * 0.65)
 			total += rate
+	if faction != null and faction.has_faction():
+		total = roundi(float(total) * faction.get_territory_income_multiplier())
 	return total
 
 
