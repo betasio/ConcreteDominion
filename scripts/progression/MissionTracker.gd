@@ -9,153 +9,62 @@ const CHAPTER_1_TASKS := [
 	"build_intel"
 ]
 
+const CHAPTER_2_TASKS := [
+	"discover_harbor",
+	"win_harbor",
+	"chapter_2_choice",
+	"discover_midtown",
+	"win_midtown"
+]
+
 const STORY_BEATS := {
-	"recruit_crew": {
-		"speaker": "Vex",
-		"portrait": "vex",
-		"line": "A city does not fear one name. Build the crew first. Then we give it a reason to remember ours."
-	},
-	"win_downtown": {
-		"speaker": "Mia",
-		"portrait": "mia",
-		"line": "Downtown moves money before it moves muscle. Hit the bank clean, fast, and leave them guessing."
-	},
-	"reach_level_2": {
-		"speaker": "Noah",
-		"portrait": "noah",
-		"line": "Noise gets attention. Reputation gets doors opened. Keep the wins coming and the city starts calling us first."
-	},
-	"build_garage": {
-		"speaker": "Mia",
-		"portrait": "mia",
-		"line": "We need wheels that belong to us. A Garage turns every future job into a choice instead of a gamble."
-	},
-	"build_intel": {
-		"speaker": "Kira",
-		"portrait": "kira",
-		"line": "Power without information is just a target. Give me an Intel Office and I will tell you where the city is weakest."
-	},
-	"chapter_complete": {
-		"speaker": "Vex",
-		"portrait": "vex",
-		"line": "Now we are not surviving the city. We are shaping it. Pick the next district and make them negotiate from below us."
-	}
+	"recruit_crew": {"speaker":"Vex","portrait":"vex","line":"A city does not fear one name. Build the crew first. Then we give it a reason to remember ours."},
+	"win_downtown": {"speaker":"Mia","portrait":"mia","line":"Downtown moves money before it moves muscle. Hit the bank clean, fast, and leave them guessing."},
+	"reach_level_2": {"speaker":"Noah","portrait":"noah","line":"Noise gets attention. Reputation gets doors opened. Keep the wins coming and the city starts calling us first."},
+	"build_garage": {"speaker":"Mia","portrait":"mia","line":"We need wheels that belong to us. A Garage turns every future job into a choice instead of a gamble."},
+	"build_intel": {"speaker":"Kira","portrait":"kira","line":"Power without information is just a target. Give me an Intel Office and I will tell you where the city is weakest."},
+	"chapter_1_complete": {"speaker":"Vex","portrait":"vex","line":"Now we are not surviving the city. We are shaping it. Harbor is where the real crews start paying attention."},
+	"discover_harbor": {"speaker":"Kira","portrait":"kira","line":"The Iron Serpents own the Harbor cameras, manifests, and checkpoints. Reveal the district before we move."},
+	"win_harbor": {"speaker":"Mia","portrait":"mia","line":"The Serpents expect a convoy war. Good. Give them the one they prepared for, then take the ground under it."},
+	"chapter_2_choice": {"speaker":"Vex","portrait":"vex","line":"We can make the next move loud or invisible. Pick the reputation you want this crew to earn."},
+	"discover_midtown": {"speaker":"Noah","portrait":"noah","line":"Midtown is different. The Meridian Boys watch patterns, not streets. Make them look in the wrong direction."},
+	"win_midtown": {"speaker":"Kira","portrait":"kira","line":"Their network is exposed. Break the Exchange now and every crew in the city learns we can beat brains as well as muscle."},
+	"chapter_2_complete": {"speaker":"Mia","portrait":"mia","line":"Harbor and Midtown both folded. That is not luck anymore. That is a pattern with our name on it."}
 }
 
 signal changed
 signal mission_completed(mission_id: String)
 signal chapter_milestone_reached(milestone: int, reward: Dictionary)
+signal strategic_choice_made(choice_id: String)
 
 var progression: PlayerProgression
 var economy: PlayerEconomy
 var loot: LootInventory
 var city_map: Node
+var world_control: WorldControlManager
 
-var chapter_milestones_claimed: Dictionary = {
-	"2": false,
-	"4": false
-}
+var chapter_milestones_claimed := {"2": false, "4": false}
+var chapter_2_choice := ""
 
 var missions: Dictionary = {
-	"recruit_crew": {
-		"title": "Grow the Crew",
-		"description": "Recruit 5 troops.",
-		"goal": 5,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 60,
-		"reward_cash": 1500
-	},
-	"win_downtown": {
-		"title": "First Score",
-		"description": "Win a raid against Downtown Bank.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 80,
-		"reward_cash": 2500
-	},
-	"reach_level_2": {
-		"title": "Make a Name",
-		"description": "Reach account level 2.",
-		"goal": 2,
-		"progress": 1,
-		"completed": false,
-		"reward_xp": 40,
-		"reward_cash": 2000
-	},
-	"build_garage": {
-		"title": "Wheels Up",
-		"description": "Build the Garage.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 70,
-		"reward_cash": 2500
-	},
-	"win_midtown": {
-		"title": "Midtown Pressure",
-		"description": "Defeat Midtown Exchange.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 110,
-		"reward_cash": 4000
-	},
-	"build_intel": {
-		"title": "Eyes Everywhere",
-		"description": "Build the Intel Office.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 90,
-		"reward_cash": 3000
-	},
-	"win_northside": {
-		"title": "Take Northside",
-		"description": "Defeat Northside Turf HQ.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 140,
-		"reward_cash": 5500
-	},
-	"win_casino": {
-		"title": "Break the House",
-		"description": "Defeat Casino Vault.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 180,
-		"reward_cash": 7000
-	},
-	"win_financial": {
-		"title": "Own the Skyline",
-		"description": "Defeat Financial Tower.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 220,
-		"reward_cash": 9000
-	},
-	"win_industrial": {
-		"title": "Control the Supply",
-		"description": "Defeat Industrial Depot.",
-		"goal": 1,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 280,
-		"reward_cash": 12000
-	},
-	"chapter_1_complete": {
-		"title": "A Higher Kingdom",
-		"description": "Complete the five Chapter 1 operations.",
-		"goal": 5,
-		"progress": 0,
-		"completed": false,
-		"reward_xp": 150,
-		"reward_cash": 5000
-	}
+	"recruit_crew":{"title":"Grow the Crew","description":"Recruit 5 troops.","goal":5,"progress":0,"completed":false,"reward_xp":60,"reward_cash":1500},
+	"win_downtown":{"title":"First Score","description":"Win a raid against Downtown Bank.","goal":1,"progress":0,"completed":false,"reward_xp":80,"reward_cash":2500},
+	"reach_level_2":{"title":"Make a Name","description":"Reach account level 2.","goal":2,"progress":1,"completed":false,"reward_xp":40,"reward_cash":2000},
+	"build_garage":{"title":"Wheels Up","description":"Build the Garage.","goal":1,"progress":0,"completed":false,"reward_xp":70,"reward_cash":2500},
+	"build_intel":{"title":"Eyes Everywhere","description":"Build the Intel Office.","goal":1,"progress":0,"completed":false,"reward_xp":90,"reward_cash":3000},
+	"chapter_1_complete":{"title":"A Higher Kingdom","description":"Complete the five Chapter 1 operations.","goal":5,"progress":0,"completed":false,"reward_xp":150,"reward_cash":5000},
+
+	"discover_harbor":{"title":"Open the Harbor","description":"Reveal Harbor District.","goal":1,"progress":0,"completed":false,"reward_xp":55,"reward_cash":2000},
+	"win_harbor":{"title":"Break the Serpents","description":"Capture Harbor Bank from the Iron Serpents.","goal":1,"progress":0,"completed":false,"reward_xp":120,"reward_cash":4500},
+	"chapter_2_choice":{"title":"Choose the Crew's Method","description":"Choose Force or Intelligence for the next push.","goal":1,"progress":0,"completed":false,"reward_xp":50,"reward_cash":0},
+	"discover_midtown":{"title":"Read the Watchers","description":"Reveal Midtown.","goal":1,"progress":0,"completed":false,"reward_xp":70,"reward_cash":2500},
+	"win_midtown":{"title":"Blind the Meridian Boys","description":"Capture Midtown Exchange.","goal":1,"progress":0,"completed":false,"reward_xp":150,"reward_cash":6000},
+	"chapter_2_complete":{"title":"Enemies Know Your Name","description":"Complete the five Chapter 2 operations.","goal":5,"progress":0,"completed":false,"reward_xp":250,"reward_cash":9000,"reward_gold":10},
+
+	"win_northside":{"title":"Take Northside","description":"Defeat Northside Turf HQ.","goal":1,"progress":0,"completed":false,"reward_xp":140,"reward_cash":5500},
+	"win_casino":{"title":"Break the House","description":"Defeat Casino Vault.","goal":1,"progress":0,"completed":false,"reward_xp":180,"reward_cash":7000},
+	"win_financial":{"title":"Own the Skyline","description":"Defeat Financial Tower.","goal":1,"progress":0,"completed":false,"reward_xp":220,"reward_cash":9000},
+	"win_industrial":{"title":"Control the Supply","description":"Defeat Industrial Depot.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000}
 }
 
 
@@ -164,6 +73,7 @@ func setup(
 	player_economy: PlayerEconomy,
 	loot_inventory: LootInventory,
 	world: Node,
+	control: WorldControlManager,
 	recruitment: RecruitmentQueue,
 	construction: ConstructionQueue,
 	raid_battle: RaidBattle
@@ -172,14 +82,19 @@ func setup(
 	economy = player_economy
 	loot = loot_inventory
 	city_map = world
+	world_control = control
 
 	recruitment.recruitment_completed.connect(_on_recruitment_completed)
 	construction.construction_completed.connect(_on_construction_completed)
 	raid_battle.battle_resolved.connect(_on_battle_resolved)
 	progression.leveled_up.connect(_on_level_up)
+	if world_control != null:
+		world_control.district_discovered.connect(_on_district_discovered)
+		world_control.district_captured.connect(_on_district_captured)
 
 	_refresh_level_mission()
 	_refresh_existing_buildings()
+	_refresh_existing_world_state()
 	_refresh_chapter_progress()
 
 
@@ -190,6 +105,58 @@ func _refresh_existing_buildings() -> void:
 		_set_progress("build_garage", 1)
 	if city_map.lot_b.is_built:
 		_set_progress("build_intel", 1)
+
+
+func _refresh_existing_world_state() -> void:
+	if world_control == null:
+		return
+	if world_control.is_discovered("harbor_bank"):
+		_set_progress("discover_harbor", 1)
+	if world_control.is_owned("harbor_bank"):
+		_set_progress("win_harbor", 1)
+	if world_control.is_discovered("midtown_exchange"):
+		_set_progress("discover_midtown", 1)
+	if world_control.is_owned("midtown_exchange"):
+		_set_progress("win_midtown", 1)
+
+
+func _on_district_discovered(district_id: String) -> void:
+	match district_id:
+		"harbor_bank":
+			_set_progress("discover_harbor", 1)
+		"midtown_exchange":
+			_set_progress("discover_midtown", 1)
+
+
+func _on_district_captured(district_id: String) -> void:
+	match district_id:
+		"harbor_bank":
+			_set_progress("win_harbor", 1)
+		"midtown_exchange":
+			_set_progress("win_midtown", 1)
+
+
+func choose_chapter_2_approach(choice_id: String) -> bool:
+	if bool(missions["chapter_2_choice"]["completed"]):
+		return false
+	if not bool(missions["win_harbor"]["completed"]):
+		return false
+	if choice_id != "force" and choice_id != "intel":
+		return false
+
+	chapter_2_choice = choice_id
+	if choice_id == "force":
+		_apply_bonus_reward({"cash":2500,"loot":{"Parts":2}})
+	else:
+		_apply_bonus_reward({"gold":3,"loot":{"Intel":2}})
+
+	_set_progress("chapter_2_choice", 1)
+	strategic_choice_made.emit(choice_id)
+	return true
+
+
+func get_chapter_2_choice() -> String:
+	return chapter_2_choice
 
 
 func _on_recruitment_completed(_troop_type: StringName, amount: int) -> void:
@@ -214,6 +181,8 @@ func _on_battle_resolved(result: Dictionary) -> void:
 	match String(result.get("target_id", "")):
 		"downtown_bank":
 			_set_progress("win_downtown", 1)
+		"harbor_bank":
+			_set_progress("win_harbor", 1)
 		"midtown_exchange":
 			_set_progress("win_midtown", 1)
 		"northside_hq":
@@ -264,38 +233,45 @@ func _check_complete(mission_id: String) -> void:
 		return
 
 	mission["completed"] = true
-
 	if progression != null:
-		progression.add_xp(int(mission["reward_xp"]))
+		progression.add_xp(int(mission.get("reward_xp", 0)))
 	if economy != null:
-		economy.add_cash(int(mission["reward_cash"]))
+		economy.add_cash(int(mission.get("reward_cash", 0)))
+		economy.add_gold(int(mission.get("reward_gold", 0)))
 
 	mission_completed.emit(mission_id)
-	if mission_id != "chapter_1_complete":
+	if mission_id != "chapter_1_complete" and mission_id != "chapter_2_complete":
 		_refresh_chapter_progress()
 	changed.emit()
 
 
 func _refresh_chapter_progress() -> void:
-	var completed_count := 0
-	for mission_id in CHAPTER_1_TASKS:
-		if missions.has(mission_id) and bool(missions[mission_id]["completed"]):
-			completed_count += 1
+	var chapter_1_count := _count_completed(CHAPTER_1_TASKS)
+	_award_chapter_milestones(chapter_1_count)
+	_set_progress("chapter_1_complete", chapter_1_count)
 
-	_award_chapter_milestones(completed_count)
-	_set_progress("chapter_1_complete", completed_count)
+	var chapter_2_count := _count_completed(CHAPTER_2_TASKS)
+	_set_progress("chapter_2_complete", chapter_2_count)
+
+
+func _count_completed(task_ids: Array) -> int:
+	var count := 0
+	for mission_id in task_ids:
+		if missions.has(mission_id) and bool(missions[mission_id]["completed"]):
+			count += 1
+	return count
 
 
 func _award_chapter_milestones(completed_count: int) -> void:
 	if completed_count >= 2 and not bool(chapter_milestones_claimed["2"]):
 		chapter_milestones_claimed["2"] = true
-		var reward_2 := {"cash": 2000, "gold": 3, "xp": 35, "loot": {"Parts": 1}}
+		var reward_2 := {"cash":2000,"gold":3,"xp":35,"loot":{"Parts":1}}
 		_apply_bonus_reward(reward_2)
 		chapter_milestone_reached.emit(2, reward_2)
 
 	if completed_count >= 4 and not bool(chapter_milestones_claimed["4"]):
 		chapter_milestones_claimed["4"] = true
-		var reward_4 := {"cash": 3500, "gold": 5, "xp": 60, "loot": {"Intel": 1}}
+		var reward_4 := {"cash":3500,"gold":5,"xp":60,"loot":{"Intel":1}}
 		_apply_bonus_reward(reward_4)
 		chapter_milestone_reached.emit(4, reward_4)
 
@@ -313,14 +289,18 @@ func _apply_bonus_reward(reward: Dictionary) -> void:
 
 
 func get_story_chapter_status() -> Dictionary:
+	if bool(missions["chapter_1_complete"]["completed"]):
+		return _build_chapter_status(2, "The City Pushes Back", CHAPTER_2_TASKS, "chapter_2_complete", "$9,000 + 10 Gold + 250 XP")
+	return _build_chapter_status(1, "A Higher Kingdom", CHAPTER_1_TASKS, "chapter_1_complete", "$5,000 + 150 XP")
+
+
+func _build_chapter_status(chapter: int, title: String, task_ids: Array, completion_id: String, completion_reward: String) -> Dictionary:
 	var completed_count := 0
 	var next_id := ""
 	var next_title := "Chapter complete"
-	var next_description := "Your crew is established. Push deeper into the city and take territory."
+	var next_description := "The chapter is complete."
 
-	for mission_id in CHAPTER_1_TASKS:
-		if not missions.has(mission_id):
-			continue
+	for mission_id in task_ids:
 		var mission: Dictionary = missions[mission_id]
 		if bool(mission["completed"]):
 			completed_count += 1
@@ -329,15 +309,15 @@ func get_story_chapter_status() -> Dictionary:
 			next_title = String(mission["title"])
 			next_description = String(mission["description"])
 
-	var beat_key := "chapter_complete" if next_id.is_empty() else next_id
-	var beat: Dictionary = STORY_BEATS.get(beat_key, STORY_BEATS["chapter_complete"])
+	var beat_key := completion_id if next_id.is_empty() else next_id
+	var beat: Dictionary = STORY_BEATS.get(beat_key, STORY_BEATS["chapter_1_complete"])
 
 	return {
-		"title": "A Higher Kingdom",
-		"chapter": 1,
+		"title": title,
+		"chapter": chapter,
 		"progress": completed_count,
-		"goal": CHAPTER_1_TASKS.size(),
-		"complete": bool(missions["chapter_1_complete"]["completed"]),
+		"goal": task_ids.size(),
+		"complete": bool(missions[completion_id]["completed"]),
 		"next_id": next_id,
 		"next_title": next_title,
 		"next_description": next_description,
@@ -346,20 +326,18 @@ func get_story_chapter_status() -> Dictionary:
 		"story_line": String(beat["line"]),
 		"milestone_2_claimed": bool(chapter_milestones_claimed["2"]),
 		"milestone_4_claimed": bool(chapter_milestones_claimed["4"]),
-		"completion_reward": "$5,000 + 150 XP"
+		"choice_required": chapter == 2 and next_id == "chapter_2_choice",
+		"choice": chapter_2_choice,
+		"completion_reward": completion_reward
 	}
 
 
 func get_mission_lines() -> PackedStringArray:
+	var active_tasks: Array = CHAPTER_2_TASKS if bool(missions["chapter_1_complete"]["completed"]) else CHAPTER_1_TASKS
 	var lines := PackedStringArray()
-	for mission_id in missions.keys():
-		if mission_id == "chapter_1_complete":
-			continue
+	for mission_id in active_tasks:
 		var mission: Dictionary = missions[mission_id]
-		var state := "DONE" if bool(mission["completed"]) else "%d/%d" % [
-			int(mission["progress"]),
-			int(mission["goal"])
-		]
+		var state := "DONE" if bool(mission["completed"]) else "%d/%d" % [int(mission["progress"]), int(mission["goal"])]
 		lines.append("%s — %s" % [String(mission["title"]), state])
 	return lines
 
@@ -367,7 +345,8 @@ func get_mission_lines() -> PackedStringArray:
 func get_save_data() -> Dictionary:
 	var saved := {
 		"_chapter_meta": {
-			"milestones_claimed": chapter_milestones_claimed.duplicate(true)
+			"milestones_claimed": chapter_milestones_claimed.duplicate(true),
+			"chapter_2_choice": chapter_2_choice
 		}
 	}
 	for mission_id in missions.keys():
@@ -394,5 +373,6 @@ func load_save_data(data: Dictionary) -> void:
 		if claimed is Dictionary:
 			for milestone in chapter_milestones_claimed.keys():
 				chapter_milestones_claimed[milestone] = bool(claimed.get(milestone, chapter_milestones_claimed[milestone]))
+		chapter_2_choice = String(meta.get("chapter_2_choice", chapter_2_choice))
 
 	changed.emit()
