@@ -340,6 +340,10 @@ func get_task_cycle_remaining() -> float:
 	return maxf(0.0, task_cycle_remaining)
 
 
+func has_discoverable_target() -> bool:
+	return _get_next_discoverable_target() != ""
+
+
 func get_next_discovery_summary() -> String:
 	var target_id := _get_next_discoverable_target()
 	if target_id == "":

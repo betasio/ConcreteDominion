@@ -4,8 +4,9 @@ extends Node
 signal queue_changed
 signal treatment_completed(entry: Dictionary)
 
-@export var seconds_per_troop: float = 3.0
-@export var gold_per_minute: int = 2
+@export var seconds_per_troop: float = 45.0
+@export var gold_per_chunk: int = 1
+var speedup_chunk_seconds: int = 300
 
 var wounded_queue: Array[Dictionary] = []
 var economy: PlayerEconomy
@@ -21,7 +22,8 @@ func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null, game
 	balance = game_balance
 	core_effects = building_effects
 	if balance != null:
-		gold_per_minute = balance.get_speedup_rate("hospital_gold_per_minute", gold_per_minute)
+		gold_per_chunk = balance.get_speedup_rate("hospital_gold_per_chunk", gold_per_chunk)
+		speedup_chunk_seconds = balance.get_speedup_chunk_seconds()
 
 
 func _process(delta: float) -> void:
@@ -69,7 +71,7 @@ func get_instant_heal_cost() -> int:
 	var total_seconds := 0.0
 	for entry in wounded_queue:
 		total_seconds += float(entry["seconds_remaining"])
-	return ceili(total_seconds / 60.0) * gold_per_minute
+	return ceili(total_seconds / float(speedup_chunk_seconds)) * gold_per_chunk
 
 
 func instant_heal() -> bool:

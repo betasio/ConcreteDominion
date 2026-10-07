@@ -7,7 +7,7 @@ This file records the deterministic balance assumptions enforced by the headless
 - XP required from Account Lv.1 to Lv.7: **1,725**
 - Sum of raw XP from one clear of all seven raid tiers: **1,910**
 - Starter Cash: **$25,000**
-- Starter Gold: **250**
+- Starter Gold: **75**
 
 ## City economy
 
@@ -53,11 +53,36 @@ At the early reference baseline:
 
 The automated floor is **10%** for each role.
 
-## Known prototype warning
+## Production timing baseline
 
-Current timers are intentionally seconds/minutes rather than production live-service durations. With 250 starter Gold, speed-ups are consequently much more affordable than they should be in a final economy.
+The project now uses an initial production-scale timing pass rather than second-long prototype queues.
 
-This is a **warning**, not a CI failure, until production-scale timing is selected.
+Base recruitment:
+- Enforcer: **20s/troop**
+- Driver: **30s/troop**
+- Spy: **36s/troop**
+
+Clinic:
+- **45s per wounded troop** before Clinic-level reductions.
+
+Construction examples:
+- core-building base upgrade steps: roughly **4–5 minutes x current level**
+- Garage build: **6 minutes**
+- Intel Office build: **8 minutes**
+- Scrapyard build: **10 minutes**
+- Data Hub build: **12 minutes**
+
+Gold speed-ups are charged in **5-minute chunks**:
+- recruitment: **1 Gold/chunk**
+- construction: **2 Gold/chunk**
+- Clinic: **1 Gold/chunk**
+
+Reference onboarding examples:
+- recruit 5 Enforcers instantly: **1 Gold**
+- finish a 10-minute construction timer: **4 Gold**
+- instantly recover 5 standard wounded troops: **1 Gold**
+
+Existing saves retain their current Gold and in-progress timer values; the new defaults apply to new jobs/new saves.
 
 ## Hard-failure philosophy
 

@@ -60,6 +60,8 @@ func _ready() -> void:
 		_fail("GameBalance facility tuning is missing.")
 	if balance == null or balance.get_core_building_value("clinic_healing_reduction_per_level", 0.0) <= 0.0:
 		_fail("GameBalance core-building tuning is missing.")
+	if balance == null or balance.get_speedup_chunk_seconds() != 300:
+		_fail("Production speed-up chunk should be 300 seconds.")
 
 	var recruitment := game.get_node_or_null("RecruitmentQueue") as RecruitmentQueue
 	if recruitment == null or recruitment.get_queue_capacity() < 1:
@@ -80,6 +82,8 @@ func _ready() -> void:
 	var text_catalog := game.get_node_or_null("LocalizedText") as LocalizedText
 	if text_catalog == null or not text_catalog.has_key("ACH_DOMINION"):
 		_fail("Localization catalog is invalid.")
+	elif not text_catalog.has_key("UI_TERRITORY_TITLE") or not text_catalog.has_key("UI_STORE_TITLE"):
+		_fail("High-traffic UI localization keys are missing.")
 
 	var faction_rules := game.get_node_or_null("FactionRules") as FactionRules
 	if faction_rules == null or faction_rules.get_encounter_cycle("harbor_bank").is_empty():

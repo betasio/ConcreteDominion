@@ -4,6 +4,7 @@ extends CanvasLayer
 var progression: PlayerProgression
 var missions: MissionTracker
 var loot: LootInventory
+var text_catalog: LocalizedText
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -19,11 +20,14 @@ var loot: LootInventory
 func setup(
 	player_progression: PlayerProgression,
 	mission_tracker: MissionTracker,
-	loot_inventory: LootInventory
+	loot_inventory: LootInventory,
+	localized_text: LocalizedText
 ) -> void:
 	progression = player_progression
 	missions = mission_tracker
 	loot = loot_inventory
+	text_catalog = localized_text
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 
 	progression.changed.connect(_refresh)
 	missions.changed.connect(_refresh)
@@ -52,16 +56,16 @@ func _refresh() -> void:
 	if progression == null:
 		return
 
-	shortcut.text = "LV.%d  Progression" % progression.account_level
-	level_label.text = "ACCOUNT LEVEL %d" % progression.account_level
-	xp_label.text = "XP: %d / %d" % [
+	shortcut.text = "LV.%d  %s" % [progression.account_level, text_catalog.text("UI_PROGRESSION")]
+	level_label.text = "%s %d" % [text_catalog.text("UI_ACCOUNT_LEVEL"), progression.account_level]
+	xp_label.text = "%s: %d / %d" % [text_catalog.text("UI_XP"),
 		progression.current_xp,
 		progression.get_xp_for_next_level()
 	]
 
-	unlocks_label.text = "DISTRICT / CITY UNLOCKS\nLv.2 — Harbor District + Garage\nLv.3 — Midtown + Intel Office\nLv.4 — Northside + Scrapyard\nLv.5 — High Roller Strip + Data Hub\nLv.6 — Financial District\nLv.7 — Industrial Belt"
+	unlocks_label.text = text_catalog.text("UI_UNLOCKS_TITLE") + "\nLv.2 — Harbor District + Garage\nLv.3 — Midtown + Intel Office\nLv.4 — Northside + Scrapyard\nLv.5 — High Roller Strip + Data Hub\nLv.6 — Financial District\nLv.7 — Industrial Belt"
 
-	missions_label.text = "MISSIONS\n" + "\n".join(missions.get_mission_lines())
+	missions_label.text = text_catalog.text("UI_MISSIONS") + "\n" + "\n".join(missions.get_mission_lines())
 
 	_refresh_upgrade_button(enforcer_button, &"Enforcer")
 	_refresh_upgrade_button(driver_button, &"Driver")
@@ -82,7 +86,7 @@ func _refresh_upgrade_button(button: Button, role: StringName) -> void:
 
 func _format_cost(cost: Dictionary) -> String:
 	if cost.is_empty():
-		return "No cost"
+		return text_catalog.text("UI_NO_COST")
 
 	var parts := PackedStringArray()
 	for item_name in cost.keys():

@@ -2,13 +2,19 @@ class_name StoreUI
 extends CanvasLayer
 
 var store: StoreManager
+var text_catalog: LocalizedText
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var offers: VBoxContainer = $Root/Panel/Margin/VBox/Offers
 
 
-func setup(store_manager: StoreManager) -> void:
+func setup(store_manager: StoreManager, localized_text: LocalizedText) -> void:
 	store = store_manager
+	text_catalog = localized_text
+	$Root/Shortcut.text = text_catalog.text("UI_STORE")
+	$Root/Panel/Margin/VBox/Title.text = text_catalog.text("UI_STORE_TITLE")
+	$Root/Panel/Margin/VBox/Notice.text = text_catalog.text("UI_STORE_NOTICE")
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle)
 	_build_offers()
@@ -53,9 +59,9 @@ func _build_offers() -> void:
 		box.add_child(description)
 
 		var purchase := Button.new()
-		purchase.text = "Purchases Disabled — Prototype Catalog"
+		purchase.text = text_catalog.text("UI_STORE_DISABLED")
 		purchase.disabled = true
-		purchase.tooltip_text = "No billing SDK, store receipt validation, or real-money transaction is connected."
+		purchase.tooltip_text = text_catalog.text("UI_STORE_TOOLTIP")
 		box.add_child(purchase)
 
 
@@ -75,4 +81,4 @@ func _format_contents(contents: Dictionary) -> String:
 	var parts := PackedStringArray()
 	for key in contents.keys():
 		parts.append("%s x%s" % [String(key), str(contents[key])])
-	return "Includes: " + ", ".join(parts)
+	return text_catalog.text("UI_INCLUDES") + " " + ", ".join(parts)

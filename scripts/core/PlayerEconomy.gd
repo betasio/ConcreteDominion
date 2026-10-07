@@ -4,7 +4,7 @@ extends Node
 signal changed
 
 @export var cash: int = 25000
-@export var gold: int = 250
+@export var gold: int = 75
 
 
 func can_afford_cash(amount: int) -> bool:

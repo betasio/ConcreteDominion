@@ -4,7 +4,8 @@ extends Node
 signal queue_changed
 signal construction_completed(target: Node)
 
-@export var gold_per_minute: int = 3
+@export var gold_per_chunk: int = 2
+var speedup_chunk_seconds: int = 300
 
 var active_job: Dictionary = {}
 var economy: PlayerEconomy
@@ -17,7 +18,8 @@ func setup(player_economy: PlayerEconomy, game_balance: GameBalance = null, buil
 	balance = game_balance
 	core_effects = building_effects
 	if balance != null:
-		gold_per_minute = balance.get_speedup_rate("construction_gold_per_minute", gold_per_minute)
+		gold_per_chunk = balance.get_speedup_rate("construction_gold_per_chunk", gold_per_chunk)
+		speedup_chunk_seconds = balance.get_speedup_chunk_seconds()
 
 func _process(delta: float) -> void:
 	if active_job.is_empty():
@@ -97,7 +99,7 @@ func start_lot_build(lot: BuildLot) -> bool:
 func get_finish_now_cost() -> int:
 	if active_job.is_empty():
 		return 0
-	return ceili(float(active_job["seconds_remaining"]) / 60.0) * gold_per_minute
+	return ceili(float(active_job["seconds_remaining"]) / float(speedup_chunk_seconds)) * gold_per_chunk
 
 func finish_now() -> bool:
 	if active_job.is_empty() or economy == null:

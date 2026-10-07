@@ -4,15 +4,16 @@ extends Node
 signal changed
 
 var recruitment: Dictionary = {
-	&"Enforcer": {"cash_each": 250, "seconds_each": 1.4},
-	&"Driver": {"cash_each": 400, "seconds_each": 2.0},
-	&"Spy": {"cash_each": 500, "seconds_each": 2.4}
+	&"Enforcer": {"cash_each": 250, "seconds_each": 20.0},
+	&"Driver": {"cash_each": 400, "seconds_each": 30.0},
+	&"Spy": {"cash_each": 500, "seconds_each": 36.0}
 }
 
 var speedups: Dictionary = {
-	"recruitment_gold_per_minute": 2,
-	"construction_gold_per_minute": 3,
-	"hospital_gold_per_minute": 2
+	"chunk_seconds": 300,
+	"recruitment_gold_per_chunk": 1,
+	"construction_gold_per_chunk": 2,
+	"hospital_gold_per_chunk": 1
 }
 
 var core_buildings: Dictionary = {
@@ -53,6 +54,10 @@ func get_speedup_rate(key: String, fallback: int) -> int:
 	return int(speedups.get(key, fallback))
 
 
+func get_speedup_chunk_seconds() -> int:
+	return maxi(60, int(speedups.get("chunk_seconds", 300)))
+
+
 func get_progression_value(key: String, fallback: float) -> float:
 	return float(progression.get(key, fallback))
 
@@ -88,9 +93,10 @@ func get_debug_summary() -> PackedStringArray:
 			get_facility_value("garage_driver_support_per_level", 0.02) * 100.0,
 			get_facility_value("intel_spy_support_per_level", 0.025) * 100.0
 		],
-		"Gold/min: Recruit %d • Build %d • Clinic %d" % [
-			int(speedups["recruitment_gold_per_minute"]),
-			int(speedups["construction_gold_per_minute"]),
-			int(speedups["hospital_gold_per_minute"])
+		"Gold/%d min: Recruit %d • Build %d • Clinic %d" % [
+			get_speedup_chunk_seconds() / 60,
+			int(speedups["recruitment_gold_per_chunk"]),
+			int(speedups["construction_gold_per_chunk"]),
+			int(speedups["hospital_gold_per_chunk"])
 		]
 	])

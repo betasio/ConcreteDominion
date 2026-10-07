@@ -12,7 +12,7 @@ display_name = "Crew Barracks"
 description = "Recruit Enforcers, Drivers, and Spies. Upgrades speed Enforcer training and unlock extra recruitment queue slots."
 accent_color = Color(0.64, 0.34, 0.25, 1)
 base_upgrade_cash_cost = 6500
-base_upgrade_duration = 18.0
+base_upgrade_duration = 240.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("Shape")

@@ -9,28 +9,28 @@ var catalog: Array[Dictionary] = [
 		"title": "Gold Starter",
 		"price_label": "$0.99 example",
 		"description": "80 Gold. Designed for small timer skips.",
-		"contents": {"Gold": 80}
+		"contents": {"Gold": 40}
 	},
 	{
 		"id": "builder_pack",
 		"title": "Builder Pack",
 		"price_label": "$4.99 example",
 		"description": "Gold plus Cash for construction progression.",
-		"contents": {"Gold": 350, "Cash": 15000}
+		"contents": {"Gold": 160, "Cash": 15000}
 	},
 	{
 		"id": "crew_support",
 		"title": "Crew Support Pack",
 		"price_label": "$4.99 example",
 		"description": "Progress resources without exclusive combat power.",
-		"contents": {"Gold": 220, "Parts": 5, "Intel": 3}
+		"contents": {"Gold": 100, "Parts": 5, "Intel": 3}
 	},
 	{
 		"id": "recovery_pack",
 		"title": "Recovery Pack",
 		"price_label": "$2.99 example",
 		"description": "Gold focused on Clinic and queue speed-ups.",
-		"contents": {"Gold": 180}
+		"contents": {"Gold": 60}
 	}
 ]
 

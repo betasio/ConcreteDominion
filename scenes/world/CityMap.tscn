@@ -32,27 +32,31 @@ script = ExtResource("1_map")
 [node name="BuildLotA" parent="Buildings" instance=ExtResource("5_lot")]
 building_name = "Garage"
 build_cash_cost = 12000
-build_duration = 20.0
+build_duration = 360.0
+base_upgrade_duration = 300.0
 description = "Build a Garage here. Future upgrades improve Driver support bonuses for Alliance Raids."
 
 [node name="BuildLotB" parent="Buildings" instance=ExtResource("5_lot")]
 building_name = "Intel Office"
 build_cash_cost = 15000
-build_duration = 25.0
+build_duration = 480.0
+base_upgrade_duration = 360.0
 description = "Build an Intel Office here. Future upgrades improve Spy defense-break bonuses."
 
 [node name="BuildLotC" parent="Buildings" instance=ExtResource("5_lot")]
 building_name = "Scrapyard"
 build_cash_cost = 18000
-build_duration = 30.0
+build_duration = 600.0
 base_upgrade_cash_cost = 10000
+base_upgrade_duration = 420.0
 description = "Produces Parts over time. Higher levels increase production."
 
 [node name="BuildLotD" parent="Buildings" instance=ExtResource("5_lot")]
 building_name = "Data Hub"
 build_cash_cost = 22000
-build_duration = 35.0
+build_duration = 720.0
 base_upgrade_cash_cost = 12000
+base_upgrade_duration = 480.0
 description = "Produces Intel over time. Higher levels increase production."
 
 [node name="RaidTargets" type="Node2D" parent="."]

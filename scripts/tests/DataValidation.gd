@@ -88,6 +88,8 @@ func _validate_building_scenes() -> void:
 			_fail("%s max level is below the endgame requirement." % building.display_name)
 		if building.base_upgrade_cash_cost <= 0 or building.base_upgrade_duration <= 0.0:
 			_fail("%s has invalid upgrade cost/duration." % building.display_name)
+		if building.base_upgrade_duration < 180.0:
+			_fail("%s upgrade duration is still prototype-compressed." % building.display_name)
 		building.free()
 
 	var city_scene := load("res://scenes/world/CityMap.tscn") as PackedScene
@@ -108,6 +110,8 @@ func _validate_building_scenes() -> void:
 			continue
 		if lot.build_cash_cost <= 0 or lot.base_upgrade_cash_cost <= 0:
 			_fail("%s has invalid Cash costs." % lot.building_name)
+		if lot.build_duration < 300.0 or lot.base_upgrade_duration < 240.0:
+			_fail("%s timing is below the production pacing floor." % lot.building_name)
 		if lot.max_level < 5:
 			_fail("%s max level is below 5." % lot.building_name)
 	city.free()

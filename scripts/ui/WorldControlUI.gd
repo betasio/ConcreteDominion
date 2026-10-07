@@ -4,6 +4,7 @@ extends CanvasLayer
 var control: WorldControlManager
 var city_map: Node
 var resources: ResourceProductionManager
+var text_catalog: LocalizedText
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var income_label: Label = $Root/Panel/Margin/VBox/Income
@@ -19,10 +20,17 @@ var resources: ResourceProductionManager
 @onready var patrol_button: Button = $Root/Panel/Margin/VBox/ResolvePatrol
 
 
-func setup(manager: WorldControlManager, world: Node, resource_manager: ResourceProductionManager) -> void:
+func setup(manager: WorldControlManager, world: Node, resource_manager: ResourceProductionManager, localized_text: LocalizedText) -> void:
 	control = manager
 	city_map = world
 	resources = resource_manager
+	text_catalog = localized_text
+	$Root/Shortcut.text = text_catalog.text("UI_TERRITORY")
+	$Root/Panel/Margin/VBox/Title.text = text_catalog.text("UI_TERRITORY_TITLE")
+	$Root/Panel/Margin/VBox/DiscoverIntel.text = text_catalog.text("UI_REVEAL_INTEL")
+	$Root/Panel/Margin/VBox/CollectResources.text = text_catalog.text("UI_COLLECT_RESOURCES")
+	$Root/Panel/Margin/VBox/ResolvePatrol.text = text_catalog.text("UI_CLEAR_PATROL")
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	control.changed.connect(_refresh)
 	resources.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
@@ -85,29 +93,29 @@ func _refresh() -> void:
 	if control == null:
 		return
 
-	income_label.text = "TURF INCOME\nRate: $%d/hr\nBanked: $%d / 8h cap" % [
+	income_label.text = text_catalog.text("UI_TURF_INCOME") + "\nRate: $%d/hr\nBanked: $%d / 8h cap" % [
 		control.get_income_per_hour(),
 		floori(control.production_bank)
 	]
 	collect_button.text = "Collect $%d" % floori(control.production_bank)
 	collect_button.disabled = control.production_bank < 1.0
 
-	districts_label.text = "DISTRICTS\n" + "\n".join(control.get_district_lines())
-	discovery_label.text = "NEXT DISCOVERY\n%s" % control.get_next_discovery_summary()
-	intel_button.disabled = control.get_next_discovery_summary() == "No eligible fogged district."
+	districts_label.text = text_catalog.text("UI_DISTRICTS") + "\n" + "\n".join(control.get_district_lines())
+	discovery_label.text = text_catalog.text("UI_NEXT_DISCOVERY") + "\n%s" % control.get_next_discovery_summary()
+	intel_button.disabled = not control.has_discoverable_target()
 
 	var scan_remaining := ceili(control.command_scan_remaining)
-	command_button.text = "Safehouse Command Scan" if scan_remaining <= 0 else "Command Scan — %ds" % scan_remaining
-	command_button.disabled = scan_remaining > 0 or control.get_next_discovery_summary() == "No eligible fogged district."
+	command_button.text = text_catalog.text("UI_COMMAND_SCAN") if scan_remaining <= 0 else "Command Scan — %ds" % scan_remaining
+	command_button.disabled = scan_remaining > 0 or not control.has_discoverable_target()
 
-	resource_label.text = "RESOURCE FACILITIES\n%s" % resources.get_summary()
+	resource_label.text = text_catalog.text("UI_RESOURCE_FACILITIES") + "\n%s" % resources.get_summary()
 	collect_resources_button.disabled = resources.parts_bank < 1.0 and resources.intel_bank < 1.0
 
 	if control.active_patrol.is_empty():
-		patrol_label.text = "RIVAL ENCOUNTER\nNo active threat."
+		patrol_label.text = text_catalog.text("UI_RIVAL_ENCOUNTER") + "\n" + text_catalog.text("UI_NO_THREAT")
 		patrol_button.disabled = true
 	else:
-		patrol_label.text = "RIVAL ENCOUNTER\n%s • %s\n%s requires %s power: %d" % [
+		patrol_label.text = text_catalog.text("UI_RIVAL_ENCOUNTER") + "\n%s • %s\n%s requires %s power: %d" % [
 			String(control.active_patrol["district_name"]),
 			String(control.active_patrol["faction"]) + " • " + String(control.active_patrol.get("trait", "")),
 			String(control.active_patrol["type"]).replace("_", " ").capitalize(),
@@ -117,7 +125,7 @@ func _refresh() -> void:
 		patrol_button.disabled = false
 
 	var cycle := ceili(control.get_task_cycle_remaining())
-	tasks_label.text = "ALLIANCE TASKS — refresh %02d:%02d:%02d\n%s" % [
+	tasks_label.text = text_catalog.text("UI_ALLIANCE_TASKS") + " — refresh %02d:%02d:%02d\n%s" % [
 		floori(float(cycle) / 3600.0),
 		floori(float(cycle % 3600) / 60.0),
 		cycle % 60,

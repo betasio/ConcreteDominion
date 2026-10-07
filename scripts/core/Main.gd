@@ -157,13 +157,13 @@ func _ready() -> void:
 			float(raid_battle.active_battle.get("seconds_remaining", 0.0))
 		)
 
-	progression_ui.setup(progression, mission_tracker, loot_inventory)
+	progression_ui.setup(progression, mission_tracker, loot_inventory, localized_text)
 	retention_ui.setup(retention)
 	profile_ui.setup(player_profile, mailbox, progression)
 	event_ui.setup(event_manager)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
-	store_ui.setup(store_manager)
-	world_control_ui.setup(world_control, city_map, resource_production)
+	store_ui.setup(store_manager, localized_text)
+	world_control_ui.setup(world_control, city_map, resource_production, localized_text)
 	achievement_ui.setup(achievements, localized_text)
 	city_map.turf_overlay.setup(world_control, city_map)
 

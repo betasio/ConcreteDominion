@@ -168,17 +168,57 @@ func _audit_specialist_value() -> void:
 
 
 func _audit_timer_scale() -> void:
-	var recruit_seconds := [1.4, 2.0, 2.4]
-	var average := (recruit_seconds[0] + recruit_seconds[1] + recruit_seconds[2]) / 3.0
+	var balance := GameBalance.new()
+	var economy := PlayerEconomy.new()
+	var clinic := HospitalQueue.new()
+
+	var enforcer_seconds := float(balance.get_recruitment_definition(&"Enforcer").get("seconds_each", 0.0))
+	var driver_seconds := float(balance.get_recruitment_definition(&"Driver").get("seconds_each", 0.0))
+	var spy_seconds := float(balance.get_recruitment_definition(&"Spy").get("seconds_each", 0.0))
+	var average := (enforcer_seconds + driver_seconds + spy_seconds) / 3.0
 	print("[BALANCE] Mean base recruitment seconds/troop: %.1f" % average)
 
-	if average < 10.0:
-		_warn("Recruitment/build/healing timers are prototype-compressed; production monetization pacing is not yet represented.")
+	if average < 20.0 or average > 60.0:
+		_fail("Base recruitment timing left the production pacing envelope.")
 
-	var starter_gold := 250
-	var one_minute_build_speedup := 3
-	if starter_gold >= one_minute_build_speedup * 50:
-		_warn("Starter Gold can fund many current short speed-ups; reassess after production-scale timer tuning.")
+	var chunk_seconds := balance.get_speedup_chunk_seconds()
+	var starter_gold := economy.gold
+	var recruitment_chunk_cost := balance.get_speedup_rate("recruitment_gold_per_chunk", 0)
+	var construction_chunk_cost := balance.get_speedup_rate("construction_gold_per_chunk", 0)
+	var clinic_chunk_cost := balance.get_speedup_rate("hospital_gold_per_chunk", 0)
+	var five_enforcers_seconds := 5.0 * enforcer_seconds
+	var five_enforcer_speedup := ceili(five_enforcers_seconds / float(chunk_seconds)) * recruitment_chunk_cost
+	var ten_minute_build_speedup := ceili(600.0 / float(chunk_seconds)) * construction_chunk_cost
+	var five_wounded_speedup := ceili((5.0 * clinic.seconds_per_troop) / float(chunk_seconds)) * clinic_chunk_cost
+
+	print("[BALANCE] Starter Gold: %d" % starter_gold)
+	print("[BALANCE] Speed-up chunk: %ds" % chunk_seconds)
+	print("[BALANCE] Speed-up examples: 5 Enforcers %dG • 10m build %dG • 5 wounded %dG" % [
+		five_enforcer_speedup,
+		ten_minute_build_speedup,
+		five_wounded_speedup
+	])
+
+	if starter_gold < 40 or starter_gold > 120:
+		_fail("Starter Gold is outside the intended onboarding envelope.")
+	if chunk_seconds != 300:
+		_fail("Speed-up chunk is not the intended 5-minute production interval.")
+	if recruitment_chunk_cost < 1 or recruitment_chunk_cost > 2:
+		_fail("Recruitment chunk pricing is outside the intended envelope.")
+	if construction_chunk_cost < 1 or construction_chunk_cost > 3:
+		_fail("Construction chunk pricing is outside the intended envelope.")
+	if clinic_chunk_cost < 1 or clinic_chunk_cost > 2:
+		_fail("Clinic chunk pricing is outside the intended envelope.")
+	if ten_minute_build_speedup < 3 or ten_minute_build_speedup > 6:
+		_fail("Construction speed-up pricing is outside the intended 5-minute-chunk envelope.")
+	if five_enforcer_speedup > 2:
+		_fail("Early recruitment speed-up is too expensive.")
+	if five_wounded_speedup > 2:
+		_fail("Early Clinic recovery speed-up is too expensive.")
+
+	balance.free()
+	economy.free()
+	clinic.free()
 
 
 func _fail(message: String) -> void:

@@ -12,7 +12,7 @@ display_name = "Underground Clinic"
 description = "Defeated troops recover here instead of dying permanently. Upgrades shorten treatment time and unlock parallel Clinic slots."
 accent_color = Color(0.25, 0.76, 0.62, 1)
 base_upgrade_cash_cost = 7000
-base_upgrade_duration = 18.0
+base_upgrade_duration = 240.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("Shape")

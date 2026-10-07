@@ -4,7 +4,8 @@ extends Node
 signal queue_changed
 signal recruitment_completed(troop_type: StringName, amount: int)
 
-@export var gold_per_minute: int = 2
+@export var gold_per_chunk: int = 1
+var speedup_chunk_seconds: int = 300
 
 var economy: PlayerEconomy
 var roster: TroopRoster
@@ -16,9 +17,9 @@ var queued_jobs: Array[Dictionary] = []
 var _last_displayed_second := -1
 
 var definitions := {
-	&"Enforcer": {"cash_each": 250, "seconds_each": 1.4},
-	&"Driver": {"cash_each": 400, "seconds_each": 2.0},
-	&"Spy": {"cash_each": 500, "seconds_each": 2.4}
+	&"Enforcer": {"cash_each": 250, "seconds_each": 20.0},
+	&"Driver": {"cash_each": 400, "seconds_each": 30.0},
+	&"Spy": {"cash_each": 500, "seconds_each": 36.0}
 }
 
 
@@ -30,7 +31,8 @@ func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster, game_balanc
 	core_effects = building_effects
 	if balance != null:
 		definitions = balance.recruitment.duplicate(true)
-		gold_per_minute = balance.get_speedup_rate("recruitment_gold_per_minute", gold_per_minute)
+		gold_per_chunk = balance.get_speedup_rate("recruitment_gold_per_chunk", gold_per_chunk)
+		speedup_chunk_seconds = balance.get_speedup_chunk_seconds()
 
 
 func _process(delta: float) -> void:
@@ -97,7 +99,7 @@ func recruit(troop_type: StringName, amount: int) -> bool:
 func get_finish_now_cost() -> int:
 	if active_job.is_empty():
 		return 0
-	return ceili(float(active_job["seconds_remaining"]) / 60.0) * gold_per_minute
+	return ceili(float(active_job["seconds_remaining"]) / float(speedup_chunk_seconds)) * gold_per_chunk
 
 
 func finish_now() -> bool:

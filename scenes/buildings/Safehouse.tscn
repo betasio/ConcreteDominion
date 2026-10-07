@@ -12,7 +12,7 @@ display_name = "Safehouse"
 description = "Your crew headquarters. Upgrades reduce construction time and improve Alliance Raid Cash rewards."
 accent_color = Color(0.78, 0.59, 0.20, 1)
 base_upgrade_cash_cost = 8000
-base_upgrade_duration = 20.0
+base_upgrade_duration = 300.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("Shape")

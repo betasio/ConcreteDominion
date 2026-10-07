@@ -345,3 +345,71 @@ The pipeline runs:
 4. full Main-scene SmokeTest.
 
 A hard failure in any stage blocks the QA job.
+
+
+## Production economy tuning pass
+
+The seconds-long prototype queue timings have now been replaced with an initial production-oriented pacing profile.
+
+### Recruitment
+
+Base time per troop:
+
+- Enforcer — 20 seconds
+- Driver — 30 seconds
+- Spy — 36 seconds
+
+Barracks, Garage, and Intel Office bonuses still reduce these values normally.
+
+### Clinic
+
+Base recovery time is now 45 seconds per wounded troop before severity and Clinic-level modifiers.
+
+The no-permanent-death pillar is unchanged.
+
+### Construction
+
+Current starting build durations:
+
+- Garage — 6 minutes
+- Intel Office — 8 minutes
+- Scrapyard — 10 minutes
+- Data Hub — 12 minutes
+
+Core-building upgrade durations begin around 4–5 minutes per level step and scale with current building level, while Safehouse construction-speed bonuses continue to apply.
+
+### Gold speed-ups
+
+Gold no longer charges per minute.
+
+All queues now use a shared **5-minute speed-up chunk**:
+
+- Recruitment — 1 Gold per chunk
+- Construction — 2 Gold per chunk
+- Clinic — 1 Gold per chunk
+
+This keeps small convenience skips inexpensive without making a longer timer cost explode linearly every minute.
+
+New accounts now begin with **75 Gold** instead of 250.
+
+Existing saves are not reduced; saved Gold balances remain intact.
+
+Prototype Store example Gold quantities were reduced to match the smaller production-scale Gold economy. Real purchases remain disabled.
+
+### Localization cleanup
+
+The most visible Progression, Territory Command, and Store interface labels/buttons now use the existing LocalizedText key/fallback system.
+
+This is still not the full legacy-text migration, but it moves the highest-frequency UI surfaces onto translation-ready strings.
+
+### QA changes
+
+BalanceAudit now hard-checks:
+
+- production recruitment timing envelope;
+- 75-Gold onboarding range;
+- 5-minute chunk pricing;
+- early recruitment speed-up affordability;
+- early Clinic recovery affordability.
+
+DataValidation now rejects core/facility construction timers that fall back into the old prototype-compressed range.
