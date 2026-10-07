@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 26:
+	if save == null or SaveManager.SAVE_VERSION < 27:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -105,6 +105,10 @@ func _ready() -> void:
 			_fail("Chapter 4 objective chain is incomplete.")
 		if not missions.missions.has("discover_casino") or not missions.missions.has("chapter_4_choice") or not missions.missions.has("build_data_hub") or not missions.missions.has("chapter_4_complete"):
 			_fail("Chapter 4 Velvet Circle campaign missions are missing.")
+		if MissionTracker.CHAPTER_5_TASKS.size() != 5:
+			_fail("Chapter 5 objective chain is incomplete.")
+		if not missions.missions.has("discover_financial") or not missions.missions.has("chapter_5_choice") or not missions.missions.has("capture_faction_objective") or not missions.missions.has("chapter_5_complete"):
+			_fail("Chapter 5 Financial District/Faction objective campaign missions are missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Force") == null or game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Intel") == null:
 			_fail("Chapter strategic choice controls are missing.")
 
@@ -186,7 +190,9 @@ func _ready() -> void:
 		if faction_manager.get_territory_cash_multiplier() < 1.0:
 			_fail("Faction territory income objective multiplier is invalid.")
 		if missions.faction != faction_manager:
-			_fail("Chapter 3 Faction onboarding is not wired.")
+			_fail("Chapter Faction integration is not wired.")
+		if not faction_manager.territory_captured.is_connected(missions._on_faction_territory_captured):
+			_fail("Chapter 5 Faction territory objective signal is not wired.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CreateBox/Create") == null:
 		_fail("Player Faction creation UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily") == null:
