@@ -23,7 +23,7 @@ var hospital: HospitalQueue
 var alliance: AllianceManager
 var city_map: Node
 var core_effects: CoreBuildingEffects
-var faction_rules: FactionRules
+var family_rules: RivalFamilyRules
 
 var discovered: Dictionary = {"downtown_bank": true}
 var owned: Dictionary = {}
@@ -102,7 +102,7 @@ func setup(
 	alliance_manager: AllianceManager,
 	world: Node,
 	building_effects: CoreBuildingEffects,
-	rules: FactionRules,
+	rules: RivalFamilyRules,
 	raid_battle: RaidBattle
 ) -> void:
 	economy = player_economy
@@ -113,7 +113,7 @@ func setup(
 	alliance = alliance_manager
 	city_map = world
 	core_effects = building_effects
-	faction_rules = rules
+	family_rules = rules
 
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 	progression.leveled_up.connect(_on_progression_changed)
@@ -151,7 +151,7 @@ func _process(delta: float) -> void:
 				continue
 			var current := float(pressure.get(target_id, 0.0))
 			if not bool(contested.get(target_id, false)):
-				var pressure_multiplier := faction_rules.get_pressure_multiplier(String(target_id)) if faction_rules != null else 1.0
+				var pressure_multiplier := family_rules.get_pressure_multiplier(String(target_id)) if family_rules != null else 1.0
 				current = minf(1.0, current + delta * PRESSURE_PER_SECOND * pressure_multiplier)
 				pressure[target_id] = current
 				if current >= 1.0:
@@ -194,18 +194,18 @@ func get_owner_label(target_id: String) -> String:
 
 
 func get_rival_faction(target_id: String) -> String:
-	if faction_rules != null:
-		return faction_rules.get_faction_name(target_id)
+	if family_rules != null:
+		return family_rules.get_faction_name(target_id)
 	return String(factions.get(target_id, "Rival Crew"))
 
 
 func get_rival_trait(target_id: String) -> String:
-	return faction_rules.get_trait_name(target_id) if faction_rules != null else ""
+	return family_rules.get_trait_name(target_id) if family_rules != null else ""
 
 
 func get_rivalry_score(target_id: String) -> int:
-	var faction_id := faction_rules.get_faction_id(target_id) if faction_rules != null else ""
-	return int(faction_rivalry.get(faction_id, 0))
+	var family_id := family_rules.get_faction_id(target_id) if family_rules != null else ""
+	return int(faction_rivalry.get(family_id, 0))
 
 
 func get_rivalry_label(target_id: String) -> String:
@@ -224,7 +224,7 @@ func get_rivalry_reward_multiplier(target_id: String) -> float:
 
 
 func get_faction_dossier(target_id: String) -> Dictionary:
-	if faction_rules == null or not districts.has(target_id):
+	if family_rules == null or not districts.has(target_id):
 		return {}
 	var data: Dictionary = districts[target_id]
 	return {
@@ -232,29 +232,29 @@ func get_faction_dossier(target_id: String) -> Dictionary:
 		"district": String(data["name"]),
 		"faction": get_rival_faction(target_id),
 		"trait": get_rival_trait(target_id),
-		"boss": faction_rules.get_boss_name(target_id),
-		"boss_title": faction_rules.get_boss_title(target_id),
-		"boss_quote": faction_rules.get_boss_quote(target_id),
-		"perk": faction_rules.get_perk_summary(target_id),
-		"preferred_encounter": faction_rules.get_preferred_encounter(target_id),
+		"boss": family_rules.get_boss_name(target_id),
+		"boss_title": family_rules.get_boss_title(target_id),
+		"boss_quote": family_rules.get_boss_quote(target_id),
+		"perk": family_rules.get_perk_summary(target_id),
+		"preferred_encounter": family_rules.get_preferred_encounter(target_id),
 		"rivalry": get_rivalry_label(target_id),
 		"rivalry_score": get_rivalry_score(target_id),
 		"feud_bonus_percent": roundi((get_rivalry_reward_multiplier(target_id) - 1.0) * 100.0),
-		"base_cash_bonus_percent": faction_rules.get_reward_bonus_percent(target_id),
-		"power_modifier_percent": faction_rules.get_power_modifier_percent(target_id)
+		"base_cash_bonus_percent": family_rules.get_reward_bonus_percent(target_id),
+		"power_modifier_percent": family_rules.get_power_modifier_percent(target_id)
 	}
 
 
 func get_rivalry_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
-	var seen_factions := {}
+	var seen_families := {}
 	for target_id in _ordered_ids():
 		if not is_discovered(target_id):
 			continue
-		var faction_id := faction_rules.get_faction_id(target_id) if faction_rules != null else target_id
-		if seen_factions.has(faction_id):
+		var family_id := family_rules.get_faction_id(target_id) if family_rules != null else target_id
+		if seen_families.has(family_id):
 			continue
-		seen_factions[faction_id] = true
+		seen_families[family_id] = true
 		var dossier := get_faction_dossier(target_id)
 		if dossier.is_empty():
 			continue
@@ -286,10 +286,10 @@ func get_capture_victory_summary(target_id: String) -> Dictionary:
 
 
 func _increase_rivalry(target_id: String, amount: int = 1) -> void:
-	if faction_rules == null:
+	if family_rules == null:
 		return
-	var faction_id := faction_rules.get_faction_id(target_id)
-	faction_rivalry[faction_id] = mini(10, int(faction_rivalry.get(faction_id, 0)) + maxi(0, amount))
+	var family_id := family_rules.get_faction_id(target_id)
+	faction_rivalry[family_id] = mini(10, int(faction_rivalry.get(family_id, 0)) + maxi(0, amount))
 
 
 func can_discover(target_id: String) -> bool:
@@ -492,7 +492,7 @@ func _spawn_patrol() -> void:
 		return
 
 	var target_id := owned_ids[_encounter_cursor % owned_ids.size()]
-	var cycle := faction_rules.get_encounter_cycle(target_id) if faction_rules != null else ["roadblock", "surveillance", "convoy_ambush"]
+	var cycle := family_rules.get_encounter_cycle(target_id) if family_rules != null else ["roadblock", "surveillance", "convoy_ambush"]
 	var encounter_type := String(cycle[_encounter_cursor % cycle.size()])
 	_encounter_cursor += 1
 	_create_encounter(target_id, encounter_type, 1.0)
@@ -506,8 +506,8 @@ func _create_encounter(target_id: String, encounter_type: String, power_multipli
 	if not districts.has(target_id):
 		return
 	var data: Dictionary = districts[target_id]
-	var faction_power := faction_rules.get_encounter_power_multiplier(target_id) if faction_rules != null else 1.0
-	var faction_cash := faction_rules.get_cash_multiplier(target_id) if faction_rules != null else 1.0
+	var faction_power := family_rules.get_encounter_power_multiplier(target_id) if family_rules != null else 1.0
+	var faction_cash := family_rules.get_cash_multiplier(target_id) if family_rules != null else 1.0
 	var role := &"Enforcer"
 	match encounter_type:
 		"surveillance":
@@ -673,7 +673,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	for target_id in owned.keys():
 		if not bool(owned[target_id]) or bool(contested.get(target_id, false)):
 			continue
-		var pressure_multiplier := faction_rules.get_pressure_multiplier(String(target_id)) if faction_rules != null else 1.0
+		var pressure_multiplier := family_rules.get_pressure_multiplier(String(target_id)) if family_rules != null else 1.0
 		var offline_pressure := minf(
 			0.99,
 			float(pressure.get(target_id, 0.0))
@@ -684,7 +684,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	var saved_rivalry = data.get("faction_rivalry", {})
 	if saved_rivalry is Dictionary:
 		for faction_id in faction_rivalry.keys():
-			faction_rivalry[faction_id] = clampi(int(saved_rivalry.get(faction_id, faction_rivalry[faction_id])), 0, 10)
+			faction_rivalry[family_id] = clampi(int(saved_rivalry.get(faction_id, faction_rivalry[family_id])), 0, 10)
 
 	var saved_tasks = data.get("alliance_tasks", {})
 	if saved_tasks is Dictionary:
