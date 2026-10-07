@@ -11,6 +11,7 @@ func _ready() -> void:
 	_test_dominion_save_clamps()
 	_test_dominion_season_rollover()
 	_test_faction_season_rollover()
+	_test_operation_report_grade_rules()
 	_finish()
 
 
@@ -230,6 +231,20 @@ func _test_faction_season_rollover() -> void:
 	if faction.get_owned_territory_count() != 0:
 		_fail("Faction seasonal territory objectives did not reset on season rollover.")
 	faction.queue_free()
+
+
+func _test_operation_report_grade_rules() -> void:
+	var report := OperationResultUI.new()
+	if report._grade_from_ratio(1.40, true) != "S":
+		_fail("Operation report S-grade threshold is invalid.")
+	if report._grade_from_ratio(1.16, true) != "A":
+		_fail("Operation report A-grade threshold is invalid.")
+	if report._grade_from_ratio(1.01, true) != "B":
+		_fail("Operation report B-grade threshold is invalid.")
+	if report._grade_from_ratio(0.90, false) != "C":
+		_fail("Operation report close-defeat grade is invalid.")
+	if report._grade_from_ratio(0.50, false) != "D":
+		_fail("Operation report defeat grade is invalid.")
 
 
 func _fail(message: String) -> void:
