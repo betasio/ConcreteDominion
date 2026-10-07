@@ -135,7 +135,7 @@ func get_progress_lines(text_catalog: LocalizedText) -> PackedStringArray:
 func get_dominion_summary() -> String:
 	if _meets_dominion_requirements():
 		return "DOMINION COMPLETE — citywide control secured."
-	return "ENDGAME: own all districts, reach Account Lv.7 + Alliance Lv.4, max core buildings, and establish all specialist/resource facilities."
+	return "ENDGAME: own all districts, reach Account Lv.7 + Crew Support Lv.4, max core buildings, and establish all specialist/resource facilities."
 
 
 func get_save_data() -> Dictionary:
