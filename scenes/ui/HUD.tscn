@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[node name="HUD" type="CanvasLayer"]
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="MarginContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+
+[node name="Panel" type="PanelContainer" parent="Root/TopBar"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="Root/TopBar/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="Title" type="Label" parent="Root/TopBar/Panel/HBox"]
+layout_mode = 2
+text = "CONCRETE DOMINION"
+
+[node name="Spacer" type="Control" parent="Root/TopBar/Panel/HBox"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Cash" type="Label" parent="Root/TopBar/Panel/HBox"]
+layout_mode = 2
+text = "Cash: $25,000"
+
+[node name="Gold" type="Label" parent="Root/TopBar/Panel/HBox"]
+layout_mode = 2
+text = "Gold: 250"
+
+[node name="Help" type="Label" parent="Root"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -370.0
+offset_top = -88.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "WASD / Arrows: Pan   •   Wheel: Zoom\nRight/Middle drag: Pan   •   Mobile: Drag + Pinch"
+horizontal_alignment = 2
+vertical_alignment = 2

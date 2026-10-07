@@ -1,0 +1,16 @@
+# Godot 4 generated files
+.godot/
+
+# Exported builds
+builds/
+exports/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
