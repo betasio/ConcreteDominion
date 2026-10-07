@@ -103,4 +103,4 @@ func _refresh_hospital() -> void:
 
 func _format_time(seconds: float) -> String:
 	var total := maxi(0, ceili(seconds))
-	return "%02d:%02d" % [total / 60, total % 60]
+	return "%02d:%02d" % [floori(total / 60.0), total % 60]
