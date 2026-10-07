@@ -66,7 +66,11 @@ func _upgrade(role: StringName) -> void:
 
 
 func _choose_approach(choice_id: String) -> void:
-	missions.choose_chapter_2_approach(choice_id)
+	var chapter := missions.get_story_chapter_status()
+	if int(chapter.get("chapter", 1)) == 3:
+		missions.choose_chapter_3_approach("pressure" if choice_id == "force" else "patience")
+	else:
+		missions.choose_chapter_2_approach(choice_id)
 	_refresh()
 
 
@@ -95,16 +99,28 @@ func _refresh() -> void:
 	approach_box.visible = bool(chapter.get("choice_required", false))
 	force_button.disabled = not approach_box.visible
 	intel_button.disabled = not approach_box.visible
+	if int(chapter["chapter"]) == 3:
+		force_button.text = "PRESSURE • $4,000 + Parts x3"
+		intel_button.text = "PATIENCE • 4 Gold + Intel x3"
+	else:
+		force_button.text = "FORCE • $2,500 + Parts x2"
+		intel_button.text = "INTEL • 3 Gold + Intel x2"
 
 	if int(chapter["chapter"]) == 1:
 		milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Gold + 35 XP + Parts x1\n%s  4/5 — $3,500 + 5 Gold + 60 XP + Intel x1" % [
 			"✓" if bool(chapter["milestone_2_claimed"]) else "○",
 			"✓" if bool(chapter["milestone_4_claimed"]) else "○"
 		]
-	else:
+	elif int(chapter["chapter"]) == 2:
 		var choice := String(chapter.get("choice", ""))
 		milestones_label.text = "RIVAL CAMPAIGN\nIron Serpents: Harbor • Meridian Boys: Midtown\nApproach: %s • Chapter reward: %s" % [
 			"UNDECIDED" if choice.is_empty() else choice.to_upper(),
+			String(chapter["completion_reward"])
+		]
+	else:
+		var chapter_3_choice := String(chapter.get("choice", ""))
+		milestones_label.text = "NORTHSIDE CAMPAIGN\nDarius Knox • Northside Crew\nDoctrine: %s • Final objective: join/create a player Faction\nChapter reward: %s" % [
+			"UNDECIDED" if chapter_3_choice.is_empty() else chapter_3_choice.to_upper(),
 			String(chapter["completion_reward"])
 		]
 
