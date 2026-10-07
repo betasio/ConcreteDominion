@@ -65,6 +65,12 @@ jobs:
           godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
+      - name: Audit runtime art coverage
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ArtCoverageAudit.tscn 2>&1 | tee godot-art.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-art.log
+
       - name: Run gameplay regression audit
         run: |
           set -o pipefail
