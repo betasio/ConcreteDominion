@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://scripts/progression/PlayerProgression.gd" id="15_progression"]
 [ext_resource type="Script" path="res://scripts/progression/MissionTracker.gd" id="16_missions"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ProgressionUI.tscn" id="17_progression_ui"]
+[ext_resource type="Script" path="res://scripts/retention/RetentionManager.gd" id="18_retention"]
+[ext_resource type="PackedScene" path="res://scenes/ui/RetentionUI.tscn" id="19_retention_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -32,6 +34,9 @@ script = ExtResource("15_progression")
 
 [node name="MissionTracker" type="Node" parent="."]
 script = ExtResource("16_missions")
+
+[node name="RetentionManager" type="Node" parent="."]
+script = ExtResource("18_retention")
 
 [node name="AllianceManager" type="Node" parent="."]
 script = ExtResource("13_alliance")
@@ -65,3 +70,5 @@ script = ExtResource("10_save")
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
 
 [node name="ProgressionUI" parent="." instance=ExtResource("17_progression_ui")]
+
+[node name="RetentionUI" parent="." instance=ExtResource("19_retention_ui")]

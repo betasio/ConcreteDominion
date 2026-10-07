@@ -2,193 +2,155 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Player progression milestone
+## Retention and content-loop milestone
 
-The prototype now has a persistent account progression loop tied directly to raids, loot, unlocks, specialist upgrades, and tutorial-style missions.
+The prototype now has a persistent rewards/objectives layer built on top of the existing progression, alliance, raid, and loot systems.
 
-### Account XP and levels
+## Daily login rewards
 
-The player now has:
+The new **Rewards** panel contains a 7-day login reward cycle.
 
-- Account Level
-- current XP
-- escalating XP required for the next level
+Current cycle:
 
-Raid victories grant XP when the local player actually participated in the raid.
+1. $1,500 Cash
+2. Parts x2
+3. 5 Gold
+4. Intel x2
+5. $3,000 Cash + 40 XP
+6. Parts x3 + Intel x1
+7. 15 Gold + Contraband x1 + 100 XP
 
-Current target progression:
+Consecutive daily claims increase the login streak.
 
-| Target | Required level | XP reward |
-| --- | ---: | ---: |
-| Downtown Bank | 1 | 80 XP |
-| Harbor Bank | 2 | 140 XP |
-| Northside Turf HQ | 4 | 220 XP |
+Missing a day resets the streak back to day 1.
 
-Locked targets remain visible in World view but clearly show their required account level.
+The prototype uses a UTC-style day index from the system clock. This is appropriate for a local prototype, but live rewards should use server timestamps.
 
-## Building unlocks
+## Daily objectives
 
-Progression now gates specialist facilities:
+Daily progress resets automatically when the calendar day changes.
 
-- Garage — Account Lv.2
-- Intel Office — Account Lv.3
+Current daily goals:
 
-Locked build lots show their level requirement directly on the Build button.
+- Recruit 3 troops
+- Win 1 raid
 
-The core Safehouse, Clinic, and Barracks remain available from the beginning.
+Daily completion reward:
 
-## Loot utility
-
-Raid loot is no longer display-only.
-
-The persistent loot inventory now supports spending:
-
-- Parts
-- Intel
-- Contraband
-
-Loot is consumed by specialist upgrades.
-
-## Specialist upgrades
-
-The **Progression** panel lets players upgrade:
-
-- Enforcer
-- Driver
-- Spy
-
-Driver upgrades increase the Driver raid multiplier.
-
-Base Driver support:
-- Lv.1: +15% per Driver slot
-- each additional Driver level: +3%
-
-Spy upgrades increase defense-break support.
-
-Base Spy support:
-- Lv.1: +18% per Spy slot
-- each additional Spy level: +4%
-
-Upgrade costs scale by level and consume different raid loot combinations.
-
-This gives lower-power alliance support players a long-term progression path that improves their strategic value rather than merely increasing raw troop quantity.
-
-## Tutorial / mission objectives
-
-The first mission set now acts as a lightweight first-time-user progression guide:
-
-### Grow the Crew
-Recruit 5 troops.
-
-Reward:
-- 60 XP
-- $1,500 Cash
-
-### First Score
-Defeat Downtown Bank.
-
-Reward:
-- 80 XP
 - $2,500 Cash
+- 3 Gold
+- 50 XP
+- Parts x1
 
-### Make a Name
-Reach Account Lv.2.
+## Weekly objectives
+
+Weekly progress resets on a seven-day period boundary.
+
+Current weekly goals:
+
+- Recruit 15 troops
+- Win 5 raids
+
+Weekly completion reward:
+
+- $10,000 Cash
+- 15 Gold
+- 200 XP
+- Parts x3
+- Intel x2
+- Contraband x1
+
+## Reward crates
+
+Raid loot can now be converted into deterministic reward crates.
+
+### Street Cache
+
+Cost:
+
+- Parts x3
+- Intel x1
 
 Reward:
-- 40 XP
-- $2,000 Cash
 
-Mission state and completion are saved.
+- $3,500 Cash
+- 4 Gold
+- 60 XP
 
-These objectives deliberately teach the existing gameplay loop:
-recruit → raid → level up → unlock new content.
+### Syndicate Crate
 
-## Progression panel
+Cost:
 
-A new responsive **Progression** shortcut shows the player's current account level.
+- Parts x5
+- Intel x3
+- Contraband x1
 
-Opening it displays:
+Reward:
 
-- current level
-- XP / next-level requirement
-- upcoming unlocks
-- mission progress
-- Enforcer upgrade
-- Driver upgrade
-- Spy upgrade
-- current loot costs
+- $9,000 Cash
+- 12 Gold
+- 150 XP
 
-Upgrade buttons automatically disable when the required loot is unavailable.
+These crates create an additional loot sink beyond specialist upgrades.
 
-## Raid progression UI
+## Achievements
 
-Raid panels now show:
+The first persistent achievements are now tracked:
 
-- target HP
-- difficulty
-- Cash reward
-- XP reward
-- loot reward
-- account-level requirement
+- **First Blood** — win a raid
+- **Crew Builder** — recruit 20 troops
+- **Specialist** — upgrade any specialist
+- **Known Name** — reach Account Lv.3
 
-The raid status clearly distinguishes:
+Achievements award small one-time bonuses such as Gold, Cash, XP, or Intel.
 
-- Ready
-- Respawning
-- Locked by account level
-- Raid in progress
+Achievement completion is saved permanently.
 
-The animated result overlay also shows XP earned.
+## Tutorial callout
 
-## Balance correction
+A persistent tutorial banner now guides the early progression flow.
 
-The prototype alliance frontline member Vex is now set to **8,000 frontline power**.
+It advances through practical actions:
 
-With current base specialist bonuses:
+1. Recruit 5 troops
+2. Switch to World view and defeat Downtown Bank
+3. Reach Account Lv.2
+4. Upgrade Driver support
+5. Continue into higher-tier alliance progression
 
-- Vex alone cannot clear Downtown Bank.
-- Vex + normal Driver/Spy support clears Downtown.
-- Harbor benefits from filling the second Driver slot.
-- Northside remains a later target requiring account progression and stronger specialist bonuses.
+This gives the prototype a lightweight first-time-user experience without locking the player into modal tutorial screens.
 
-This better matches the intended design: frontline power matters, but coordinated support is required.
+## UI
+
+A new **Rewards** shortcut opens the retention panel.
+
+The panel shows:
+
+- current login streak
+- login reward claim button
+- daily objective progress
+- weekly objective progress
+- crate crafting
+- achievement status
+
+The tutorial hint remains visible separately so the player's next step is always readable.
 
 ## Persistence
 
-Save version 7 now includes:
+Save version 8 now also stores:
 
-- Account Level
-- XP
-- specialist upgrade levels
-- mission progress/completion
+- last login claim day
+- login streak
+- daily objective period/progress
+- weekly objective period/progress
+- objective reward claim state
+- lifetime recruit count
+- lifetime raid wins
+- achievement unlocks
 
-All previous persistent systems remain intact:
+All previous save data remains part of the same save document.
 
-- Cash and Gold
-- loot
-- troops
-- buildings
-- construction/recruitment/healing queues
-- raid state
-- target cooldowns
-- alliance roster/slots/social feed
-- Base/World view
-
-## Suggested test
-
-1. Open **Progression** and review the three tutorial missions.
-2. Recruit 5 troops and confirm **Grow the Crew** completes.
-3. Switch to **WORLD** and inspect Harbor Bank; it should show **Lv.2 required**.
-4. Raid Downtown Bank with alliance support.
-5. Confirm the result overlay grants XP.
-6. Reopen **Progression** and watch account XP/mission state update.
-7. Reach Lv.2 and confirm Harbor Bank + Garage unlock.
-8. Earn Parts/Intel from raids.
-9. Spend loot upgrading Driver or Spy.
-10. Preview another raid and verify the support percentage increases.
-11. Restart and verify level, XP, upgrades, and missions persist.
-
-## Architecture additions
+## Architecture
 
 ```text
 Main
@@ -196,6 +158,7 @@ Main
 ├── LootInventory
 ├── PlayerProgression
 ├── MissionTracker
+├── RetentionManager
 ├── AllianceManager
 ├── AllianceSocial
 ├── TroopRoster
@@ -207,39 +170,54 @@ Main
 ├── SaveManager
 ├── CityMap
 ├── HUD
-└── ProgressionUI
+├── ProgressionUI
+└── RetentionUI
 ```
 
-New scripts:
+New files:
 
 ```text
-scripts/progression/
-├── PlayerProgression.gd
-└── MissionTracker.gd
+scripts/retention/
+└── RetentionManager.gd
 
 scripts/ui/
-└── ProgressionUI.gd
+└── RetentionUI.gd
 
 scenes/ui/
-└── ProgressionUI.tscn
+└── RetentionUI.tscn
 ```
 
-Raid target data resources now own both `reward_xp` and `required_account_level`, keeping the progression ladder data-driven.
+`RetentionManager` listens to recruitment, raid resolution, specialist progression, and account-level events. It does not own those systems.
 
-## Production direction
+That separation makes it possible to replace local timers/reward validation with backend-driven live-ops state later.
 
-This progression model is still intentionally local/client-authoritative.
+## Suggested test
 
-Before live multiplayer or real-money monetization, XP, levels, mission completion, loot spending, specialist upgrades, unlock eligibility, and raid rewards should all be validated server-side.
+1. Open **Rewards** and claim today's login reward.
+2. Recruit 3+ troops and check daily/weekly progress.
+3. Win Downtown Bank and confirm raid-win objectives advance.
+4. Claim the daily reward after both daily goals are complete.
+5. Accumulate Parts/Intel and craft a Street Cache.
+6. Upgrade a specialist and check the Specialist achievement.
+7. Recruit 20 total troops and check Crew Builder.
+8. Restart and confirm streak/objectives/achievements persist.
+
+## Security / production note
+
+Daily rewards currently rely on the local system clock and all reward state is client-authoritative.
+
+Before live release, login claims, day/week boundaries, achievements, objective progress, crate crafting, XP, currencies, and loot should be server-authoritative to prevent clock manipulation or save editing.
 
 ## Next strong milestone
 
-A strong next step is the first **content/retention layer**:
+The next logical feature step is **player identity and deeper content**:
 
-- daily and weekly objectives;
-- daily login rewards;
-- reward crates that consume Parts/Intel/Contraband;
-- player profile/name/avatar;
-- achievements;
-- tutorial callouts/highlights;
-- additional data-driven raid targets and district expansion.
+- editable player name/profile;
+- portrait/avatar selection;
+- player power summary;
+- alliance profile page;
+- additional data-driven world targets;
+- district unlocks;
+- achievement/profile badges;
+- mail/inbox rewards;
+- event-style limited objectives.
