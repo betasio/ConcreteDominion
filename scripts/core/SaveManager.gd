@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 25
+const SAVE_VERSION := 26
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -420,6 +420,18 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 			chapter_meta_v25["chapter_3_choice"] = ""
 		mission_data_v25["_chapter_meta"] = chapter_meta_v25
 		data["missions"] = mission_data_v25
+
+	if version < 26:
+		var mission_data_v26 = data.get("missions", {})
+		if not (mission_data_v26 is Dictionary):
+			mission_data_v26 = {}
+		var chapter_meta_v26 = mission_data_v26.get("_chapter_meta", {})
+		if not (chapter_meta_v26 is Dictionary):
+			chapter_meta_v26 = {}
+		if not chapter_meta_v26.has("chapter_4_choice"):
+			chapter_meta_v26["chapter_4_choice"] = ""
+		mission_data_v26["_chapter_meta"] = chapter_meta_v26
+		data["missions"] = mission_data_v26
 
 	data["schema_meta"] = {
 		"migrated_from": version,
