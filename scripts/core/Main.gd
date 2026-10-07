@@ -96,7 +96,8 @@ func _ready() -> void:
 		loot_inventory,
 		progression,
 		recruitment_queue,
-		raid_battle
+		raid_battle,
+		construction_queue
 	)
 
 	event_manager.setup(
