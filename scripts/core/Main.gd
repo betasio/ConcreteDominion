@@ -124,6 +124,14 @@ func _ready() -> void:
 		progression
 	)
 
+	faction_manager.setup(
+		economy,
+		loot_inventory,
+		recruitment_queue,
+		construction_queue,
+		raid_battle
+	)
+
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
 	raid_battle.battle_resolved.connect(alliance_manager.award_raid_result)
