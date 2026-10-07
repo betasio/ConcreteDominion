@@ -139,6 +139,9 @@ func _validate_required_resources() -> void:
 	if SaveManager.SAVE_VERSION < 18:
 		_fail("Save schema unexpectedly regressed below v18.")
 
+	if not bool(ProjectSettings.get_setting("rendering/textures/vram_compression/import_etc2_astc", false)):
+		_fail("Android ETC2/ASTC texture import is not enabled.")
+
 	for path in [
 		"res://localization/ui.csv",
 		"res://localization/en.po",
