@@ -110,6 +110,7 @@ var season_period := -1
 var season_points := 0
 var claimed_season_tiers: Array[String] = []
 var pending_season_tiers: Array[String] = []
+var pending_season_prestige: Dictionary = {}
 var featured_wins := 0
 var scored_operation_wins := 0
 var prestige_badges: Array[String] = []
@@ -180,6 +181,10 @@ func _refresh_season() -> void:
 		for tier in _eligible_tiers_for_points(season_points):
 			if not tier in claimed_season_tiers and not tier in pending_season_tiers:
 				pending_season_tiers.append(tier)
+				pending_season_prestige[tier] = "%s %s" % [
+					String(completed_identity.get("prestige", "DOMINION")),
+					tier
+				]
 
 	season_period = season
 	season_points = 0
@@ -252,6 +257,7 @@ func get_status() -> Dictionary:
 		"next_season_reward_tier": get_next_claimable_season_tier(),
 		"claimed_season_tiers": claimed_season_tiers.duplicate(),
 		"pending_season_tiers": pending_season_tiers.duplicate(),
+		"pending_season_prestige": pending_season_prestige.duplicate(true),
 		"featured_wins": featured_wins,
 		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1,
 		"season_name": get_season_name(),
@@ -463,16 +469,18 @@ func claim_season_reward() -> bool:
 	var tier := get_next_claimable_season_tier()
 	if tier.is_empty():
 		return false
+	var badge_name := ""
 	if tier in pending_season_tiers:
 		pending_season_tiers.erase(tier)
+		badge_name = String(pending_season_prestige.get(tier, "DOMINION %s" % tier))
+		pending_season_prestige.erase(tier)
 	else:
 		claimed_season_tiers.append(tier)
-
-	var identity := get_season_identity()
-	var badge_name := "%s %s" % [
-		String(identity.get("prestige", "DOMINION")),
-		tier
-	]
+		var identity := get_season_identity()
+		badge_name = "%s %s" % [
+			String(identity.get("prestige", "DOMINION")),
+			tier
+		]
 	if not badge_name in prestige_badges:
 		prestige_badges.append(badge_name)
 		if equipped_prestige_badge.is_empty():
@@ -623,6 +631,15 @@ func load_save_data(data: Dictionary) -> void:
 			var pending_tier := String(raw_tier)
 			if pending_tier in ["SILVER", "GOLD", "PLATINUM"] and not pending_tier in pending_season_tiers:
 				pending_season_tiers.append(pending_tier)
+
+	pending_season_prestige.clear()
+	var saved_pending_prestige = data.get("pending_season_prestige", {})
+	if saved_pending_prestige is Dictionary:
+		for raw_key in saved_pending_prestige.keys():
+			var prestige_tier := String(raw_key)
+			if prestige_tier in pending_season_tiers:
+				pending_season_prestige[prestige_tier] = String(saved_pending_prestige[raw_key]).left(40)
+
 	featured_wins = maxi(0, int(data.get("featured_wins", 0)))
 	scored_operation_wins = clampi(int(data.get("scored_operation_wins", 0)), 0, 5)
 
