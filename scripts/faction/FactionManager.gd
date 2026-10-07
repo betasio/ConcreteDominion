@@ -25,6 +25,7 @@ const DAILY_REQUIRED := 3
 const WAR_DURATION_SECONDS := 24.0 * 60.0 * 60.0
 const RALLY_DURATION_SECONDS := 10.0 * 60.0
 const MAX_MEMBERS_BASE := 20
+const SEASON_WEEKS := 4
 
 var economy: PlayerEconomy
 var loot: LootInventory
@@ -58,8 +59,10 @@ var gift_charges := 0
 var active_rally: Dictionary = {}
 var active_war: Dictionary = {}
 
+var season_period := -1
 var season_points := 0
 var season_wins := 0
+var _season_check_accumulator := 0.0
 var war_reward_claimed := false
 var pending_invites: Array[Dictionary] = []
 
@@ -104,11 +107,16 @@ func setup(
 	construction.construction_completed.connect(_on_construction_completed)
 	raid_battle.battle_resolved.connect(_on_battle_resolved)
 	_refresh_daily_period()
+	_refresh_season_period()
 	changed.emit()
 
 
 func _process(delta: float) -> void:
 	var did_change := false
+	_season_check_accumulator += delta
+	if _season_check_accumulator >= 30.0:
+		_season_check_accumulator = 0.0
+		_refresh_season_period()
 	if not active_rally.is_empty():
 		active_rally["seconds_remaining"] = maxf(0.0, float(active_rally.get("seconds_remaining", 0.0)) - delta)
 		if float(active_rally["seconds_remaining"]) <= 0.0:
@@ -219,6 +227,29 @@ func _reset_faction_activity() -> void:
 	war_reward_claimed = false
 	for territory_id in faction_territory.keys():
 		faction_territory[territory_id]["owned"] = false
+
+
+func _get_season_index() -> int:
+	var day := floori(Time.get_unix_time_from_system() / 86400.0)
+	var week := floori(float(day) / 7.0)
+	return floori(float(week) / float(SEASON_WEEKS))
+
+
+func _refresh_season_period() -> void:
+	var current := _get_season_index()
+	if season_period < 0:
+		season_period = current
+		return
+	if season_period == current:
+		return
+
+	season_period = current
+	season_points = 0
+	season_wins = 0
+	war_reward_claimed = false
+	for territory_id in faction_territory.keys():
+		faction_territory[territory_id]["owned"] = false
+	changed.emit()
 
 
 func get_local_role() -> String:
@@ -662,6 +693,7 @@ func get_season_tier() -> String:
 
 
 func get_season_summary() -> String:
+	_refresh_season_period()
 	return "%s • %d season points • %d war win(s) • %d territory objective(s)" % [
 		get_season_tier(),
 		season_points,
@@ -884,6 +916,7 @@ func get_save_data() -> Dictionary:
 		"active_rally": active_rally.duplicate(true),
 		"active_war": active_war.duplicate(true),
 		"war_reward_claimed": war_reward_claimed,
+		"season_period": season_period,
 		"season_points": season_points,
 		"season_wins": season_wins,
 		"pending_invites": pending_invites.duplicate(true),
@@ -903,6 +936,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	daily_mastery_claimed = bool(data.get("daily_mastery_claimed", daily_mastery_claimed))
 	gift_charges = maxi(0, int(data.get("gift_charges", gift_charges)))
 	war_reward_claimed = bool(data.get("war_reward_claimed", war_reward_claimed))
+	season_period = int(data.get("season_period", season_period))
 	season_points = maxi(0, int(data.get("season_points", season_points)))
 	season_wins = maxi(0, int(data.get("season_wins", season_wins)))
 
@@ -956,6 +990,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			_complete_war()
 
 	_refresh_daily_period()
+	_refresh_season_period()
 	changed.emit()
 
 
