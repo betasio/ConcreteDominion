@@ -38,6 +38,7 @@ extends Node
 @onready var profile_ui: ProfileUI = $ProfileUI
 @onready var faction_ui: FactionUI = $FactionUI
 @onready var endgame_ui: EndgameUI = $EndgameUI
+@onready var operation_result_ui: OperationResultUI = $OperationResultUI
 @onready var event_ui: EventUI = $EventUI
 @onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 @onready var safe_area_manager: SafeAreaManager = $SafeAreaManager
@@ -199,6 +200,7 @@ func _ready() -> void:
 	profile_ui.setup(player_profile, mailbox, progression, localized_text, endgame)
 	faction_ui.setup(faction_manager, economy, mission_tracker)
 	endgame_ui.setup(endgame, faction_manager)
+	operation_result_ui.setup(raid_battle, world_control, endgame, presentation_catalog)
 	event_ui.setup(event_manager, localized_text)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map, localized_text)
 	store_ui.setup(store_manager, localized_text)
@@ -217,6 +219,7 @@ func _ready() -> void:
 		profile_ui.get_node("Root") as Control,
 		faction_ui.get_node("Root") as Control,
 		endgame_ui.get_node("Root") as Control,
+		operation_result_ui.get_node("Root") as Control,
 		event_ui.get_node("Root") as Control,
 		combat_strategy_ui.get_node("Root") as Control,
 		settings_ui.get_node("Root") as Control,
