@@ -47,6 +47,6 @@ func get_save_data() -> Dictionary:
 
 
 func load_save_data(data: Dictionary) -> void:
-	cash = int(data.get("cash", cash))
-	gold = int(data.get("gold", gold))
+	cash = maxi(0, int(data.get("cash", cash)))
+	gold = maxi(0, int(data.get("gold", gold)))
 	changed.emit()

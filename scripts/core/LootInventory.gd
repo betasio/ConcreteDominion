@@ -33,7 +33,8 @@ func add_loot(loot: Dictionary) -> void:
 
 func can_afford(loot: Dictionary) -> bool:
 	for item_name in loot.keys():
-		if get_count(String(item_name)) < int(loot[item_name]):
+		var required := maxi(0, int(loot[item_name]))
+		if get_count(String(item_name)) < required:
 			return false
 	return true
 
@@ -43,7 +44,8 @@ func spend_loot(loot: Dictionary) -> bool:
 		return false
 
 	for item_name in loot.keys():
-		items[String(item_name)] = get_count(String(item_name)) - int(loot[item_name])
+		var required := maxi(0, int(loot[item_name]))
+		items[String(item_name)] = maxi(0, get_count(String(item_name)) - required)
 
 	changed.emit()
 	return true
@@ -59,5 +61,5 @@ func get_save_data() -> Dictionary:
 
 func load_save_data(data: Dictionary) -> void:
 	for item_name in items.keys():
-		items[item_name] = int(data.get(item_name, items[item_name]))
+		items[item_name] = maxi(0, int(data.get(item_name, items[item_name])))
 	changed.emit()

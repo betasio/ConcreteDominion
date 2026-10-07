@@ -383,7 +383,7 @@ func _calculate_reward_splits(reward_pool: int, contributions: Dictionary, parti
 				float(contributions.get(player_id, 0.0)) / total_contribution
 			)
 
-		var share := roundi(equal_each + performance_share)
+		var share := floori(equal_each + performance_share)
 		if i == participant_ids.size() - 1:
 			share = maxi(0, reward_pool - distributed)
 

@@ -7,6 +7,7 @@ func _ready() -> void:
 	_test_event_rollover()
 	_test_resource_caps()
 	_test_reward_split_conservation()
+	_test_malformed_save_clamps()
 	_finish()
 
 
@@ -69,33 +70,68 @@ func _test_resource_caps() -> void:
 
 
 func _test_reward_split_conservation() -> void:
-	# Mirror the public design invariant: the 50/50 equal/performance split
-	# must distribute exactly the target reward pool, never create/delete Cash.
-	var reward_pool := 10001
-	var ids := ["frontline", "driver", "spy"]
-	var contribution := {
-		"frontline": 8000.0,
-		"driver": 1200.0,
-		"spy": 1440.0
-	}
-	var equal_share := 0.50
-	var equal_pool := float(reward_pool) * equal_share
-	var performance_pool := float(reward_pool) - equal_pool
-	var total_contribution := 0.0
-	for id in ids:
-		total_contribution += float(contribution[id])
+	var battle := RaidBattle.new()
+	var synergy := SynergyRaid.new()
+	add_child(synergy)
+	add_child(battle)
+	battle.synergy = synergy
 
-	var distributed := 0
-	for i in range(ids.size()):
-		var id := ids[i]
-		var performance_share := performance_pool * float(contribution[id]) / total_contribution
-		var share := roundi(equal_pool / float(ids.size()) + performance_share)
-		if i == ids.size() - 1:
-			share = maxi(0, reward_pool - distributed)
-		distributed += share
+	for raw_id in ["frontline", "driver", "spy"]:
+		var participant_id: String = String(raw_id)
+		synergy.join_raid(participant_id, 1, 1.0, &"frontline", participant_id)
 
-	if distributed != reward_pool:
-		_fail("Raid reward split does not conserve the reward pool.")
+	var participants: Array = [
+		{"player_id":"frontline"},
+		{"player_id":"driver"},
+		{"player_id":"spy"}
+	]
+
+	var cases: Array = [
+		{"pool":10001, "contributions":{"frontline":8000.0,"driver":1200.0,"spy":1440.0}},
+		{"pool":7, "contributions":{"frontline":1.0,"driver":1.0,"spy":1.0}},
+		{"pool":13, "contributions":{"frontline":9.0,"driver":1.0,"spy":0.1}},
+		{"pool":9999, "contributions":{"frontline":0.0,"driver":0.0,"spy":0.0}}
+	]
+
+	for raw_case in cases:
+		var case_data: Dictionary = raw_case as Dictionary
+		var reward_pool: int = int(case_data["pool"])
+		var splits: Dictionary = battle._calculate_reward_splits(
+			reward_pool,
+			case_data["contributions"],
+			participants
+		)
+		var distributed := 0
+		for raw_value in splits.values():
+			distributed += int(raw_value)
+		if distributed != reward_pool:
+			_fail("Raid reward split did not conserve pool %d (distributed %d)." % [
+				reward_pool,
+				distributed
+			])
+		for raw_value in splits.values():
+			if int(raw_value) < 0:
+				_fail("Raid reward split generated a negative participant reward.")
+
+	battle.queue_free()
+	synergy.queue_free()
+
+
+func _test_malformed_save_clamps() -> void:
+	var economy := PlayerEconomy.new()
+	economy.load_save_data({"cash":-500,"gold":-20})
+	if economy.cash != 0 or economy.gold != 0:
+		_fail("Malformed economy save produced negative balances.")
+
+	var loot := LootInventory.new()
+	loot.load_save_data({"Parts":-3,"Intel":-2,"Contraband":-1})
+	for raw_key in ["Parts","Intel","Contraband"]:
+		var item_key: String = String(raw_key)
+		if loot.get_count(item_key) != 0:
+			_fail("Malformed loot save produced negative %s." % item_key)
+
+	economy.free()
+	loot.free()
 
 
 func _fail(message: String) -> void:
