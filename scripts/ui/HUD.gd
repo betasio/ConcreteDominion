@@ -70,6 +70,10 @@ var raid_spies := 0
 @onready var invite_button: Button = $Root/AlliancePanel/Margin/VBox/CreateInvite
 @onready var invite_driver_button: Button = $Root/AlliancePanel/Margin/VBox/JoinDriver
 @onready var invite_spy_button: Button = $Root/AlliancePanel/Margin/VBox/JoinSpy
+@onready var alliance_profiles: HFlowContainer = $Root/AlliancePanel/Margin/VBox/Profiles
+@onready var result_overlay: PanelContainer = $Root/ResultOverlay
+@onready var result_overlay_title: Label = $Root/ResultOverlay/Margin/VBox/Title
+@onready var result_overlay_body: Label = $Root/ResultOverlay/Margin/VBox/Body
 
 
 func setup(
@@ -103,7 +107,7 @@ func setup(
 	construction_queue.construction_completed.connect(_on_construction_completed)
 	recruitment_queue.queue_changed.connect(_refresh_recruitment)
 	recruitment_queue.recruitment_completed.connect(_on_recruitment_completed)
-	alliance_manager.changed.connect(_refresh_raid)
+	alliance_manager.changed.connect(_on_alliance_changed)
 	alliance_social.changed.connect(_refresh_alliance_social)
 	raid_battle.changed.connect(_refresh_raid)
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
@@ -145,9 +149,11 @@ func setup(
 	invite_spy_button.pressed.connect(func(): _join_social_invite(&"spy"))
 	$Root/AlliancePanel/Margin/VBox/PostMessage.pressed.connect(_post_alliance_message)
 	$Root/AlliancePanel/Margin/VBox/Close.pressed.connect(_close_alliance_panel)
+	$Root/ResultOverlay/Margin/VBox/Close.pressed.connect(_close_result_overlay)
 
 	_refresh_all()
 	_refresh_alliance_social()
+	_refresh_alliance_profiles()
 	set_view_mode_display(get_node("/root/Main/CityMap").get_view_mode())
 
 
@@ -640,6 +646,7 @@ func _launch_raid() -> void:
 
 func _on_raid_resolved(result: Dictionary) -> void:
 	_show_raid_result(result)
+	_show_result_overlay(result)
 	_refresh_all()
 
 
@@ -809,3 +816,85 @@ func _refresh_alliance_social() -> void:
 
 	invite_driver_button.disabled = troop_roster.get_count(&"Driver") <= 0
 	invite_spy_button.disabled = troop_roster.get_count(&"Spy") <= 0
+
+
+
+func _on_alliance_changed() -> void:
+	_refresh_raid()
+	_refresh_alliance_profiles()
+
+
+func _refresh_alliance_profiles() -> void:
+	if alliance_profiles == null or alliance_manager == null:
+		return
+
+	for child in alliance_profiles.get_children():
+		child.queue_free()
+
+	for member in alliance_manager.get_members():
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(130, 112)
+		alliance_profiles.add_child(card)
+
+		var margin := MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_top", 8)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_bottom", 8)
+		card.add_child(margin)
+
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 3)
+		margin.add_child(box)
+
+		var name_label := Label.new()
+		name_label.text = String(member["name"])
+		name_label.add_theme_font_size_override("font_size", 18)
+		box.add_child(name_label)
+
+		var role_label := Label.new()
+		role_label.text = "Lv.%d • %s" % [
+			int(member["level"]),
+			String(member["preferred_role"]).capitalize()
+		]
+		box.add_child(role_label)
+
+		var power_label := Label.new()
+		var power := roundi(float(member["power"]))
+		power_label.text = "Power %s" % _format_number(power)
+		box.add_child(power_label)
+
+		var state_label := Label.new()
+		state_label.text = "● ONLINE" if bool(member["online"]) else "○ OFFLINE"
+		box.add_child(state_label)
+
+
+func _show_result_overlay(result: Dictionary) -> void:
+	var victory := bool(result.get("victory", false))
+	result_overlay_title.text = "RAID VICTORY" if victory else "RAID DEFEAT"
+
+	var loot_text := _format_loot(result.get("loot", {}))
+	result_overlay_body.text = "%s\n\nDamage: %s / %s HP\nYour Cash: $%s\nLoot: %s\nSupport bonus: +%d%%\n\n%s" % [
+		String(result.get("target_name", "Target")),
+		_format_number(roundi(float(result.get("damage", 0.0)))),
+		_format_number(roundi(float(result.get("target_hp", 0.0)))),
+		_format_number(int(result.get("local_cash_reward", 0))),
+		loot_text,
+		roundi(float(result.get("support_bonus", 0.0)) * 100.0),
+		_format_reward_splits(
+			result.get("reward_splits", {}),
+			result.get("participants", [])
+		)
+	]
+
+	result_overlay.visible = true
+	result_overlay.modulate.a = 0.0
+	result_overlay.scale = Vector2(0.90, 0.90)
+
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(result_overlay, "modulate:a", 1.0, 0.22)
+	tween.tween_property(result_overlay, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _close_result_overlay() -> void:
+	result_overlay.visible = false

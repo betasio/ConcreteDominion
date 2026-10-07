@@ -31,6 +31,7 @@ func _ready() -> void:
 	)
 
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
+	raid_battle.battle_resolved.connect(city_map.show_raid_impact)
 
 	save_manager.setup(
 		economy,

@@ -2,203 +2,150 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Base / World / Alliance milestone
+## Visual polish milestone
 
-The prototype now has three distinct layers of play:
+The current build adds a first presentation pass to the existing Base / World / Alliance raid loop without requiring external art assets.
 
-### Base view
+### Street-following raid convoys
 
-Use **BASE** to return to the player's district.
+Raid convoys no longer move in a straight line from the Safehouse to a target.
 
-Base view focuses on:
+Each current target has a district route made from world-map waypoints. The convoy:
 
-- Safehouse
-- Underground Clinic
-- Crew Barracks
-- build lots
-- upgrades
-- recruitment
-- healing
+- follows multiple street turns;
+- rotates to face its current route segment;
+- uses the raid launch countdown as total travel time;
+- restores along the route after reopening during an active raid.
 
-Raid targets are hidden so the base screen feels like a management space instead of a crowded world map.
+The routing system is still lightweight and deterministic, making it suitable for replacement with proper pathfinding later.
 
-### World view
+### Raid target status bars
 
-Use **WORLD** to switch to the raid district.
+World-map targets now display a compact status bar.
 
-World view:
+When available, the bar shows:
 
-- hides base-building interactions
-- zooms the strategy camera outward
-- shows Banks and Turf HQ raid targets
-- displays raid convoys
-- allows target selection and raid preparation
+- target HP;
+- difficulty tier;
+- ready state.
 
-The current view is persisted in the local save.
+After defeat, the same area changes into a recovery/respawn progress bar and the existing countdown remains visible.
 
-## Alliance Hub
+### Raid impact effects
 
-The new **Alliance** button opens a persistent social/activity panel.
+Raid resolution now spawns a procedural impact effect over the attacked target.
 
-The Alliance Hub currently includes:
+- victories use a bright impact/explosion burst;
+- defeats use a harsher red impact;
+- the effect expands and fades automatically.
 
-- activity/message feed
-- active raid invite status
-- invite countdown
-- joined-member list
-- create raid invite action
-- join invite as Driver
-- join invite as Spy
-- prototype message posting
+This uses Godot drawing code only, so there are no new texture dependencies.
 
-The message feed and active invite are saved locally.
+### Animated raid result overlay
 
-## Raid invitations
+Battle results now appear in a dedicated center-screen overlay with a short fade/scale animation.
 
-Select a world target and press:
+The overlay shows:
 
-**Invite Alliance to Selected Target**
+- victory or defeat;
+- target name;
+- damage versus target HP;
+- the local player's Cash share;
+- local loot;
+- total support bonus;
+- named alliance reward shares.
 
-A 15-second invite opens.
+The original detailed raid-lobby result remains available underneath.
 
-Simulated alliance members respond over time:
+### Alliance member profile cards
 
-- Mia can respond as Driver
-- Noah can respond as Spy
-- Kira can respond if she is currently online
+The Alliance Hub now renders the alliance roster as responsive member cards.
 
-The joined-member list updates while the invite is active.
+Each card shows:
 
-The local player can join as Driver or Spy if the required specialist troop is available.
+- member name;
+- level;
+- preferred role;
+- power;
+- online/offline state.
 
-Joining an invite focuses the invited target in **World view**, preserving the existing raid-slot and contribution system.
+Cards use an `HFlowContainer` so they wrap on narrower screens rather than assuming desktop width.
 
-## Alliance simulation
+## Current player flow
 
-Current prototype members:
+1. Manage buildings and crew in **BASE**.
+2. Switch to **WORLD**.
+3. Review target HP/difficulty bars.
+4. Select a Bank or Turf HQ.
+5. Open **Alliance** and review member cards/activity.
+6. Send a raid invite or configure the raid lobby.
+7. Launch the raid.
+8. Watch the convoy travel through district waypoints.
+9. See the target impact effect at resolution.
+10. Review the animated result overlay.
+11. Heal wounded specialists and continue progression.
 
-- Vex — frontline
-- Mia — Driver
-- Noah — Spy
-- Kira — Driver
-- You — Driver or Spy
-
-The raid lobby still handles:
-
-- explicit role slots
-- online/offline members
-- named contribution scores
-- frozen participant snapshots
-- shared Cash reward pools
-- local loot eligibility
-
-The social system sits above that combat model rather than duplicating it.
-
-## Persistence
-
-Save version 6 now tracks:
-
-- Cash and Gold
-- loot inventory
-- troop roster
-- buildings and build lots
-- healing
-- recruitment
-- construction
-- active raids
-- target cooldowns
-- alliance presence and raid slots
-- alliance activity feed
-- active raid invite
-- Base / World view selection
-
-Offline time is applied to gameplay timers and raid invitations.
-
-## Suggested test
-
-1. Start in **BASE**.
-2. Open the Clinic or Barracks to verify base interactions.
-3. Press **WORLD**.
-4. Select Downtown Bank or Harbor Bank.
-5. Open **Alliance**.
-6. Create an alliance raid invite.
-7. Watch Mia/Noah respond during the invite countdown.
-8. Join the invite as Driver or Spy.
-9. Confirm the invited target is focused in World view.
-10. Open/preview the raid and inspect the named alliance slots.
-11. Launch the raid and review contribution/reward sharing.
-12. Restart the game and confirm the selected view and social feed persist.
-
-## Architecture
+## Architecture additions
 
 ```text
-Main
-├── PlayerEconomy
-├── LootInventory
-├── AllianceManager
-├── AllianceSocial
-├── TroopRoster
-├── HospitalQueue
-├── ConstructionQueue
-├── RecruitmentQueue
-├── SynergyRaid
-├── RaidBattle
-├── SaveManager
-├── CityMap
-└── HUD
+scenes/effects/
+└── RaidImpactVFX.tscn
+
+scripts/effects/
+└── RaidImpactVFX.gd
+
+CityMap
+├── Buildings
+├── RaidTargets
+├── Convoys
+├── Effects
+└── StrategyCamera
 ```
 
-### AllianceManager
+`ConvoyVisual.gd` now accepts a `PackedVector2Array` route instead of requiring only a start/end point.
 
-Owns durable alliance gameplay state:
+`CityMap.gd` owns prototype district routes and spawns impact effects on battle resolution.
 
-- members
-- presence
-- role preferences
-- raid slot assignments
+`RaidTarget.gd` draws target HP/difficulty and recovery status directly in world space.
 
-### AllianceSocial
-
-Owns prototype social state:
-
-- activity feed
-- raid invites
-- invite countdown
-- simulated invite responses
-
-### CityMap
-
-Now owns the presentation mode:
-
-- `base`
-- `world`
-
-This keeps the world/base distinction separate from HUD button implementation.
+`HUD.gd` builds responsive alliance profile cards and animates the result overlay.
 
 ## Production direction
 
-The current alliance feed and invitation responses are local simulations.
+This is intentionally a procedural prototype presentation layer.
 
-A future backend can replace them with:
+Later art passes can replace the procedural shapes with:
 
-- real alliance membership
-- presence events
-- chat messages
-- push notifications
-- raid invitation events
-- server countdown timestamps
-- authoritative slot reservation
+- vehicle sprites;
+- road/path navigation;
+- particles;
+- screen shake;
+- target hit animations;
+- portrait art;
+- polished panel textures;
+- sound and haptics;
 
-The game-facing interfaces can remain largely the same.
+without changing the underlying raid/economy/alliance models.
+
+## Suggested test
+
+1. Switch to **WORLD**.
+2. Observe HP/difficulty above each target.
+3. Select a target and launch a raid.
+4. Watch the convoy turn through multiple route waypoints.
+5. Wait for resolution and observe the impact VFX.
+6. Confirm the animated result overlay opens.
+7. Open **Alliance** and resize the window to verify profile cards wrap.
+8. Defeat a target and verify its HP bar changes to respawn/recovery progress.
 
 ## Next strong milestone
 
-Good next additions are:
+The strongest next feature step is to add actual **player progression and inventory utility**:
 
-- route-based convoy movement along streets instead of straight lines
-- alliance profile/member detail cards
-- join/leave/invite-to-alliance flow
-- unread alliance notifications
-- a polished raid result overlay
-- simple impact/explosion/combat VFX
-- target reward crates and inventory-use mechanics
+- player/account level and XP;
+- building unlock requirements;
+- Parts/Intel/Contraband uses;
+- specialist upgrades;
+- target tier unlocking;
+- daily/mission objectives;
+- first-time-user tutorial flow.

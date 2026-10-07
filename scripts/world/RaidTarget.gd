@@ -142,6 +142,8 @@ func _draw() -> void:
 		draw_rect(Rect2(-34, -93, 68, 38), accent.darkened(0.3), true)
 		draw_string(ThemeDB.fallback_font, Vector2(-28, -66), "HQ", HORIZONTAL_ALIGNMENT_CENTER, 56, 20, Color.WHITE)
 
+	_draw_status_bar(accent)
+
 	if not is_available():
 		draw_string(
 			ThemeDB.fallback_font,
@@ -165,6 +167,49 @@ func _draw() -> void:
 		17,
 		Color(0.95, 0.91, 0.78)
 	)
+
+
+func _draw_status_bar(accent: Color) -> void:
+	var bar_rect := Rect2(-72, -164, 144, 12)
+	draw_rect(bar_rect, Color(0.05, 0.05, 0.06, 0.9), true)
+
+	if is_available():
+		draw_rect(Rect2(bar_rect.position + Vector2(2, 2), Vector2(140, 8)), accent, true)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(-68, -172),
+			"%s HP  %s" % [_format_number(roundi(get_max_hp())), get_difficulty().to_upper()],
+			HORIZONTAL_ALIGNMENT_LEFT,
+			150,
+			13,
+			Color(0.94, 0.94, 0.92)
+		)
+	else:
+		var total := maxf(1.0, data.cooldown_seconds if data != null else 1.0)
+		var ready_progress := 1.0 - clampf(cooldown_remaining / total, 0.0, 1.0)
+		draw_rect(
+			Rect2(bar_rect.position + Vector2(2, 2), Vector2(140.0 * ready_progress, 8)),
+			Color(0.45, 0.47, 0.48),
+			true
+		)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(-68, -172),
+			"RECOVERING",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			150,
+			13,
+			Color(0.75, 0.76, 0.76)
+		)
+
+
+func _format_number(value: int) -> String:
+	var text := str(value)
+	var output := ""
+	while text.length() > 3:
+		output = "," + text.right(3) + output
+		text = text.left(text.length() - 3)
+	return text + output
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

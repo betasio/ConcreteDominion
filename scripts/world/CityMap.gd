@@ -6,6 +6,7 @@ signal raid_target_selected(target: RaidTarget)
 signal view_mode_changed(mode: StringName)
 
 const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
+const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 
 @export var grid_width: int = 24
 @export var grid_height: int = 20
@@ -16,6 +17,7 @@ const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 @onready var buildings_layer: Node2D = $Buildings
 @onready var raid_targets_layer: Node2D = $RaidTargets
 @onready var convoy_layer: Node2D = $Convoys
+@onready var effects_layer: Node2D = $Effects
 @onready var safehouse: Building = $Buildings/Safehouse
 @onready var hospital: Building = $Buildings/Hospital
 @onready var barracks: Building = $Buildings/Barracks
@@ -70,12 +72,14 @@ func set_view_mode(mode: StringName) -> void:
 		buildings_layer.visible = true
 		raid_targets_layer.visible = false
 		convoy_layer.visible = false
+		effects_layer.visible = false
 		camera.position = safehouse.position + Vector2(0, 60)
 		camera.zoom = Vector2(1.0, 1.0)
 	else:
 		buildings_layer.visible = false
 		raid_targets_layer.visible = true
 		convoy_layer.visible = true
+		effects_layer.visible = true
 		camera.position = Vector2(0, 140)
 		camera.zoom = Vector2(0.72, 0.72)
 
@@ -122,17 +126,48 @@ func launch_convoy_to(target_id: String, travel_time: float) -> void:
 
 	active_convoy = CONVOY_SCENE.instantiate()
 	convoy_layer.add_child(active_convoy)
-	active_convoy.setup(
-		safehouse.position + Vector2(0, -35),
-		target.position + Vector2(0, -35),
-		travel_time
-	)
+	active_convoy.setup_path(_get_convoy_route(target_id), travel_time)
 
 
 func restore_active_convoy(target_id: String, remaining_time: float) -> void:
 	if remaining_time <= 0.0:
 		return
 	launch_convoy_to(target_id, remaining_time)
+
+
+func show_raid_impact(result: Dictionary) -> void:
+	var target := get_raid_target_by_id(String(result.get("target_id", "")))
+	if target == null:
+		return
+
+	var effect: RaidImpactVFX = RAID_IMPACT_SCENE.instantiate()
+	effects_layer.add_child(effect)
+	effect.position = target.position + Vector2(0, -65)
+	effect.setup(bool(result.get("victory", false)))
+
+
+func _get_convoy_route(target_id: String) -> PackedVector2Array:
+	var cells: Array[Vector2i] = [Vector2i(10, 10), Vector2i(12, 10), Vector2i(12, 7)]
+
+	match target_id:
+		"downtown_bank":
+			cells.append_array([Vector2i(7, 7), Vector2i(7, 6), Vector2i(4, 6)])
+		"harbor_bank":
+			cells.append_array([Vector2i(17, 7), Vector2i(19, 7), Vector2i(19, 6)])
+		"northside_hq":
+			cells.append_array([Vector2i(12, 12), Vector2i(17, 12), Vector2i(17, 15), Vector2i(19, 15)])
+		_:
+			var target := get_raid_target_by_id(target_id)
+			if target != null:
+				return PackedVector2Array([
+					safehouse.position + Vector2(0, -35),
+					target.position + Vector2(0, -35)
+				])
+
+	var route := PackedVector2Array()
+	for cell in cells:
+		route.append(iso_to_screen(cell) + Vector2(0, -35))
+	return route
 
 
 func get_persistent_target(target_id: String) -> Node:
