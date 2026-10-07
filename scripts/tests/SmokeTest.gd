@@ -32,6 +32,7 @@ func _ready() -> void:
 		"GameBalance",
 		"SettingsManager",
 		"SaveManager",
+		"MissionTracker",
 		"CityMap",
 		"HUD",
 		"PauseMenu",
@@ -73,6 +74,18 @@ func _ready() -> void:
 	var recruitment := game.get_node_or_null("RecruitmentQueue") as RecruitmentQueue
 	if recruitment == null or recruitment.get_queue_capacity() < 1:
 		_fail("Recruitment queue capacity is invalid.")
+
+	var missions := game.get_node_or_null("MissionTracker") as MissionTracker
+	if missions == null:
+		_fail("MissionTracker is missing.")
+	else:
+		var chapter := missions.get_story_chapter_status()
+		if String(chapter.get("title", "")) != "A Higher Kingdom" or int(chapter.get("chapter", 0)) != 1:
+			_fail("Chapter 1 story configuration is invalid.")
+		if int(chapter.get("goal", 0)) != 5 or String(chapter.get("next_title", "")).is_empty():
+			_fail("Chapter 1 objective chain is incomplete.")
+		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Chapter") == null:
+			_fail("Chapter 1 progression presentation is missing.")
 
 	var alliance := game.get_node_or_null("AllianceManager") as AllianceManager
 	if alliance == null or alliance.get_xp_for_next_level() <= 0:
