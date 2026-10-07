@@ -85,8 +85,9 @@ var active_boss_target := ""
 
 var season_period := -1
 var season_points := 0
-var season_reward_claimed := false
+var claimed_season_tiers: Array[String] = []
 var featured_wins := 0
+var scored_operation_wins := 0
 
 
 func setup(
@@ -141,8 +142,9 @@ func _refresh_season() -> void:
 		return
 	season_period = season
 	season_points = 0
-	season_reward_claimed = false
+	claimed_season_tiers.clear()
 	featured_wins = 0
+	scored_operation_wins = 0
 	changed.emit()
 
 
@@ -158,6 +160,7 @@ func _refresh_week() -> void:
 	weekly_claimed = false
 	mastery_claimed = false
 	active_boss_target = ""
+	scored_operation_wins = 0
 	changed.emit()
 
 
@@ -194,7 +197,8 @@ func get_status() -> Dictionary:
 		"season_points": season_points,
 		"season_tier": get_season_tier(),
 		"season_reward_claimable": is_season_reward_claimable(),
-		"season_reward_claimed": season_reward_claimed,
+		"next_season_reward_tier": get_next_claimable_season_tier(),
+		"claimed_season_tiers": claimed_season_tiers.duplicate(),
 		"featured_wins": featured_wins,
 		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1
 	}
@@ -231,15 +235,24 @@ func get_season_tier() -> String:
 	return "BRONZE"
 
 
+func get_next_claimable_season_tier() -> String:
+	if season_points >= 700 and not "PLATINUM" in claimed_season_tiers:
+		return "PLATINUM"
+	if season_points >= 450 and not "GOLD" in claimed_season_tiers:
+		return "GOLD"
+	if season_points >= 250 and not "SILVER" in claimed_season_tiers:
+		return "SILVER"
+	return ""
+
+
 func is_season_reward_claimable() -> bool:
-	# Season rewards become available once the player proves sustained activity.
-	# We intentionally do not require the 4-week season to end so missed weeks do not
-	# turn the system into a punitive deadline.
-	return is_unlocked() and season_points >= 250 and not season_reward_claimed
+	# Seasonal tiers are incremental: claiming Silver never forfeits Gold or Platinum.
+	return is_unlocked() and not get_next_claimable_season_tier().is_empty()
 
 
-func get_season_reward_summary() -> String:
-	match get_season_tier():
+func get_season_reward_summary(tier: String = "") -> String:
+	var reward_tier := tier if not tier.is_empty() else get_next_claimable_season_tier()
+	match reward_tier:
 		"PLATINUM":
 			return "$30,000 + 25 Gold + Parts x5 + Intel x5 + Contraband x2"
 		"GOLD":
@@ -247,7 +260,7 @@ func get_season_reward_summary() -> String:
 		"SILVER":
 			return "$15,000 + 12 Gold + Parts x3 + Intel x3"
 		_:
-			return "$8,000 + 6 Gold + Parts x2 + Intel x2"
+			return "Next tier unlocks at 250 seasonal influence."
 
 
 func get_dominion_rank() -> String:
@@ -306,6 +319,14 @@ func launch_rival_operation() -> bool:
 func launch_boss_rematch() -> bool:
 	if not is_unlocked() or world_control == null or not world_control.active_patrol.is_empty():
 		return false
+
+	var featured_target := String(get_current_modifier().get("district_id", ""))
+	if world_control.is_discovered(featured_target) and world_control.launch_boss_rematch(featured_target):
+		active_boss_target = featured_target
+		boss_cursor = (TARGET_ROTATION.find(featured_target) + 1) % TARGET_ROTATION.size()
+		changed.emit()
+		return true
+
 	for offset in range(TARGET_ROTATION.size()):
 		var index := (boss_cursor + offset) % TARGET_ROTATION.size()
 		var target_id := String(TARGET_ROTATION[index])
@@ -320,10 +341,10 @@ func launch_boss_rematch() -> bool:
 
 
 func claim_season_reward() -> bool:
-	if not is_season_reward_claimable():
+	var tier := get_next_claimable_season_tier()
+	if tier.is_empty():
 		return false
-	season_reward_claimed = true
-	var tier := get_season_tier()
+	claimed_season_tiers.append(tier)
 	match tier:
 		"PLATINUM":
 			economy.add_cash(30000)
@@ -387,13 +408,15 @@ func _on_family_encounter_resolved(district_id: String, _encounter_type: String,
 	family_operation_wins = mini(FAMILY_OPERATION_GOAL, family_operation_wins + 1)
 	var modifier := get_current_modifier()
 	var featured := district_id == String(modifier.get("district_id", ""))
-	season_points += FEATURED_WIN_POINTS if featured else NORMAL_WIN_POINTS
-	if featured:
-		featured_wins += 1
-		economy.add_cash(int(modifier.get("bonus_cash", 0)))
-		var bonus_loot = modifier.get("bonus_loot", {})
-		if bonus_loot is Dictionary:
-			loot.add_loot(bonus_loot)
+	if scored_operation_wins < 5:
+		scored_operation_wins += 1
+		season_points += FEATURED_WIN_POINTS if featured else NORMAL_WIN_POINTS
+		if featured:
+			featured_wins += 1
+			economy.add_cash(int(modifier.get("bonus_cash", 0)))
+			var bonus_loot = modifier.get("bonus_loot", {})
+			if bonus_loot is Dictionary:
+				loot.add_loot(bonus_loot)
 	if district_id == active_boss_target:
 		boss_rematch_wins = mini(BOSS_REMATCH_GOAL, boss_rematch_wins + 1)
 		active_boss_target = ""
@@ -429,8 +452,9 @@ func get_save_data() -> Dictionary:
 		"active_boss_target": active_boss_target,
 		"season_period": season_period,
 		"season_points": season_points,
-		"season_reward_claimed": season_reward_claimed,
-		"featured_wins": featured_wins
+		"claimed_season_tiers": claimed_season_tiers.duplicate(),
+		"featured_wins": featured_wins,
+		"scored_operation_wins": scored_operation_wins
 	}
 
 
@@ -448,8 +472,15 @@ func load_save_data(data: Dictionary) -> void:
 	active_boss_target = String(data.get("active_boss_target", ""))
 	season_period = int(data.get("season_period", season_period))
 	season_points = maxi(0, int(data.get("season_points", 0)))
-	season_reward_claimed = bool(data.get("season_reward_claimed", false))
+	claimed_season_tiers.clear()
+	var saved_tiers = data.get("claimed_season_tiers", [])
+	if saved_tiers is Array:
+		for raw_tier in saved_tiers:
+			var tier := String(raw_tier)
+			if tier in ["SILVER", "GOLD", "PLATINUM"] and not tier in claimed_season_tiers:
+				claimed_season_tiers.append(tier)
 	featured_wins = maxi(0, int(data.get("featured_wins", 0)))
+	scored_operation_wins = clampi(int(data.get("scored_operation_wins", 0)), 0, 5)
 	_refresh_season()
 	_refresh_week()
 	changed.emit()
