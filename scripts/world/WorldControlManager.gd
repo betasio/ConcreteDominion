@@ -347,7 +347,11 @@ func get_income_per_hour() -> int:
 				rate = roundi(float(rate) * 0.65)
 			total += rate
 	if faction != null and faction.has_faction():
-		total = roundi(float(total) * faction.get_territory_income_multiplier())
+		total = roundi(
+			float(total)
+			* faction.get_territory_income_multiplier()
+			* faction.get_territory_cash_multiplier()
+		)
 	return total
 
 
