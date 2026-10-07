@@ -30,9 +30,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 24.0
-offset_top = -335.0
+offset_top = -430.0
 offset_right = 520.0
-offset_bottom = 335.0
+offset_bottom = 430.0
 grow_vertical = 2
 
 [node name="Margin" type="MarginContainer" parent="Root/Panel"]
@@ -83,14 +83,39 @@ text = "Create"
 layout_mode = 2
 text = "Join Prototype Faction"
 
+[node name="Permissions" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "ROLE PERMISSIONS"
+autowrap_mode = 2
+
+[node name="Daily" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 118)
+layout_mode = 2
+text = "DAILY FACTION OPERATIONS"
+autowrap_mode = 2
+
+[node name="DailyButtons" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ClaimDaily" type="Button" parent="Root/Panel/Margin/VBox/DailyButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Claim Daily Reward"
+
+[node name="ClaimMastery" type="Button" parent="Root/Panel/Margin/VBox/DailyButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Claim 4/4 Mastery"
+
 [node name="Members" type="Label" parent="Root/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 130)
+custom_minimum_size = Vector2(0, 105)
 layout_mode = 2
 text = "MEMBERS & RANKS"
 autowrap_mode = 2
 
 [node name="Research" type="Label" parent="Root/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 text = "FACTION RESEARCH"
 autowrap_mode = 2
@@ -102,6 +127,54 @@ text = "Donate $5,000 to Faction"
 [node name="UpgradeResearch" type="Button" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
 text = "Upgrade Research"
+
+[node name="Gift" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Claim Faction Gift"
+
+[node name="Rally" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "FACTION RALLY"
+autowrap_mode = 2
+
+[node name="RallyButtons" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StartRally" type="Button" parent="Root/Panel/Margin/VBox/RallyButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Start Prototype Rally"
+
+[node name="ClearRally" type="Button" parent="Root/Panel/Margin/VBox/RallyButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancel Rally"
+
+[node name="War" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "FACTION WAR"
+autowrap_mode = 2
+
+[node name="WarRules" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+text = "WAR RULES"
+autowrap_mode = 2
+
+[node name="WarButtons" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StartWar" type="Button" parent="Root/Panel/Margin/VBox/WarButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Start Prototype War"
+
+[node name="WarAttack" type="Button" parent="Root/Panel/Margin/VBox/WarButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Run War Attack"
 
 [node name="Leave" type="Button" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
