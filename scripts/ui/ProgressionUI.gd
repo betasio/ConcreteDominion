@@ -15,6 +15,9 @@ var presentation_catalog: PresentationCatalog
 @onready var story_portrait: TextureRect = $Root/Panel/Margin/VBox/StoryBeat/Portrait
 @onready var story_speaker: Label = $Root/Panel/Margin/VBox/StoryBeat/Copy/Speaker
 @onready var story_line: Label = $Root/Panel/Margin/VBox/StoryBeat/Copy/Line
+@onready var approach_box: HBoxContainer = $Root/Panel/Margin/VBox/Approach
+@onready var force_button: Button = $Root/Panel/Margin/VBox/Approach/Force
+@onready var intel_button: Button = $Root/Panel/Margin/VBox/Approach/Intel
 @onready var milestones_label: Label = $Root/Panel/Margin/VBox/Milestones
 @onready var unlocks_label: Label = $Root/Panel/Margin/VBox/Unlocks
 @onready var missions_label: Label = $Root/Panel/Margin/VBox/Missions
@@ -46,6 +49,8 @@ func setup(
 	enforcer_button.pressed.connect(func(): _upgrade(&"Enforcer"))
 	driver_button.pressed.connect(func(): _upgrade(&"Driver"))
 	spy_button.pressed.connect(func(): _upgrade(&"Spy"))
+	force_button.pressed.connect(func(): _choose_approach("force"))
+	intel_button.pressed.connect(func(): _choose_approach("intel"))
 
 	_refresh()
 
@@ -57,6 +62,11 @@ func _toggle_panel() -> void:
 
 func _upgrade(role: StringName) -> void:
 	progression.upgrade_specialist(role)
+	_refresh()
+
+
+func _choose_approach(choice_id: String) -> void:
+	missions.choose_chapter_2_approach(choice_id)
 	_refresh()
 
 
@@ -82,10 +92,21 @@ func _refresh() -> void:
 			int(chapter["chapter"]), String(chapter["title"]), int(chapter["progress"]), int(chapter["goal"]), String(chapter["next_title"]), String(chapter["next_description"]), String(chapter["completion_reward"])
 		]
 
-	milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Gold + 35 XP + Parts x1\n%s  4/5 — $3,500 + 5 Gold + 60 XP + Intel x1" % [
-		"✓" if bool(chapter["milestone_2_claimed"]) else "○",
-		"✓" if bool(chapter["milestone_4_claimed"]) else "○"
-	]
+	approach_box.visible = bool(chapter.get("choice_required", false))
+	force_button.disabled = not approach_box.visible
+	intel_button.disabled = not approach_box.visible
+
+	if int(chapter["chapter"]) == 1:
+		milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Gold + 35 XP + Parts x1\n%s  4/5 — $3,500 + 5 Gold + 60 XP + Intel x1" % [
+			"✓" if bool(chapter["milestone_2_claimed"]) else "○",
+			"✓" if bool(chapter["milestone_4_claimed"]) else "○"
+		]
+	else:
+		var choice := String(chapter.get("choice", ""))
+		milestones_label.text = "RIVAL CAMPAIGN\nIron Serpents: Harbor • Meridian Boys: Midtown\nApproach: %s • Chapter reward: %s" % [
+			"UNDECIDED" if choice.is_empty() else choice.to_upper(),
+			String(chapter["completion_reward"])
+		]
 
 	unlocks_label.text = text_catalog.text("UI_UNLOCKS_TITLE") + "\nLv.2 — Harbor District + Garage\nLv.3 — Midtown + Intel Office\nLv.4 — Northside + Scrapyard\nLv.5 — High Roller Strip + Data Hub\nLv.6 — Financial District\nLv.7 — Industrial Belt"
 
