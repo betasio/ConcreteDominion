@@ -90,6 +90,7 @@ func _ready() -> void:
 		city_map,
 		core_building_effects,
 		rival_family_rules,
+		faction_manager,
 		raid_battle
 	)
 
