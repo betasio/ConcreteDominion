@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 28
+const SAVE_VERSION := 29
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -20,6 +20,7 @@ var mailbox: MailboxManager
 var alliance: AllianceManager
 var alliance_social: AllianceSocial
 var faction: FactionManager
+var endgame: EndgameManager
 var roster: TroopRoster
 var hospital: HospitalQueue
 var construction: ConstructionQueue
@@ -52,6 +53,7 @@ func setup(
 	alliance_manager: AllianceManager,
 	social: AllianceSocial,
 	faction_manager: FactionManager,
+	endgame_manager: EndgameManager,
 	troop_roster: TroopRoster,
 	hospital_queue: HospitalQueue,
 	construction_queue: ConstructionQueue,
@@ -75,6 +77,7 @@ func setup(
 	alliance = alliance_manager
 	alliance_social = social
 	faction = faction_manager
+	endgame = endgame_manager
 	roster = troop_roster
 	hospital = hospital_queue
 	construction = construction_queue
@@ -98,6 +101,7 @@ func setup(
 	alliance.changed.connect(mark_dirty)
 	alliance_social.changed.connect(mark_dirty)
 	faction.changed.connect(mark_dirty)
+	endgame.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
 	hospital.queue_changed.connect(mark_dirty)
 	construction.queue_changed.connect(mark_dirty)
@@ -149,6 +153,7 @@ func save_game() -> bool:
 		"alliance": alliance.get_save_data(),
 		"alliance_social": alliance_social.get_save_data(),
 		"faction": faction.get_save_data(),
+		"endgame": endgame.get_save_data(),
 		"roster": roster.get_save_data(),
 		"hospital": hospital.get_save_data(),
 		"construction": construction.get_save_data(),
@@ -209,6 +214,7 @@ func load_game() -> bool:
 	alliance.load_save_data(data.get("alliance", {}))
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
 	faction.load_save_data(data.get("faction", {}), elapsed)
+	endgame.load_save_data(data.get("endgame", {}))
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	world_control.load_save_data(data.get("world_control", {}), elapsed)
@@ -456,6 +462,10 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 			chapter_meta_v28["chapter_6_choice"] = ""
 		mission_data_v28["_chapter_meta"] = chapter_meta_v28
 		data["missions"] = mission_data_v28
+
+	if version < 29:
+		if not data.has("endgame"):
+			data["endgame"] = {}
 
 	data["schema_meta"] = {
 		"migrated_from": version,
