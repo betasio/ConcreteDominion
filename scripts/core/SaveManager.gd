@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 30
+const SAVE_VERSION := 31
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -484,6 +484,16 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 		if not endgame_data_v30.has("scored_operation_wins"):
 			endgame_data_v30["scored_operation_wins"] = 0
 		data["endgame"] = endgame_data_v30
+
+	if version < 31:
+		var faction_data_v31 = data.get("faction", {})
+		if not (faction_data_v31 is Dictionary):
+			faction_data_v31 = {}
+		if not faction_data_v31.has("season_period"):
+			var current_day_v31 := floori(Time.get_unix_time_from_system() / 86400.0)
+			var current_week_v31 := floori(float(current_day_v31) / 7.0)
+			faction_data_v31["season_period"] = floori(float(current_week_v31) / 4.0)
+		data["faction"] = faction_data_v31
 
 	data["schema_meta"] = {
 		"migrated_from": version,
