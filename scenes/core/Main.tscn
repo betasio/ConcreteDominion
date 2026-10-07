@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=3]
+[gd_scene load_steps=55 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -52,6 +52,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/FactionUI.tscn" id="50_faction_ui"]
 [ext_resource type="Script" path="res://scripts/endgame/EndgameManager.gd" id="51_endgame"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EndgameUI.tscn" id="52_endgame_ui"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OperationResultUI.tscn" id="53_operation_result_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -177,6 +178,8 @@ script = ExtResource("48_ui_art")
 [node name="FactionUI" parent="." instance=ExtResource("50_faction_ui")]
 
 [node name="EndgameUI" parent="." instance=ExtResource("52_endgame_ui")]
+
+[node name="OperationResultUI" parent="." instance=ExtResource("53_operation_result_ui")]
 
 [node name="EventUI" parent="." instance=ExtResource("24_event_ui")]
 
