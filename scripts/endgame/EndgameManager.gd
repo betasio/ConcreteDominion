@@ -15,6 +15,29 @@ const SEASON_WEEKS := 4
 const FEATURED_WIN_POINTS := 25
 const NORMAL_WIN_POINTS := 10
 
+const SEASON_IDENTITIES := [
+	{
+		"name":"Steel Reign",
+		"subtitle":"Supply lines, convoys, and hard control decide the city.",
+		"prestige":"STEEL"
+	},
+	{
+		"name":"Velvet Ledger",
+		"subtitle":"Money, favors, and information move faster than bullets.",
+		"prestige":"VELVET"
+	},
+	{
+		"name":"Crown of Northside",
+		"subtitle":"Borders harden and reputation becomes a weapon.",
+		"prestige":"CROWN"
+	},
+	{
+		"name":"Blackout Accord",
+		"subtitle":"The city goes quiet while surveillance networks fail.",
+		"prestige":"BLACKOUT"
+	}
+]
+
 const SEASON_MODIFIERS := [
 	{
 		"id":"supply_shock",
@@ -89,6 +112,9 @@ var claimed_season_tiers: Array[String] = []
 var pending_season_tiers: Array[String] = []
 var featured_wins := 0
 var scored_operation_wins := 0
+var prestige_badges: Array[String] = []
+var equipped_prestige_badge := ""
+var last_season_result: Dictionary = {}
 
 
 func setup(
@@ -143,6 +169,14 @@ func _refresh_season() -> void:
 		return
 
 	if season_period >= 0:
+		var completed_identity := _get_season_identity_for_period(season_period)
+		last_season_result = {
+			"season_name": String(completed_identity.get("name", "Dominion Season")),
+			"season_points": season_points,
+			"season_tier": get_season_tier(),
+			"featured_wins": featured_wins,
+			"claimed_tiers": claimed_season_tiers.duplicate()
+		}
 		for tier in _eligible_tiers_for_points(season_points):
 			if not tier in claimed_season_tiers and not tier in pending_season_tiers:
 				pending_season_tiers.append(tier)
@@ -219,8 +253,63 @@ func get_status() -> Dictionary:
 		"claimed_season_tiers": claimed_season_tiers.duplicate(),
 		"pending_season_tiers": pending_season_tiers.duplicate(),
 		"featured_wins": featured_wins,
-		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1
+		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1,
+		"season_name": get_season_name(),
+		"season_subtitle": get_season_subtitle(),
+		"equipped_prestige_badge": equipped_prestige_badge
 	}
+
+
+func _get_season_identity_for_period(period: int) -> Dictionary:
+	return SEASON_IDENTITIES[posmod(period, SEASON_IDENTITIES.size())].duplicate(true)
+
+
+func get_season_identity() -> Dictionary:
+	return _get_season_identity_for_period(_get_season_index())
+
+
+func get_season_name() -> String:
+	return String(get_season_identity().get("name", "Dominion Season"))
+
+
+func get_season_subtitle() -> String:
+	return String(get_season_identity().get("subtitle", ""))
+
+
+func get_last_season_result_text() -> String:
+	if last_season_result.is_empty():
+		return "No completed Dominion season yet."
+	return "%s • %s • %d influence • %d featured win(s)" % [
+		String(last_season_result.get("season_name", "Season")),
+		String(last_season_result.get("season_tier", "BRONZE")),
+		int(last_season_result.get("season_points", 0)),
+		int(last_season_result.get("featured_wins", 0))
+	]
+
+
+func get_prestige_badge_lines() -> PackedStringArray:
+	if prestige_badges.is_empty():
+		return PackedStringArray(["No seasonal prestige badges earned yet."])
+	var lines := PackedStringArray()
+	for badge in prestige_badges:
+		lines.append("%s%s" % [badge, " • EQUIPPED" if badge == equipped_prestige_badge else ""])
+	return lines
+
+
+func equip_next_prestige_badge() -> bool:
+	if prestige_badges.is_empty():
+		return false
+	var index := prestige_badges.find(equipped_prestige_badge)
+	if index < 0:
+		equipped_prestige_badge = prestige_badges[0]
+	else:
+		equipped_prestige_badge = prestige_badges[(index + 1) % prestige_badges.size()]
+	changed.emit()
+	return true
+
+
+func get_equipped_prestige_badge() -> String:
+	return equipped_prestige_badge
 
 
 func get_current_modifier() -> Dictionary:
@@ -378,6 +467,17 @@ func claim_season_reward() -> bool:
 		pending_season_tiers.erase(tier)
 	else:
 		claimed_season_tiers.append(tier)
+
+	var identity := get_season_identity()
+	var badge_name := "%s %s" % [
+		String(identity.get("prestige", "DOMINION")),
+		tier
+	]
+	if not badge_name in prestige_badges:
+		prestige_badges.append(badge_name)
+		if equipped_prestige_badge.is_empty():
+			equipped_prestige_badge = badge_name
+
 	match tier:
 		"PLATINUM":
 			economy.add_cash(30000)
@@ -487,7 +587,10 @@ func get_save_data() -> Dictionary:
 		"season_points": season_points,
 		"claimed_season_tiers": claimed_season_tiers.duplicate(),
 		"featured_wins": featured_wins,
-		"scored_operation_wins": scored_operation_wins
+		"scored_operation_wins": scored_operation_wins,
+		"prestige_badges": prestige_badges.duplicate(),
+		"equipped_prestige_badge": equipped_prestige_badge,
+		"last_season_result": last_season_result.duplicate(true)
 	}
 
 
@@ -522,6 +625,21 @@ func load_save_data(data: Dictionary) -> void:
 				pending_season_tiers.append(pending_tier)
 	featured_wins = maxi(0, int(data.get("featured_wins", 0)))
 	scored_operation_wins = clampi(int(data.get("scored_operation_wins", 0)), 0, 5)
+
+	prestige_badges.clear()
+	var saved_badges = data.get("prestige_badges", [])
+	if saved_badges is Array:
+		for raw_badge in saved_badges:
+			var badge := String(raw_badge).strip_edges().left(40)
+			if not badge.is_empty() and not badge in prestige_badges:
+				prestige_badges.append(badge)
+	equipped_prestige_badge = String(data.get("equipped_prestige_badge", ""))
+	if not equipped_prestige_badge.is_empty() and not equipped_prestige_badge in prestige_badges:
+		equipped_prestige_badge = prestige_badges[0] if not prestige_badges.is_empty() else ""
+
+	var saved_result = data.get("last_season_result", {})
+	last_season_result = saved_result.duplicate(true) if saved_result is Dictionary else {}
+
 	_refresh_season()
 	_refresh_week()
 	changed.emit()
