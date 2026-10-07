@@ -86,6 +86,7 @@ var active_boss_target := ""
 var season_period := -1
 var season_points := 0
 var claimed_season_tiers: Array[String] = []
+var pending_season_tiers: Array[String] = []
 var featured_wins := 0
 var scored_operation_wins := 0
 
@@ -140,12 +141,29 @@ func _refresh_season() -> void:
 	var season := _get_season_index()
 	if season_period == season:
 		return
+
+	if season_period >= 0:
+		for tier in _eligible_tiers_for_points(season_points):
+			if not tier in claimed_season_tiers and not tier in pending_season_tiers:
+				pending_season_tiers.append(tier)
+
 	season_period = season
 	season_points = 0
 	claimed_season_tiers.clear()
 	featured_wins = 0
 	scored_operation_wins = 0
 	changed.emit()
+
+
+func _eligible_tiers_for_points(points: int) -> Array[String]:
+	var tiers: Array[String] = []
+	if points >= 250:
+		tiers.append("SILVER")
+	if points >= 450:
+		tiers.append("GOLD")
+	if points >= 700:
+		tiers.append("PLATINUM")
+	return tiers
 
 
 func _refresh_week() -> void:
@@ -199,6 +217,7 @@ func get_status() -> Dictionary:
 		"season_reward_claimable": is_season_reward_claimable(),
 		"next_season_reward_tier": get_next_claimable_season_tier(),
 		"claimed_season_tiers": claimed_season_tiers.duplicate(),
+		"pending_season_tiers": pending_season_tiers.duplicate(),
 		"featured_wins": featured_wins,
 		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1
 	}
@@ -236,12 +255,14 @@ func get_season_tier() -> String:
 
 
 func get_next_claimable_season_tier() -> String:
-	if season_points >= 700 and not "PLATINUM" in claimed_season_tiers:
-		return "PLATINUM"
-	if season_points >= 450 and not "GOLD" in claimed_season_tiers:
-		return "GOLD"
+	if not pending_season_tiers.is_empty():
+		return pending_season_tiers[0]
 	if season_points >= 250 and not "SILVER" in claimed_season_tiers:
 		return "SILVER"
+	if season_points >= 450 and not "GOLD" in claimed_season_tiers:
+		return "GOLD"
+	if season_points >= 700 and not "PLATINUM" in claimed_season_tiers:
+		return "PLATINUM"
 	return ""
 
 
@@ -303,6 +324,15 @@ func get_contract_lines() -> PackedStringArray:
 func launch_rival_operation() -> bool:
 	if not is_unlocked() or world_control == null or not world_control.active_patrol.is_empty():
 		return false
+
+	var featured_target := String(get_current_modifier().get("district_id", ""))
+	if world_control.is_discovered(featured_target):
+		var featured_type := world_control.family_rules.get_preferred_encounter(featured_target)
+		if world_control.launch_family_operation(featured_target, featured_type):
+			operation_cursor = (TARGET_ROTATION.find(featured_target) + 1) % TARGET_ROTATION.size()
+			changed.emit()
+			return true
+
 	for offset in range(TARGET_ROTATION.size()):
 		var index := (operation_cursor + offset) % TARGET_ROTATION.size()
 		var target_id := String(TARGET_ROTATION[index])
@@ -344,7 +374,10 @@ func claim_season_reward() -> bool:
 	var tier := get_next_claimable_season_tier()
 	if tier.is_empty():
 		return false
-	claimed_season_tiers.append(tier)
+	if tier in pending_season_tiers:
+		pending_season_tiers.erase(tier)
+	else:
+		claimed_season_tiers.append(tier)
 	match tier:
 		"PLATINUM":
 			economy.add_cash(30000)
@@ -479,6 +512,14 @@ func load_save_data(data: Dictionary) -> void:
 			var tier := String(raw_tier)
 			if tier in ["SILVER", "GOLD", "PLATINUM"] and not tier in claimed_season_tiers:
 				claimed_season_tiers.append(tier)
+
+	pending_season_tiers.clear()
+	var saved_pending = data.get("pending_season_tiers", [])
+	if saved_pending is Array:
+		for raw_tier in saved_pending:
+			var pending_tier := String(raw_tier)
+			if pending_tier in ["SILVER", "GOLD", "PLATINUM"] and not pending_tier in pending_season_tiers:
+				pending_season_tiers.append(pending_tier)
 	featured_wins = maxi(0, int(data.get("featured_wins", 0)))
 	scored_operation_wins = clampi(int(data.get("scored_operation_wins", 0)), 0, 5)
 	_refresh_season()
