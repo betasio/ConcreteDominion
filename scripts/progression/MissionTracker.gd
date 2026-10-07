@@ -272,6 +272,8 @@ func get_story_chapter_status() -> Dictionary:
 func get_mission_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
 	for mission_id in missions.keys():
+		if mission_id == "chapter_1_complete":
+			continue
 		var mission: Dictionary = missions[mission_id]
 		var state := "DONE" if bool(mission["completed"]) else "%d/%d" % [
 			int(mission["progress"]),
@@ -300,4 +302,5 @@ func load_save_data(data: Dictionary) -> void:
 		if saved is Dictionary:
 			missions[mission_id]["progress"] = int(saved.get("progress", missions[mission_id]["progress"]))
 			missions[mission_id]["completed"] = bool(saved.get("completed", missions[mission_id]["completed"]))
+	_refresh_chapter_progress()
 	changed.emit()
