@@ -2,198 +2,244 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Production-readiness foundation
+## Release-quality shell milestone
 
-This milestone moves several prototype-wide concerns out of individual gameplay scripts and into dedicated infrastructure.
+The project now has a real application shell around the gameplay scene instead of booting directly into the city.
 
-## Central balance configuration
+## Boot / title screen
 
-A new `GameBalance` node owns shared tuning values for:
+`project.godot` now starts:
 
-- troop recruitment Cash cost;
-- troop recruitment time;
-- recruitment Gold speed-up rate;
-- construction Gold speed-up rate;
-- Clinic Gold speed-up rate;
-- account XP curve;
-- Driver support progression;
-- Spy support progression;
-- Enforcer power progression.
+`res://scenes/core/Boot.tscn`
 
-Recruitment, construction, Clinic healing, and player progression now read these values from the same source.
+The title flow includes:
 
-This makes future economy passes substantially safer because core tuning no longer requires searching multiple unrelated scripts.
+- Continue
+- New Game
+- Quit
+- asynchronous loading screen
+- loading progress indicator
+- initial keyboard/controller focus
 
-## Player settings
+Continue is enabled when either the primary save or backup save exists.
 
-Settings are stored separately in:
+New Game removes both gameplay save files while leaving player settings intact.
 
-`user://settings.cfg`
+The game scene is loaded with Godot's threaded resource loader and then becomes the active scene, preserving the existing `/root/Main` paths used by the prototype.
 
-They do not belong to the gameplay save and can therefore survive save resets independently.
+## Pause / system menu
 
-Current settings:
+Press the built-in `ui_cancel` action, normally Escape or the controller cancel/back action, to open the system menu.
 
-- Master Volume
-- Haptics on/off
-- Haptics strength
-- Reduced Motion
-- Larger UI Text
-- PC Edge Pan
+Current actions:
 
-Master volume is applied through Godot's Master audio bus.
+- Resume
+- Save Now
+- Return to Title
+- Quit Game
 
-Haptics use `Input.vibrate_handheld()` only when touchscreen hardware is available.
+The menu runs while the SceneTree is paused and explicitly focuses Resume for keyboard/controller navigation.
 
-Raid resolution provides short victory/defeat haptic feedback when enabled.
+Returning to the title or quitting saves first.
 
-Reduced Motion disables the raid result tween and raid impact burst.
+## Keyboard and controller UI navigation
 
-## Mobile safe areas
+A new `UIFocusManager` provides a fallback initial focus when the player starts navigating with:
 
-The project now uses:
+- Tab / Shift+Tab
+- keyboard arrows
+- controller D-pad
+- UI accept/cancel actions
 
-`DisplayServer.get_display_safe_area()`
+Existing Godot Button controls then use the engine's normal focus navigation.
 
-on touchscreen devices.
+The strategy camera now stops keyboard and edge-panning whenever a GUI control owns focus. This prevents arrow/D-pad UI navigation from also moving the world camera.
 
-A `SafeAreaManager` converts the physical safe-area rectangle into the game's stretched viewport space and applies the resulting insets to the major UI roots.
+## Audio / SFX hooks
 
-This protects interface controls from:
+A new `AudioManager` provides a lightweight sound layer.
 
-- phone notches;
-- camera cutouts;
-- rounded display corners;
-- system UI safe regions.
+Because final audio assets do not exist yet, the current build generates short procedural tones for:
 
-Desktop windows receive zero safe-area padding.
+- UI button clicks
+- reward/milestone completion
+- raid victory/defeat
 
-The project stretch aspect is now `expand` so extra PC/mobile aspect-ratio space can be used responsively.
+All tones pass through the Master audio bus, so the existing Master Volume setting affects them automatically.
 
-## Diagnostics panel
+The audio manager listens for dynamically-created buttons as well as controls already present when Main loads, so future UI panels inherit click feedback without manually wiring every button.
 
-The Settings screen includes live diagnostics:
+This procedural implementation is intentionally replaceable: production WAV/OGG assets can later be dropped behind the same public audio methods.
 
-- FPS;
-- operating system;
-- active Godot renderer;
-- viewport size;
-- touchscreen detection;
-- current gameplay save schema;
-- central recruitment costs/times;
-- Gold-per-minute speed-up values.
+## Crash-safe backup saves
 
-This provides a basic in-game inspection surface for later balancing and device testing.
+Gameplay persistence now uses two files:
 
-## Save migrations
+- `user://concrete_dominion_save.json`
+- `user://concrete_dominion_save.backup.json`
 
-Gameplay save schema is now **version 12**.
+Before overwriting the primary save, the previous valid primary document is copied into the backup slot.
 
-Older saves are explicitly migrated before loading.
+Loading behavior:
 
-Current migration guards cover the historical additions for:
+1. Try the primary save.
+2. If missing or invalid, try the backup.
+3. Run the normal version migrations.
+4. Continue loading gameplay state.
 
-- progression/missions;
-- retention;
-- profile/mailbox;
-- live events;
-- combat loadouts.
+New Game deletes both files.
 
-Missing systems are initialized with empty/default data rather than breaking older saves.
+This protects the prototype from a partially-written or corrupted latest save while keeping the existing schema at version 12.
 
-The migration result is marked with schema metadata and then loaded through the normal subsystem loaders.
+## Windows export preset
 
-## Mobile lifecycle saving
+A version-controlled **Windows Desktop** export preset is included.
 
-Desktop close requests still trigger a save.
+Default output:
 
-The game now also saves on:
+`build/windows/ConcreteDominion.exe`
 
-`NOTIFICATION_APPLICATION_PAUSED`
+Command-line release export:
 
-This is important for Android/iOS because a suspended application can be terminated by the operating system without receiving a normal desktop-style close event.
+```bash
+godot --headless --path . --export-release "Windows Desktop" build/windows/ConcreteDominion.exe
+```
 
-## Accessibility
+The `build/` folder is ignored by Git.
 
-The current accessibility foundation contains:
+## Android export preset
 
-- reduced motion;
-- larger UI text;
-- adjustable haptic strength;
-- complete haptic disable;
-- master-volume control.
+A version-controlled **Android** export preset is included.
 
-The larger-text option applies a shared font-size override to the major UI roots so the feature affects the whole interface rather than one panel.
+Default output:
 
-## Architecture additions
+`build/android/ConcreteDominion.apk`
+
+Current prototype package identifier:
+
+`com.betasio.concretedominion`
+
+The preset targets arm64 and enables Android vibration permission so the existing haptic setting can work on supported devices.
+
+Command-line debug/release examples:
+
+```bash
+godot --headless --path . --export-debug "Android" build/android/ConcreteDominion-debug.apk
+godot --headless --path . --export-release "Android" build/android/ConcreteDominion.apk
+```
+
+Signing credentials are intentionally **not** committed.
+
+Before a store release, configure the Android SDK/JDK and release keystore on the build machine.
+
+## Automated smoke-test scene
+
+A lightweight headless validation scene now exists:
+
+`res://scenes/tests/SmokeTest.tscn`
+
+It verifies that critical scenes/resources exist, instantiates Main, and checks for key production nodes including:
+
+- GameBalance
+- SettingsManager
+- SaveManager
+- CityMap
+- HUD
+- PauseMenu
+- AudioManager
+- UIFocusManager
+
+It also checks the central Driver recruitment definition and save schema.
+
+Run it with:
+
+```bash
+godot --headless --path . res://scenes/tests/SmokeTest.tscn
+```
+
+Exit code:
+
+- 0 = pass
+- 1 = failure
+
+This is intended to become the first CI gate once the repository has an automated build workflow.
+
+## Current application structure
 
 ```text
+Boot
+└── threaded load → Main
+
 Main
 ├── GameBalance
 ├── SettingsManager
-├── SafeAreaManager
+├── PlayerEconomy
+├── LootInventory
+├── PlayerProgression
+├── MissionTracker
+├── RetentionManager
+├── EventManager
+├── PlayerProfile
+├── MailboxManager
+├── AllianceManager
+├── AllianceSocial
+├── TroopRoster
+├── HospitalQueue
+├── ConstructionQueue
+├── RecruitmentQueue
+├── SynergyRaid
+├── CombatLoadout
+├── RaidBattle
 ├── SaveManager
-└── SettingsDiagnosticsUI
-
-scripts/core/
-├── GameBalance.gd
-├── SettingsManager.gd
-└── SaveManager.gd
-
-scripts/ui/
-├── SafeAreaManager.gd
-└── SettingsDiagnosticsUI.gd
-
-scenes/ui/
-└── SettingsDiagnosticsUI.tscn
+├── SafeAreaManager
+├── AudioManager
+├── UIFocusManager
+├── CityMap
+├── HUD
+├── ProgressionUI
+├── RetentionUI
+├── ProfileUI
+├── EventUI
+├── CombatStrategyUI
+├── SettingsDiagnosticsUI
+└── PauseMenu
 ```
 
-## Current shared balance defaults
+## New files
 
-### Recruitment
+```text
+scenes/core/Boot.tscn
+scripts/core/BootFlow.gd
 
-| Unit | Cash each | Seconds each |
-| --- | ---: | ---: |
-| Enforcer | $250 | 1.4 |
-| Driver | $400 | 2.0 |
-| Spy | $500 | 2.4 |
+scenes/ui/PauseMenu.tscn
+scripts/ui/PauseMenu.gd
 
-### Gold speed-ups
+scripts/ui/UIFocusManager.gd
 
-| Queue | Gold/minute |
-| --- | ---: |
-| Recruitment | 2 |
-| Construction | 3 |
-| Clinic | 2 |
+scripts/audio/AudioManager.gd
 
-### Progression
+scenes/tests/SmokeTest.tscn
+scripts/tests/SmokeTest.gd
 
-- Base XP required: 100
-- Extra XP per account level: 75
-- Driver support starts at +15%, +3% per specialist level
-- Spy support starts at +18%, +4% per specialist level
-- Enforcer power starts at 100 each, +15 per specialist level
+export_presets.cfg
+```
 
-These are prototype defaults and are intentionally centralized for the later full balance pass.
+## Current testing limitation
 
-## Production notes
+The repository now contains the smoke-test harness, but this coding environment does not currently have a Godot editor executable installed, so the new scene could not be executed here.
 
-Haptic vibration is platform-dependent. Android exports must enable the appropriate vibration permission for handheld vibration to work.
-
-Gameplay saves, rewards, timers, progression, currencies, battles, and event state remain client-authoritative in this prototype. A live multiplayer release still requires server validation.
+The repository-level wiring and file references were statically checked before commit. The first final-game test should run the smoke-test command above before any manual gameplay testing.
 
 ## Next strong milestone
 
-The project is now ready for a broader **quality and release-preparation pass**:
+The project is now structurally ready for a broader **content-completion and final QA phase**:
 
-- real audio/SFX hooks;
-- UI navigation/focus for keyboard/controller;
-- loading/title screen;
-- pause/system menu;
-- export presets for Windows/Android;
-- crash-safe backup save;
-- data validation tools;
-- automated smoke-test scene;
-- runtime parser/error cleanup;
-- performance budget checks;
-- final economy/balance spreadsheet.
+- more building functions and district content;
+- real art/audio asset replacement;
+- monetization/store prototype screens without real purchases;
+- economy/balance simulation;
+- automated CI smoke test;
+- Android/Windows device testing;
+- UI overflow and localization checks;
+- full new-player-to-endgame playthrough;
+- bug triage and release checklist.

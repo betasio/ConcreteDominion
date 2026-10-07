@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -30,6 +30,9 @@
 [ext_resource type="Script" path="res://scripts/core/SettingsManager.gd" id="28_settings"]
 [ext_resource type="Script" path="res://scripts/ui/SafeAreaManager.gd" id="29_safe"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsDiagnosticsUI.tscn" id="30_settings_ui"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="31_pause"]
+[ext_resource type="Script" path="res://scripts/audio/AudioManager.gd" id="32_audio"]
+[ext_resource type="Script" path="res://scripts/ui/UIFocusManager.gd" id="33_focus"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -97,6 +100,12 @@ script = ExtResource("10_save")
 [node name="SafeAreaManager" type="Node" parent="."]
 script = ExtResource("29_safe")
 
+[node name="AudioManager" type="Node" parent="."]
+script = ExtResource("32_audio")
+
+[node name="UIFocusManager" type="Node" parent="."]
+script = ExtResource("33_focus")
+
 [node name="CityMap" parent="." instance=ExtResource("2_city")]
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
@@ -112,3 +121,5 @@ script = ExtResource("29_safe")
 [node name="CombatStrategyUI" parent="." instance=ExtResource("26_tactics_ui")]
 
 [node name="SettingsDiagnosticsUI" parent="." instance=ExtResource("30_settings_ui")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("31_pause")]

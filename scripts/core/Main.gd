@@ -29,6 +29,9 @@ extends Node
 @onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 @onready var safe_area_manager: SafeAreaManager = $SafeAreaManager
 @onready var settings_ui: SettingsDiagnosticsUI = $SettingsDiagnosticsUI
+@onready var pause_menu: PauseMenu = $PauseMenu
+@onready var audio_manager: AudioManager = $AudioManager
+@onready var ui_focus_manager: UIFocusManager = $UIFocusManager
 
 
 func _ready() -> void:
@@ -139,6 +142,13 @@ func _ready() -> void:
 	]
 	safe_area_manager.setup(safe_roots)
 	settings_ui.setup(settings, save_manager, balance, safe_roots)
+	pause_menu.setup(save_manager)
+	ui_focus_manager.setup(self)
+	audio_manager.setup(self)
+	retention.login_reward_claimed.connect(func(_reward): audio_manager.play_reward())
+	retention.achievement_unlocked.connect(func(_achievement_id): audio_manager.play_reward())
+	event_manager.milestone_claimed.connect(func(_points): audio_manager.play_reward())
+	mission_tracker.mission_completed.connect(func(_mission_id): audio_manager.play_reward())
 
 	hud.setup(
 		economy,
@@ -189,4 +199,5 @@ func _on_raid_resolved_feedback(result: Dictionary) -> void:
 	else:
 		city_map.show_raid_impact(result)
 
+	audio_manager.play_raid_result(bool(result.get("victory", false)))
 	settings.pulse_haptic(70 if bool(result.get("victory", false)) else 110, 1.0 if bool(result.get("victory", false)) else 0.6)

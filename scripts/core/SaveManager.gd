@@ -5,6 +5,7 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
+const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
 const SAVE_VERSION := 12
 
 var economy: PlayerEconomy
@@ -149,22 +150,19 @@ func save_game() -> bool:
 
 
 func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
+	var parsed := _read_save_dictionary(SAVE_PATH)
+	var used_backup := false
+
+	if parsed.is_empty():
+		parsed = _read_save_dictionary(BACKUP_PATH)
+		used_backup = not parsed.is_empty()
+
+	if parsed.is_empty():
 		load_completed.emit(false)
 		return false
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		load_completed.emit(false)
-		return false
-
-	var parsed = JSON.parse_string(file.get_as_text())
-	file.close()
-
-	if not parsed is Dictionary:
-		push_warning("Save file is invalid; starting with defaults.")
-		load_completed.emit(false)
-		return false
+	if used_backup:
+		push_warning("Primary save was unavailable or invalid. Loaded backup save.")
 
 	var data: Dictionary = _migrate_save(parsed)
 	last_loaded_version = int(data.get("version", SAVE_VERSION))
@@ -194,6 +192,33 @@ func load_game() -> bool:
 	_autosave_timer = 0.0
 	load_completed.emit(true)
 	return true
+
+
+func _read_save_dictionary(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+
+	if parsed is Dictionary:
+		return parsed
+	return {}
+
+
+func _backup_current_save() -> void:
+	var existing := _read_save_dictionary(SAVE_PATH)
+	if existing.is_empty():
+		return
+
+	var file := FileAccess.open(BACKUP_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(existing, "\t"))
+		file.close()
 
 
 func _migrate_save(raw: Dictionary) -> Dictionary:
@@ -230,9 +255,11 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 
 
 func delete_save() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return true
-	return DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH)) == OK
+	var ok := true
+	for path in [SAVE_PATH, BACKUP_PATH]:
+		if FileAccess.file_exists(path):
+			ok = DirAccess.remove_absolute(ProjectSettings.globalize_path(path)) == OK and ok
+	return ok
 
 
 func _notification(what: int) -> void:

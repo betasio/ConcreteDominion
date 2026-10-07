@@ -26,8 +26,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_handle_keyboard_movement(delta)
-	if edge_pan_enabled and not DisplayServer.is_touchscreen_available():
+	var ui_has_focus := get_viewport().gui_get_focus_owner() != null
+	if not ui_has_focus:
+		_handle_keyboard_movement(delta)
+	if edge_pan_enabled and not ui_has_focus and not DisplayServer.is_touchscreen_available():
 		_handle_edge_pan(delta)
 	_clamp_camera_to_world()
 

@@ -2,6 +2,7 @@
 .godot/
 
 # Exported builds
+build/
 builds/
 exports/
 

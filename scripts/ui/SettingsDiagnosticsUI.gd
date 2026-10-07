@@ -16,6 +16,16 @@ var ui_roots: Array[Control] = []
 @onready var diagnostics: Label = $Root/Panel/Margin/VBox/Diagnostics
 
 
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+func open_panel() -> void:
+	panel.visible = true
+	$Root/Panel/Margin/VBox/Close.grab_focus.call_deferred()
+	_refresh()
+
+
 func setup(
 	settings_manager: SettingsManager,
 	game_save: SaveManager,
