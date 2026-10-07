@@ -48,7 +48,8 @@ func _ready() -> void:
 		"LocalizedText",
 		"PresentationCatalog",
 		"UIArtStyler",
-		"FactionRules",
+		"RivalFamilyRules",
+		"FactionManager",
 		"AchievementManager",
 		"TutorialManager",
 		"AchievementUI",
@@ -58,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 21:
+	if save == null or SaveManager.SAVE_VERSION < 22:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -120,9 +121,9 @@ func _ready() -> void:
 	if world_control == null or not world_control.is_discovered("downtown_bank"):
 		_fail("World-control discovery defaults are invalid.")
 	elif world_control.get_rivalry_label("harbor_bank") != "COLD":
-		_fail("Faction rivalry baseline is invalid.")
+		_fail("Family rivalry baseline is invalid.")
 	elif world_control.get_rivalry_reward_multiplier("harbor_bank") < 1.0:
-		_fail("Faction rivalry reward scaling is invalid.")
+		_fail("Family rivalry reward scaling is invalid.")
 	else:
 		var harbor_dossier := world_control.get_faction_dossier("harbor_bank")
 		if String(harbor_dossier.get("boss", "")).is_empty() or String(harbor_dossier.get("perk", "")).is_empty():
@@ -146,13 +147,21 @@ func _ready() -> void:
 	elif not text_catalog.has_key("TUTORIAL_WELCOME_TITLE") or not text_catalog.has_key("UI_TACTICS"):
 		_fail("Tutorial/secondary UI localization keys are missing.")
 
-	var faction_rules := game.get_node_or_null("FactionRules") as FactionRules
-	if faction_rules == null or faction_rules.get_encounter_cycle("harbor_bank").is_empty():
-		_fail("Faction rules are invalid.")
-	elif faction_rules.get_boss_name("harbor_bank").is_empty() or faction_rules.get_boss_name("midtown_exchange").is_empty():
-		_fail("Named rival bosses are missing.")
-	elif faction_rules.get_perk_summary("harbor_bank").is_empty():
-		_fail("Faction gameplay identity is missing.")
+	var family_rules := game.get_node_or_null("RivalFamilyRules") as RivalFamilyRules
+	if family_rules == null or family_rules.get_encounter_cycle("harbor_bank").is_empty():
+		_fail("Rival Family rules are invalid.")
+	elif family_rules.get_boss_name("harbor_bank").is_empty() or family_rules.get_boss_name("midtown_exchange").is_empty():
+		_fail("Named Rival Family bosses are missing.")
+	elif family_rules.get_perk_summary("harbor_bank").is_empty():
+		_fail("Rival Family gameplay identity is missing.")
+
+	var faction_manager := game.get_node_or_null("FactionManager") as FactionManager
+	if faction_manager == null:
+		_fail("Player Faction manager is missing.")
+	elif faction_manager.get_xp_for_next_level() <= 0:
+		_fail("Player Faction progression is invalid.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/VBox/CreateBox/Create") == null:
+		_fail("Player Faction creation UI is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
