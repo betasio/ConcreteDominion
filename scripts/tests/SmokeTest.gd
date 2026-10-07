@@ -58,7 +58,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 19:
+	if save == null or SaveManager.SAVE_VERSION < 20:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -84,8 +84,14 @@ func _ready() -> void:
 			_fail("Chapter 1 story configuration is invalid.")
 		if int(chapter.get("goal", 0)) != 5 or String(chapter.get("next_title", "")).is_empty():
 			_fail("Chapter 1 objective chain is incomplete.")
+		if String(chapter.get("speaker", "")).is_empty() or String(chapter.get("story_line", "")).is_empty():
+			_fail("Chapter 1 character story beat is missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Chapter") == null:
 			_fail("Chapter 1 progression presentation is missing.")
+		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/StoryBeat/Portrait") == null:
+			_fail("Chapter 1 story portrait presentation is missing.")
+		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Milestones") == null:
+			_fail("Chapter 1 milestone reward presentation is missing.")
 
 	var retention := game.get_node_or_null("RetentionManager") as RetentionManager
 	if retention == null:
