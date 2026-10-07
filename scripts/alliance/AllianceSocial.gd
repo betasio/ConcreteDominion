@@ -18,7 +18,7 @@ func setup(alliance_manager: AllianceManager) -> void:
 	alliance = alliance_manager
 
 	if feed.is_empty():
-		_add_feed("Alliance channel connected.")
+		_add_feed("Crew Support channel connected.")
 		_add_feed("Vex: Banks are active in the district.")
 		_add_feed("Mia: I can cover Driver support.")
 
@@ -69,7 +69,7 @@ func create_raid_invite(target_id: String, target_name: String) -> bool:
 	_joined_noah = false
 	_joined_kira = false
 
-	_add_feed("You invited the alliance to raid %s." % target_name)
+	_add_feed("You invited your crew support to raid %s." % target_name)
 	changed.emit()
 	return true
 
@@ -102,7 +102,7 @@ func post_message(message: String) -> void:
 
 func get_feed_text() -> String:
 	if feed.is_empty():
-		return "No alliance activity yet."
+		return "No crew-support activity yet."
 	return "\n".join(feed)
 
 
@@ -160,7 +160,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			active_invite.clear()
 
 	if feed.is_empty():
-		_add_feed("Alliance channel connected.")
+		_add_feed("Crew Support channel connected.")
 
 	changed.emit()
 
