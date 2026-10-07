@@ -33,16 +33,16 @@ const TEXTURE_OVERRIDE_PATHS := {
 }
 
 const CHARACTER_ATLAS_PATH := "res://assets/generated/characters/character_atlas.webp"
-const CHARACTER_ATLAS_SIZE := Vector2i(512, 256)
-const CHARACTER_CELL := 128
+const CHARACTER_ATLAS_SIZE := Vector2i(128, 64)
+const CHARACTER_CELL := 32
 const CHARACTER_REGIONS := {
-	"vex": Rect2(0, 0, 128, 128),
-	"mia": Rect2(128, 0, 128, 128),
-	"noah": Rect2(256, 0, 128, 128),
-	"kira": Rect2(384, 0, 128, 128),
-	"enforcer": Rect2(0, 128, 128, 128),
-	"driver": Rect2(128, 128, 128, 128),
-	"spy": Rect2(256, 128, 128, 128)
+	"vex": Rect2(0, 0, 32, 32),
+	"mia": Rect2(32, 0, 32, 32),
+	"noah": Rect2(64, 0, 32, 32),
+	"kira": Rect2(96, 0, 32, 32),
+	"enforcer": Rect2(0, 32, 32, 32),
+	"driver": Rect2(32, 32, 32, 32),
+	"spy": Rect2(64, 32, 32, 32)
 }
 
 const DECOR_ATLAS_PATH := "res://assets/generated/presentation/presentation_atlas.webp"
