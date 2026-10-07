@@ -30,6 +30,7 @@ func _ready() -> void:
 		return
 
 	_check_city_art(presentation, city)
+	_check_character_art(presentation)
 	_check_ui_and_street_art(presentation)
 	_finish()
 
@@ -74,6 +75,19 @@ func _check_city_art(presentation: PresentationCatalog, city: Node) -> void:
 	for target in city.get_raid_targets():
 		if target == null or target.art_texture == null:
 			_fail("A raid target did not receive approved art at runtime.")
+
+
+func _check_character_art(presentation: PresentationCatalog) -> void:
+	if not presentation.is_character_atlas_ready():
+		_fail("Character/unit portrait atlas failed to load.")
+		return
+
+	if presentation.get_character_atlas_size() != Vector2i(512, 256):
+		_fail("Character/unit portrait atlas size changed unexpectedly: %s" % presentation.get_character_atlas_size())
+
+	for key in ["vex", "mia", "noah", "kira", "enforcer", "driver", "spy"]:
+		if presentation.get_character_portrait(key) == null:
+			_fail("Missing required character/unit portrait: %s" % key)
 
 
 func _check_ui_and_street_art(presentation: PresentationCatalog) -> void:
