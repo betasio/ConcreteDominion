@@ -238,6 +238,7 @@ func _ready() -> void:
 	mission_tracker.mission_completed.connect(func(_mission_id): audio_manager.play_reward())
 	endgame.dominion_cache_claimed.connect(audio_manager.play_reward)
 	endgame.dominion_mastery_claimed.connect(audio_manager.play_reward)
+	endgame.season_reward_claimed.connect(func(_tier): audio_manager.play_reward())
 
 	hud.setup(
 		economy,
