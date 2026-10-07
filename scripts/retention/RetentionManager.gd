@@ -18,16 +18,23 @@ var weekly_period: int = -1
 
 var daily_progress: Dictionary = {
 	"recruit": 0,
-	"raid_win": 0
+	"raid_win": 0,
+	"construction": 0
 }
 
 var weekly_progress: Dictionary = {
 	"recruit": 0,
-	"raid_win": 0
+	"raid_win": 0,
+	"construction": 0
 }
 
 var daily_claimed := false
 var weekly_claimed := false
+var daily_mastery_claimed := false
+var weekly_mastery_claimed := false
+
+var pending_comeback_reward: Dictionary = {}
+var comeback_gap_days := 0
 
 var achievements: Dictionary = {
 	"first_raid": false,
@@ -38,6 +45,7 @@ var achievements: Dictionary = {
 
 var lifetime_recruited := 0
 var lifetime_raid_wins := 0
+var lifetime_construction_completed := 0
 var _period_refresh_accumulator := 0.0
 
 
@@ -46,7 +54,8 @@ func setup(
 	loot_inventory: LootInventory,
 	player_progression: PlayerProgression,
 	recruitment: RecruitmentQueue,
-	raid_battle: RaidBattle
+	raid_battle: RaidBattle,
+	construction: ConstructionQueue = null
 ) -> void:
 	economy = player_economy
 	loot = loot_inventory
@@ -54,6 +63,8 @@ func setup(
 
 	recruitment.recruitment_completed.connect(_on_recruitment_completed)
 	raid_battle.battle_resolved.connect(_on_battle_resolved)
+	if construction != null:
+		construction.construction_completed.connect(_on_construction_completed)
 	progression.specialist_upgraded.connect(_on_specialist_upgraded)
 	progression.leveled_up.connect(_on_level_up)
 
@@ -81,28 +92,78 @@ func _get_week_index() -> int:
 func _refresh_periods() -> void:
 	var day := _get_day_index()
 	var week := _get_week_index()
+	var previous_seen_day := last_seen_day
 	var did_change := false
 
 	if daily_period != day:
 		daily_period = day
 		daily_progress["recruit"] = 0
 		daily_progress["raid_win"] = 0
+		daily_progress["construction"] = 0
 		daily_claimed = false
+		daily_mastery_claimed = false
 		did_change = true
 
 	if weekly_period != week:
 		weekly_period = week
 		weekly_progress["recruit"] = 0
 		weekly_progress["raid_win"] = 0
+		weekly_progress["construction"] = 0
 		weekly_claimed = false
+		weekly_mastery_claimed = false
 		did_change = true
 
 	if last_seen_day != day:
+		_queue_comeback_reward(previous_seen_day, day)
 		last_seen_day = day
 		did_change = true
 
 	if did_change:
 		changed.emit()
+
+
+func _queue_comeback_reward(previous_day: int, current_day: int) -> void:
+	if previous_day < 0 or current_day <= previous_day:
+		return
+	if not pending_comeback_reward.is_empty():
+		return
+
+	var gap := current_day - previous_day
+	if gap < 3:
+		return
+
+	var rewarded_days := mini(gap, 7)
+	comeback_gap_days = gap
+	pending_comeback_reward = {
+		"cash": rewarded_days * 1200,
+		"gold": mini(10, rewarded_days),
+		"xp": rewarded_days * 20,
+		"loot": {"Parts": 1} if gap >= 5 else {}
+	}
+
+
+func can_claim_comeback_reward() -> bool:
+	return not pending_comeback_reward.is_empty()
+
+
+func get_comeback_status() -> Dictionary:
+	return {
+		"available": can_claim_comeback_reward(),
+		"gap_days": comeback_gap_days,
+		"reward": pending_comeback_reward.duplicate(true)
+	}
+
+
+func claim_comeback_reward() -> Dictionary:
+	if pending_comeback_reward.is_empty():
+		return {}
+
+	var reward := pending_comeback_reward.duplicate(true)
+	pending_comeback_reward.clear()
+	comeback_gap_days = 0
+	_apply_reward(reward)
+	changed.emit()
+	return reward
 
 
 func can_claim_login_reward() -> bool:
@@ -118,6 +179,9 @@ func claim_login_reward() -> Dictionary:
 	var today := _get_day_index()
 
 	if last_login_claim_day == today - 1:
+		login_streak += 1
+	elif last_login_claim_day == today - 2 and login_streak >= 2:
+		# One missed day does not destroy an established streak.
 		login_streak += 1
 	else:
 		login_streak = 1
@@ -153,37 +217,65 @@ func _get_login_reward(cycle_day: int) -> Dictionary:
 
 
 func get_daily_status() -> Dictionary:
+	var completed := _daily_completed_contracts()
 	return {
 		"recruit": int(daily_progress["recruit"]),
 		"recruit_goal": 3,
 		"raid_win": int(daily_progress["raid_win"]),
 		"raid_goal": 1,
-		"complete": _daily_complete(),
-		"claimed": daily_claimed
+		"construction": int(daily_progress["construction"]),
+		"construction_goal": 1,
+		"completed_contracts": completed,
+		"required_contracts": 2,
+		"complete": completed >= 2,
+		"mastery_complete": completed >= 3,
+		"claimed": daily_claimed,
+		"mastery_claimed": daily_mastery_claimed
 	}
 
 
 func get_weekly_status() -> Dictionary:
+	var completed := _weekly_completed_contracts()
 	return {
 		"recruit": int(weekly_progress["recruit"]),
 		"recruit_goal": 15,
 		"raid_win": int(weekly_progress["raid_win"]),
 		"raid_goal": 5,
-		"complete": _weekly_complete(),
-		"claimed": weekly_claimed
+		"construction": int(weekly_progress["construction"]),
+		"construction_goal": 3,
+		"completed_contracts": completed,
+		"required_contracts": 2,
+		"complete": completed >= 2,
+		"mastery_complete": completed >= 3,
+		"claimed": weekly_claimed,
+		"mastery_claimed": weekly_mastery_claimed
 	}
 
 
-func _daily_complete() -> bool:
-	return int(daily_progress["recruit"]) >= 3 and int(daily_progress["raid_win"]) >= 1
+func _daily_completed_contracts() -> int:
+	var count := 0
+	if int(daily_progress["recruit"]) >= 3:
+		count += 1
+	if int(daily_progress["raid_win"]) >= 1:
+		count += 1
+	if int(daily_progress["construction"]) >= 1:
+		count += 1
+	return count
 
 
-func _weekly_complete() -> bool:
-	return int(weekly_progress["recruit"]) >= 15 and int(weekly_progress["raid_win"]) >= 5
+func _weekly_completed_contracts() -> int:
+	var count := 0
+	if int(weekly_progress["recruit"]) >= 15:
+		count += 1
+	if int(weekly_progress["raid_win"]) >= 5:
+		count += 1
+	if int(weekly_progress["construction"]) >= 3:
+		count += 1
+	return count
 
 
 func claim_daily_objective_reward() -> bool:
-	if daily_claimed or not _daily_complete():
+	if daily_claimed or _daily_completed_contracts() < 2:
 		return false
 
 	daily_claimed = true
@@ -197,8 +289,22 @@ func claim_daily_objective_reward() -> bool:
 	return true
 
 
+func claim_daily_mastery_reward() -> bool:
+	if daily_mastery_claimed or _daily_completed_contracts() < 3:
+		return false
+
+	daily_mastery_claimed = true
+	_apply_reward({
+		"cash": 1500,
+		"gold": 2,
+		"xp": 25
+	})
+	changed.emit()
+	return true
+
+
 func claim_weekly_objective_reward() -> bool:
-	if weekly_claimed or not _weekly_complete():
+	if weekly_claimed or _weekly_completed_contracts() < 2:
 		return false
 
 	weekly_claimed = true
@@ -207,6 +313,21 @@ func claim_weekly_objective_reward() -> bool:
 		"gold": 15,
 		"xp": 200,
 		"loot": {"Parts": 3, "Intel": 2, "Contraband": 1}
+	})
+	changed.emit()
+	return true
+
+
+func claim_weekly_mastery_reward() -> bool:
+	if weekly_mastery_claimed or _weekly_completed_contracts() < 3:
+		return false
+
+	weekly_mastery_claimed = true
+	_apply_reward({
+		"cash": 5000,
+		"gold": 5,
+		"xp": 100,
+		"loot": {"Intel": 1}
 	})
 	changed.emit()
 	return true
@@ -264,6 +385,14 @@ func _on_battle_resolved(result: Dictionary) -> void:
 	weekly_progress["raid_win"] = mini(5, int(weekly_progress["raid_win"]) + 1)
 	lifetime_raid_wins += 1
 	_check_achievements()
+	changed.emit()
+
+
+func _on_construction_completed(_target: Node) -> void:
+	_refresh_periods()
+	daily_progress["construction"] = mini(1, int(daily_progress["construction"]) + 1)
+	weekly_progress["construction"] = mini(3, int(weekly_progress["construction"]) + 1)
+	lifetime_construction_completed += 1
 	changed.emit()
 
 
@@ -342,7 +471,7 @@ func get_tutorial_hint() -> String:
 	if progression.get_specialist_level(&"Driver") <= 1:
 		return "Tutorial: Earn Parts/Intel, then upgrade Driver support in Progression."
 
-	return "Tutorial complete: build your alliance, improve specialists, and push higher-tier targets."
+	return "Tutorial complete: choose the contracts you enjoy, strengthen your crew, and push higher-tier targets."
 
 
 func _apply_reward(reward: Dictionary) -> void:
@@ -370,9 +499,14 @@ func get_save_data() -> Dictionary:
 		"weekly_progress": weekly_progress.duplicate(true),
 		"daily_claimed": daily_claimed,
 		"weekly_claimed": weekly_claimed,
+		"daily_mastery_claimed": daily_mastery_claimed,
+		"weekly_mastery_claimed": weekly_mastery_claimed,
+		"pending_comeback_reward": pending_comeback_reward.duplicate(true),
+		"comeback_gap_days": comeback_gap_days,
 		"achievements": achievements.duplicate(true),
 		"lifetime_recruited": lifetime_recruited,
-		"lifetime_raid_wins": lifetime_raid_wins
+		"lifetime_raid_wins": lifetime_raid_wins,
+		"lifetime_construction_completed": lifetime_construction_completed
 	}
 
 
@@ -384,18 +518,27 @@ func load_save_data(data: Dictionary) -> void:
 	weekly_period = int(data.get("weekly_period", weekly_period))
 	daily_claimed = bool(data.get("daily_claimed", daily_claimed))
 	weekly_claimed = bool(data.get("weekly_claimed", weekly_claimed))
+	daily_mastery_claimed = bool(data.get("daily_mastery_claimed", daily_mastery_claimed))
+	weekly_mastery_claimed = bool(data.get("weekly_mastery_claimed", weekly_mastery_claimed))
+	comeback_gap_days = maxi(0, int(data.get("comeback_gap_days", comeback_gap_days)))
 	lifetime_recruited = maxi(0, int(data.get("lifetime_recruited", lifetime_recruited)))
 	lifetime_raid_wins = maxi(0, int(data.get("lifetime_raid_wins", lifetime_raid_wins)))
+	lifetime_construction_completed = maxi(0, int(data.get("lifetime_construction_completed", lifetime_construction_completed)))
+
+	var saved_comeback = data.get("pending_comeback_reward", {})
+	pending_comeback_reward = saved_comeback.duplicate(true) if saved_comeback is Dictionary else {}
 
 	var saved_daily = data.get("daily_progress", {})
 	if saved_daily is Dictionary:
 		daily_progress["recruit"] = int(saved_daily.get("recruit", 0))
 		daily_progress["raid_win"] = int(saved_daily.get("raid_win", 0))
+		daily_progress["construction"] = int(saved_daily.get("construction", 0))
 
 	var saved_weekly = data.get("weekly_progress", {})
 	if saved_weekly is Dictionary:
 		weekly_progress["recruit"] = int(saved_weekly.get("recruit", 0))
 		weekly_progress["raid_win"] = int(saved_weekly.get("raid_win", 0))
+		weekly_progress["construction"] = int(saved_weekly.get("construction", 0))
 
 	var saved_achievements = data.get("achievements", {})
 	if saved_achievements is Dictionary:
