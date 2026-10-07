@@ -492,6 +492,19 @@ func launch_family_operation(target_id: String, encounter_type: String) -> bool:
 	return true
 
 
+func launch_boss_rematch(target_id: String) -> bool:
+	if family_rules == null:
+		return false
+	var encounter_type := family_rules.get_preferred_encounter(target_id)
+	if not can_launch_family_operation(target_id, encounter_type):
+		return false
+	_create_encounter(target_id, encounter_type, 1.35)
+	active_patrol["dominion_boss"] = true
+	active_patrol["boss_name"] = family_rules.get_boss_name(target_id)
+	changed.emit()
+	return true
+
+
 func _on_raid_resolved(result: Dictionary) -> void:
 	if not bool(result.get("victory", false)):
 		return
