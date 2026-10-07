@@ -75,7 +75,7 @@ autowrap_mode = 2
 [node name="Rivalries" type="Label" parent="Root/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 92)
 layout_mode = 2
-text = "RIVAL DOSSIERS"
+text = "RIVAL FAMILY DOSSIERS"
 autowrap_mode = 2
 
 [node name="Discovery" type="Label" parent="Root/Panel/Margin/VBox"]
