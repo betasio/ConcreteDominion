@@ -15,6 +15,11 @@ var economy: PlayerEconomy
 @onready var claim_daily_button: Button = $Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily
 @onready var claim_mastery_button: Button = $Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimMastery
 @onready var members_label: Label = $Root/Panel/Margin/Scroll/VBox/Members
+@onready var invite_status_label: Label = $Root/Panel/Margin/Scroll/VBox/InviteStatus
+@onready var invite_button: Button = $Root/Panel/Margin/Scroll/VBox/MemberAdmin/Invite
+@onready var accept_invite_button: Button = $Root/Panel/Margin/Scroll/VBox/MemberAdmin/AcceptInvite
+@onready var promote_button: Button = $Root/Panel/Margin/Scroll/VBox/MemberAdmin/Promote
+@onready var remove_button: Button = $Root/Panel/Margin/Scroll/VBox/MemberAdmin/Remove
 @onready var research_label: Label = $Root/Panel/Margin/Scroll/VBox/Research
 @onready var donate_button: Button = $Root/Panel/Margin/Scroll/VBox/Donate
 @onready var research_button: Button = $Root/Panel/Margin/Scroll/VBox/UpgradeResearch
@@ -22,10 +27,17 @@ var economy: PlayerEconomy
 @onready var rally_label: Label = $Root/Panel/Margin/Scroll/VBox/Rally
 @onready var start_rally_button: Button = $Root/Panel/Margin/Scroll/VBox/RallyButtons/StartRally
 @onready var clear_rally_button: Button = $Root/Panel/Margin/Scroll/VBox/RallyButtons/ClearRally
+@onready var territory_label: Label = $Root/Panel/Margin/Scroll/VBox/Territory
+@onready var capture_territory_button: Button = $Root/Panel/Margin/Scroll/VBox/CaptureTerritory
+@onready var season_label: Label = $Root/Panel/Margin/Scroll/VBox/Season
+@onready var rankings_label: Label = $Root/Panel/Margin/Scroll/VBox/Rankings
+@onready var matchmaking_label: Label = $Root/Panel/Margin/Scroll/VBox/Matchmaking
 @onready var war_label: Label = $Root/Panel/Margin/Scroll/VBox/War
 @onready var war_rules_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRules
 @onready var start_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar
 @onready var war_attack_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/WarAttack
+@onready var claim_war_reward_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward
+@onready var clear_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClearWar
 @onready var leave_button: Button = $Root/Panel/Margin/Scroll/VBox/Leave
 
 
@@ -44,10 +56,17 @@ func setup(faction_manager: FactionManager, player_economy: PlayerEconomy) -> vo
 	claim_daily_button.pressed.connect(_claim_daily)
 	claim_mastery_button.pressed.connect(_claim_mastery)
 	gift_button.pressed.connect(_claim_gift)
+	invite_button.pressed.connect(_invite)
+	accept_invite_button.pressed.connect(_accept_invite)
+	promote_button.pressed.connect(_promote)
+	remove_button.pressed.connect(_remove)
 	start_rally_button.pressed.connect(_start_rally)
 	clear_rally_button.pressed.connect(_clear_rally)
+	capture_territory_button.pressed.connect(_capture_territory)
 	start_war_button.pressed.connect(_start_war)
 	war_attack_button.pressed.connect(_war_attack)
+	claim_war_reward_button.pressed.connect(_claim_war_reward)
+	clear_war_button.pressed.connect(_clear_war)
 	leave_button.pressed.connect(_leave)
 	_refresh()
 
@@ -100,13 +119,41 @@ func _claim_gift() -> void:
 	_refresh()
 
 
+func _invite() -> void:
+	faction.invite_prototype_member()
+	_refresh()
+
+
+func _accept_invite() -> void:
+	faction.accept_next_prototype_invite()
+	_refresh()
+
+
+func _promote() -> void:
+	faction.promote_prototype_member()
+	_refresh()
+
+
+func _remove() -> void:
+	faction.remove_prototype_member()
+	_refresh()
+
+
 func _start_rally() -> void:
-	faction.start_rally("faction_war_front", "Faction War Front")
+	var target_id := faction.get_next_territory_id()
+	if target_id.is_empty():
+		target_id = "faction_war_front"
+	faction.start_rally(target_id, "Faction Territory Push")
 	_refresh()
 
 
 func _clear_rally() -> void:
 	faction.clear_rally()
+	_refresh()
+
+
+func _capture_territory() -> void:
+	faction.capture_next_territory()
 	_refresh()
 
 
@@ -117,6 +164,16 @@ func _start_war() -> void:
 
 func _war_attack() -> void:
 	faction.perform_prototype_war_attack()
+	_refresh()
+
+
+func _claim_war_reward() -> void:
+	faction.claim_war_reward()
+	_refresh()
+
+
+func _clear_war() -> void:
+	faction.clear_completed_war()
 	_refresh()
 
 
@@ -133,31 +190,36 @@ func _refresh() -> void:
 	summary_label.text = faction.get_summary()
 
 	var has := faction.has_faction()
+	for node in [
+		permissions_label,
+		daily_label,
+		$Root/Panel/Margin/Scroll/VBox/DailyButtons,
+		members_label,
+		$Root/Panel/Margin/Scroll/VBox/MemberAdmin,
+		invite_status_label,
+		research_label,
+		donate_button,
+		research_button,
+		gift_button,
+		rally_label,
+		$Root/Panel/Margin/Scroll/VBox/RallyButtons,
+		territory_label,
+		capture_territory_button,
+		season_label,
+		rankings_label,
+		matchmaking_label,
+		war_label,
+		war_rules_label,
+		$Root/Panel/Margin/Scroll/VBox/WarButtons,
+		$Root/Panel/Margin/Scroll/VBox/WarRewardButtons,
+		leave_button
+	]:
+		node.visible = has
+
 	$Root/Panel/Margin/Scroll/VBox/CreateBox.visible = not has
 	join_button.visible = not has
-	permissions_label.visible = has
-	daily_label.visible = has
-	$Root/Panel/Margin/Scroll/VBox/DailyButtons.visible = has
-	members_label.visible = has
-	research_label.visible = has
-	donate_button.visible = has
-	research_button.visible = has
-	gift_button.visible = has
-	rally_label.visible = has
-	$Root/Panel/Margin/Scroll/VBox/RallyButtons.visible = has
-	war_label.visible = has
-	war_rules_label.visible = has
-	$Root/Panel/Margin/Scroll/VBox/WarButtons.visible = has
-	leave_button.visible = has
 
 	if not has:
-		permissions_label.text = ""
-		daily_label.text = ""
-		members_label.text = ""
-		research_label.text = ""
-		rally_label.text = ""
-		war_label.text = ""
-		war_rules_label.text = ""
 		return
 
 	permissions_label.text = "ROLE PERMISSIONS\n%s" % faction.get_permissions_summary()
@@ -174,8 +236,14 @@ func _refresh() -> void:
 	claim_mastery_button.disabled = not bool(daily["mastery_claimable"])
 
 	members_label.text = "MEMBERS & RANKS\n" + "\n".join(faction.get_member_lines())
-	research_label.text = "FACTION RESEARCH\n" + "\n".join(faction.get_research_summary())
+	invite_status_label.text = faction.get_invite_summary()
+	var can_manage := faction.can_manage_members()
+	invite_button.disabled = not can_manage or faction.members.size() + faction.pending_invites.size() >= faction.get_member_limit()
+	accept_invite_button.disabled = not can_manage or faction.pending_invites.is_empty()
+	promote_button.disabled = not can_manage
+	remove_button.disabled = not can_manage
 
+	research_label.text = "FACTION RESEARCH\n" + "\n".join(faction.get_research_summary())
 	donate_button.text = "Donate $5,000 to Faction"
 	donate_button.disabled = economy.cash < 5000
 
@@ -202,6 +270,27 @@ func _refresh() -> void:
 	start_rally_button.disabled = not faction.can_start_rally() or not faction.active_rally.is_empty()
 	clear_rally_button.disabled = faction.active_rally.is_empty()
 
+	territory_label.text = "FACTION TERRITORY OBJECTIVES\n" + "\n".join(faction.get_territory_lines())
+	var next_territory := faction.get_next_territory_id()
+	capture_territory_button.text = "All Territory Objectives Held" if next_territory.is_empty() else "Capture Next Objective"
+	capture_territory_button.disabled = not faction.can_capture_next_territory()
+
+	season_label.text = "SEASON\n%s" % faction.get_season_summary()
+	rankings_label.text = "FACTION RANKINGS\n" + "\n".join(faction.get_ranking_lines())
+
+	var candidates := faction.get_matchmaking_candidates()
+	var matchmaking_lines := PackedStringArray()
+	for candidate in candidates:
+		matchmaking_lines.append("%s • Rating %d • %d members" % [
+			String(candidate["name"]),
+			int(candidate["rating"]),
+			int(candidate["members"])
+		])
+	matchmaking_label.text = "WAR MATCHMAKING PREVIEW • your rating %d\n%s" % [
+		faction.get_matchmaking_rating(),
+		"\n".join(matchmaking_lines)
+	]
+
 	war_label.text = "FACTION WAR\n%s" % faction.get_war_summary()
 	war_rules_label.text = "WAR RULES\n" + "\n".join(faction.get_war_rules_lines())
 	start_war_button.disabled = not faction.can_start_war() or not faction.active_war.is_empty()
@@ -209,6 +298,12 @@ func _refresh() -> void:
 		faction.active_war.is_empty()
 		or String(faction.active_war.get("status", "")) != "active"
 		or int(faction.active_war.get("attacks_remaining", 0)) <= 0
+	)
+	claim_war_reward_button.disabled = not faction.can_claim_war_reward()
+	clear_war_button.disabled = (
+		faction.active_war.is_empty()
+		or String(faction.active_war.get("status", "")) != "complete"
+		or not faction.war_reward_claimed
 	)
 
 	leave_button.disabled = faction.get_local_role() == FactionManager.ROLE_LEADER and faction.members.size() > 1
