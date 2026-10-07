@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -33,6 +33,9 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="31_pause"]
 [ext_resource type="Script" path="res://scripts/audio/AudioManager.gd" id="32_audio"]
 [ext_resource type="Script" path="res://scripts/ui/UIFocusManager.gd" id="33_focus"]
+[ext_resource type="Script" path="res://scripts/buildings/FacilityEffects.gd" id="34_facilities"]
+[ext_resource type="Script" path="res://scripts/store/StoreManager.gd" id="35_store"]
+[ext_resource type="PackedScene" path="res://scenes/ui/StoreUI.tscn" id="36_store_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -79,6 +82,9 @@ script = ExtResource("7_roster")
 [node name="HospitalQueue" type="Node" parent="."]
 script = ExtResource("4_hospital")
 
+[node name="FacilityEffects" type="Node" parent="."]
+script = ExtResource("34_facilities")
+
 [node name="ConstructionQueue" type="Node" parent="."]
 script = ExtResource("6_construction")
 
@@ -96,6 +102,9 @@ script = ExtResource("11_battle")
 
 [node name="SaveManager" type="Node" parent="."]
 script = ExtResource("10_save")
+
+[node name="StoreManager" type="Node" parent="."]
+script = ExtResource("35_store")
 
 [node name="SafeAreaManager" type="Node" parent="."]
 script = ExtResource("29_safe")
@@ -123,3 +132,5 @@ script = ExtResource("33_focus")
 [node name="SettingsDiagnosticsUI" parent="." instance=ExtResource("30_settings_ui")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("31_pause")]
+
+[node name="StoreUI" parent="." instance=ExtResource("36_store_ui")]

@@ -9,6 +9,7 @@ signal recruitment_completed(troop_type: StringName, amount: int)
 var economy: PlayerEconomy
 var roster: TroopRoster
 var balance: GameBalance
+var facilities: FacilityEffects
 var active_job: Dictionary = {}
 var _last_displayed_second := -1
 
@@ -19,10 +20,11 @@ var definitions := {
 }
 
 
-func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster, game_balance: GameBalance = null) -> void:
+func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster, game_balance: GameBalance = null, facility_effects: FacilityEffects = null) -> void:
 	economy = player_economy
 	roster = troop_roster
 	balance = game_balance
+	facilities = facility_effects
 	if balance != null:
 		definitions = balance.recruitment.duplicate(true)
 		gold_per_minute = balance.get_speedup_rate("recruitment_gold_per_minute", gold_per_minute)
@@ -53,7 +55,9 @@ func get_cash_cost(troop_type: StringName, amount: int) -> int:
 func get_duration(troop_type: StringName, amount: int) -> float:
 	if not definitions.has(troop_type):
 		return 0.0
-	return float(definitions[troop_type]["seconds_each"]) * float(maxi(0, amount))
+	var base_duration := float(definitions[troop_type]["seconds_each"]) * float(maxi(0, amount))
+	var multiplier := facilities.get_training_time_multiplier(troop_type) if facilities != null else 1.0
+	return base_duration * multiplier
 
 
 func recruit(troop_type: StringName, amount: int) -> bool:

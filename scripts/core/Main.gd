@@ -15,6 +15,7 @@ extends Node
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
+@onready var facility_effects: FacilityEffects = $FacilityEffects
 @onready var recruitment_queue: RecruitmentQueue = $RecruitmentQueue
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
 @onready var combat_loadout: CombatLoadout = $CombatLoadout
@@ -29,6 +30,8 @@ extends Node
 @onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 @onready var safe_area_manager: SafeAreaManager = $SafeAreaManager
 @onready var settings_ui: SettingsDiagnosticsUI = $SettingsDiagnosticsUI
+@onready var store_manager: StoreManager = $StoreManager
+@onready var store_ui: StoreUI = $StoreUI
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var ui_focus_manager: UIFocusManager = $UIFocusManager
@@ -36,12 +39,13 @@ extends Node
 
 func _ready() -> void:
 	progression.setup(loot_inventory, balance)
-	synergy_raid.setup(progression)
+	facility_effects.setup(city_map.lot_a, city_map.lot_b, balance)
+	synergy_raid.setup(progression, facility_effects)
 	city_map.setup_progression(progression)
 	alliance_social.setup(alliance_manager)
 	hospital_queue.setup(economy, troop_roster, balance)
 	construction_queue.setup(economy, balance)
-	recruitment_queue.setup(economy, troop_roster, balance)
+	recruitment_queue.setup(economy, troop_roster, balance, facility_effects)
 	combat_loadout.setup(loot_inventory, progression)
 
 	raid_battle.setup(
@@ -127,6 +131,7 @@ func _ready() -> void:
 	profile_ui.setup(player_profile, mailbox, progression)
 	event_ui.setup(event_manager)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
+	store_ui.setup(store_manager)
 
 	settings.changed.connect(_apply_runtime_settings)
 	_apply_runtime_settings()
@@ -138,7 +143,8 @@ func _ready() -> void:
 		profile_ui.get_node("Root") as Control,
 		event_ui.get_node("Root") as Control,
 		combat_strategy_ui.get_node("Root") as Control,
-		settings_ui.get_node("Root") as Control
+		settings_ui.get_node("Root") as Control,
+		store_ui.get_node("Root") as Control
 	]
 	safe_area_manager.setup(safe_roots)
 	settings_ui.setup(settings, save_manager, balance, safe_roots)

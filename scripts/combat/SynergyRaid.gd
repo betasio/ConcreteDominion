@@ -8,10 +8,12 @@ signal raid_calculated(result: Dictionary)
 
 var participants: Dictionary = {}
 var progression: PlayerProgression
+var facilities: FacilityEffects
 
 
-func setup(player_progression: PlayerProgression) -> void:
+func setup(player_progression: PlayerProgression, facility_effects: FacilityEffects = null) -> void:
 	progression = player_progression
+	facilities = facility_effects
 
 
 func clear() -> void:
@@ -41,11 +43,13 @@ func leave_raid(player_id: String) -> void:
 
 
 func get_driver_bonus_each() -> float:
-	return progression.get_driver_bonus() if progression != null else 0.15
+	var base := progression.get_driver_bonus() if progression != null else 0.15
+	return base + (facilities.get_driver_support_bonus() if facilities != null else 0.0)
 
 
 func get_spy_bonus_each() -> float:
-	return progression.get_spy_bonus() if progression != null else 0.18
+	var base := progression.get_spy_bonus() if progression != null else 0.18
+	return base + (facilities.get_spy_support_bonus() if facilities != null else 0.0)
 
 
 func calculate_raid_damage() -> Dictionary:

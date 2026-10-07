@@ -187,10 +187,10 @@ func show_lot(lot: BuildLot) -> void:
 	selection_title.text = lot.building_name if lot.is_built else "Empty Build Lot"
 	selection_description.text = lot.description
 	level_label.visible = lot.is_built
-	level_label.text = "Level 1" if lot.is_built else ""
+	level_label.text = "Level %d" % lot.level if lot.is_built else ""
 	open_hospital_button.visible = false
 	open_barracks_button.visible = false
-	upgrade_button.visible = false
+	upgrade_button.visible = lot.is_built
 	build_button.visible = not lot.is_built
 	_refresh_selection()
 	selection_panel.visible = true
@@ -249,29 +249,56 @@ func _refresh_selection() -> void:
 		var unlocked := progression.is_building_unlocked(selected_lot.building_name)
 		var required_level := progression.get_building_unlock_level(selected_lot.building_name)
 
-		if unlocked:
-			build_button.text = "Build %s — $%s" % [
-				selected_lot.building_name,
-				_format_number(selected_lot.build_cash_cost)
+		if selected_lot.is_built:
+			level_label.text = "Level %d%s" % [
+				selected_lot.level,
+				" (upgrading)" if selected_lot.is_constructing else ""
 			]
+			selection_description.text = "%s\n\n%s" % [
+				selected_lot.description,
+				selected_lot.get_effect_summary()
+			]
+			var facility_cost := selected_lot.get_upgrade_cash_cost()
+			if selected_lot.level >= selected_lot.max_level:
+				upgrade_button.text = "MAX LEVEL"
+				upgrade_button.disabled = true
+			else:
+				upgrade_button.text = "Upgrade to Lv.%d — $%s" % [
+					selected_lot.level + 1,
+					_format_number(facility_cost)
+				]
+				upgrade_button.disabled = (
+					construction_queue.is_busy()
+					or selected_lot.is_constructing
+					or economy.cash < facility_cost
+				)
+			build_button.visible = false
 		else:
-			build_button.text = "%s unlocks at Account Lv.%d" % [
-				selected_lot.building_name,
-				required_level
-			]
+			selection_description.text = selected_lot.description
+			if unlocked:
+				build_button.text = "Build %s — $%s" % [
+					selected_lot.building_name,
+					_format_number(selected_lot.build_cash_cost)
+				]
+			else:
+				build_button.text = "%s unlocks at Account Lv.%d" % [
+					selected_lot.building_name,
+					required_level
+				]
 
-		build_button.disabled = (
-			not unlocked
-			or construction_queue.is_busy()
-			or selected_lot.is_built
-			or economy.cash < selected_lot.build_cash_cost
-		)
+			build_button.disabled = (
+				not unlocked
+				or construction_queue.is_busy()
+				or economy.cash < selected_lot.build_cash_cost
+			)
 
 
 func _upgrade_selected() -> void:
 	if selected_building != null:
 		construction_queue.start_upgrade(selected_building)
-		_refresh_all()
+	elif selected_lot != null and selected_lot.is_built:
+		construction_queue.start_facility_upgrade(selected_lot)
+	_refresh_all()
 
 
 func _build_selected_lot() -> void:

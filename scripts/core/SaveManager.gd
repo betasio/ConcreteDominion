@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 12
+const SAVE_VERSION := 13
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -245,6 +245,15 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 
 	if version < 11 and not data.has("combat_loadout"):
 		data["combat_loadout"] = {}
+
+	if version < 13:
+		var world = data.get("world", {})
+		if world is Dictionary:
+			if bool(world.get("garage_built", false)) and not world.has("garage_level"):
+				world["garage_level"] = 1
+			if bool(world.get("intel_built", false)) and not world.has("intel_level"):
+				world["intel_level"] = 1
+			data["world"] = world
 
 	data["schema_meta"] = {
 		"migrated_from": version,

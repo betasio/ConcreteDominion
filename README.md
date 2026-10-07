@@ -2,244 +2,243 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Release-quality shell milestone
+## Functional facilities + economy content milestone
 
-The project now has a real application shell around the gameplay scene instead of booting directly into the city.
+This milestone turns the Garage and Intel Office from visual build-lot completions into real progression systems, expands the district ladder, and adds a non-transactional store prototype.
 
-## Boot / title screen
+## Functional Garage
 
-`project.godot` now starts:
+The Garage unlocks at Account Lv.2.
 
-`res://scenes/core/Boot.tscn`
+After construction it becomes an upgradeable facility up to Lv.5.
 
-The title flow includes:
+Each Garage level currently provides:
 
-- Continue
-- New Game
-- Quit
-- asynchronous loading screen
-- loading progress indicator
-- initial keyboard/controller focus
+- +2% Driver support effectiveness in Alliance Raids;
+- -5% Driver recruitment time.
 
-Continue is enabled when either the primary save or backup save exists.
+The training reduction is capped through the shared balance configuration so future tuning cannot reduce training time indefinitely.
 
-New Game removes both gameplay save files while leaving player settings intact.
+Garage upgrades use the existing Construction Queue, Cash costs, timers, and Gold Finish Now system.
 
-The game scene is loaded with Godot's threaded resource loader and then becomes the active scene, preserving the existing `/root/Main` paths used by the prototype.
+## Functional Intel Office
 
-## Pause / system menu
+The Intel Office unlocks at Account Lv.3.
 
-Press the built-in `ui_cancel` action, normally Escape or the controller cancel/back action, to open the system menu.
+After construction it also upgrades to Lv.5.
 
-Current actions:
+Each Intel Office level currently provides:
 
-- Resume
-- Save Now
-- Return to Title
-- Quit Game
+- +2.5% Spy support effectiveness in Alliance Raids;
+- -5% Spy recruitment time.
 
-The menu runs while the SceneTree is paused and explicitly focuses Resume for keyboard/controller navigation.
+Like the Garage, all upgrades use the normal construction queue rather than a separate upgrade system.
 
-Returning to the title or quitting saves first.
+## Facility UI
 
-## Keyboard and controller UI navigation
+Selecting a completed Garage or Intel Office now shows:
 
-A new `UIFocusManager` provides a fallback initial focus when the player starts navigating with:
+- current facility level;
+- active raid-support bonus;
+- training-time reduction;
+- next upgrade Cash cost;
+- MAX LEVEL state;
+- construction progress while upgrading.
 
-- Tab / Shift+Tab
-- keyboard arrows
-- controller D-pad
-- UI accept/cancel actions
+This means completed build lots are now meaningful long-term city assets instead of one-time construction objectives.
 
-Existing Godot Button controls then use the engine's normal focus navigation.
+## Central facility balance
 
-The strategy camera now stops keyboard and edge-panning whenever a GUI control owns focus. This prevents arrow/D-pad UI navigation from also moving the world camera.
+Facility tuning lives in `GameBalance.gd`.
 
-## Audio / SFX hooks
+Current defaults:
 
-A new `AudioManager` provides a lightweight sound layer.
+- Garage Driver support: +2% per level
+- Garage Driver training reduction: 5% per level
+- Intel Office Spy support: +2.5% per level
+- Intel Office Spy training reduction: 5% per level
+- minimum specialist training-time multiplier: 0.70
 
-Because final audio assets do not exist yet, the current build generates short procedural tones for:
+The diagnostics panel now includes facility tuning alongside recruitment and Gold speed-up values.
 
-- UI button clicks
-- reward/milestone completion
-- raid victory/defeat
+## Expanded district ladder
 
-All tones pass through the Master audio bus, so the existing Master Volume setting affects them automatically.
+Two additional data-driven raid targets fill progression gaps.
 
-The audio manager listens for dynamically-created buttons as well as controls already present when Main loads, so future UI panels inherit click feedback without manually wiring every button.
+### Midtown Exchange — Account Lv.3
 
-This procedural implementation is intentionally replaceable: production WAV/OGG assets can later be dropped behind the same public audio methods.
+- District: Midtown
+- Hard difficulty
+- Layered Surveillance
+- 8% defensive HP modifier
+- Spy weakness
+- +10% counter bonus
+- $12,500 Cash
+- 180 XP
+- Parts x3
+- Intel x2
 
-## Crash-safe backup saves
+### Industrial Depot — Account Lv.7
 
-Gameplay persistence now uses two files:
+- District: Industrial Belt
+- Mythic difficulty
+- Heavy Barriers
+- 18% defensive HP modifier
+- Driver weakness
+- +16% counter bonus
+- $38,000 Cash
+- 520 XP
+- Parts x7
+- Intel x4
+- Contraband x2
 
-- `user://concrete_dominion_save.json`
-- `user://concrete_dominion_save.backup.json`
+The complete progression ladder is now:
 
-Before overwriting the primary save, the previous valid primary document is copied into the backup slot.
+1. Lv.1 — Downtown Core
+2. Lv.2 — Harbor District + Garage
+3. Lv.3 — Midtown + Intel Office
+4. Lv.4 — Northside
+5. Lv.5 — High Roller Strip
+6. Lv.6 — Financial District
+7. Lv.7 — Industrial Belt
 
-Loading behavior:
+Both new targets have their own world-map positions, convoy routes, cooldowns, event rewards, target weaknesses, save state, and progression gates.
 
-1. Try the primary save.
-2. If missing or invalid, try the backup.
-3. Run the normal version migrations.
-4. Continue loading gameplay state.
+## Blackout Week expansion
 
-New Game deletes both files.
+The event system now recognizes the new raid targets.
 
-This protects the prototype from a partially-written or corrupted latest save while keeping the existing schema at version 12.
+Event Marks:
 
-## Windows export preset
+- Downtown Bank — 2
+- Harbor Bank — 4
+- Midtown Exchange — 5
+- Northside Turf HQ — 6
+- Casino Vault — 9
+- Financial Tower — 12
+- Industrial Depot — 15
 
-A version-controlled **Windows Desktop** export preset is included.
+This gives higher progression tiers stronger event efficiency without creating exclusive event-only combat stats.
 
-Default output:
+## Prototype store
 
-`build/windows/ConcreteDominion.exe`
+A new **Store** screen is included for monetization UX planning.
 
-Command-line release export:
+Current example offers:
 
-```bash
-godot --headless --path . --export-release "Windows Desktop" build/windows/ConcreteDominion.exe
-```
+- Gold Starter
+- Builder Pack
+- Crew Support Pack
+- Recovery Pack
 
-The `build/` folder is ignored by Git.
+The catalog intentionally focuses on:
 
-## Android export preset
+- Gold;
+- construction progression;
+- queue speed-ups;
+- ordinary progression materials.
 
-A version-controlled **Android** export preset is included.
+It does **not** sell exclusive troops, exclusive raid roles, or unique combat power.
 
-Default output:
+### Important
 
-`build/android/ConcreteDominion.apk`
+Real-money purchases are deliberately disabled.
 
-Current prototype package identifier:
+Every offer displays:
 
-`com.betasio.concretedominion`
+**Purchases Disabled — Prototype Catalog**
 
-The preset targets arm64 and enables Android vibration permission so the existing haptic setting can work on supported devices.
+There is currently:
 
-Command-line debug/release examples:
+- no billing SDK;
+- no payment request;
+- no receipt validation;
+- no platform-store transaction;
+- no real-money grant logic.
 
-```bash
-godot --headless --path . --export-debug "Android" build/android/ConcreteDominion-debug.apk
-godot --headless --path . --export-release "Android" build/android/ConcreteDominion.apk
-```
+The price labels are example UX placeholders only.
 
-Signing credentials are intentionally **not** committed.
+This lets the economy/store experience be designed before introducing platform billing or server-authoritative entitlement validation.
 
-Before a store release, configure the Android SDK/JDK and release keystore on the build machine.
+## Persistence
 
-## Automated smoke-test scene
+Save schema is now **version 13**.
 
-A lightweight headless validation scene now exists:
+City save data now includes:
 
-`res://scenes/tests/SmokeTest.tscn`
+- Garage built state;
+- Garage level;
+- Intel Office built state;
+- Intel Office level.
 
-It verifies that critical scenes/resources exist, instantiates Main, and checks for key production nodes including:
+Older saves with already-built facilities automatically migrate those facilities to Lv.1.
 
-- GameBalance
-- SettingsManager
-- SaveManager
-- CityMap
-- HUD
-- PauseMenu
-- AudioManager
-- UIFocusManager
+The Store has no purchase state because billing is not connected.
 
-It also checks the central Driver recruitment definition and save schema.
-
-Run it with:
-
-```bash
-godot --headless --path . res://scenes/tests/SmokeTest.tscn
-```
-
-Exit code:
-
-- 0 = pass
-- 1 = failure
-
-This is intended to become the first CI gate once the repository has an automated build workflow.
-
-## Current application structure
+## Architecture additions
 
 ```text
-Boot
-└── threaded load → Main
-
 Main
-├── GameBalance
-├── SettingsManager
-├── PlayerEconomy
-├── LootInventory
-├── PlayerProgression
-├── MissionTracker
-├── RetentionManager
-├── EventManager
-├── PlayerProfile
-├── MailboxManager
-├── AllianceManager
-├── AllianceSocial
-├── TroopRoster
-├── HospitalQueue
-├── ConstructionQueue
-├── RecruitmentQueue
-├── SynergyRaid
-├── CombatLoadout
-├── RaidBattle
-├── SaveManager
-├── SafeAreaManager
-├── AudioManager
-├── UIFocusManager
-├── CityMap
-├── HUD
-├── ProgressionUI
-├── RetentionUI
-├── ProfileUI
-├── EventUI
-├── CombatStrategyUI
-├── SettingsDiagnosticsUI
-└── PauseMenu
+├── FacilityEffects
+├── StoreManager
+└── StoreUI
+
+scripts/buildings/
+├── BuildLot.gd
+└── FacilityEffects.gd
+
+scripts/store/
+└── StoreManager.gd
+
+scripts/ui/
+└── StoreUI.gd
+
+scenes/ui/
+└── StoreUI.tscn
+
+data/raids/
+├── midtown_exchange.tres
+└── industrial_depot.tres
 ```
 
-## New files
+## Design intent
 
-```text
-scenes/core/Boot.tscn
-scripts/core/BootFlow.gd
+The facility system reinforces the original alliance philosophy:
 
-scenes/ui/PauseMenu.tscn
-scripts/ui/PauseMenu.gd
+- specialist players become more valuable through city investment;
+- Garage progression improves Driver support rather than replacing frontline strength;
+- Intel Office progression improves Spy support rather than creating a solo-win mechanic;
+- whales still benefit from strong frontline progression;
+- coordinated specialist roles remain strategically important.
 
-scripts/ui/UIFocusManager.gd
+The store follows the same philosophy: pay for progression/time convenience, not exclusive battlefield participation.
 
-scripts/audio/AudioManager.gd
+## Future final-test path
 
-scenes/tests/SmokeTest.tscn
-scripts/tests/SmokeTest.gd
+When the full game is ready for testing:
 
-export_presets.cfg
-```
-
-## Current testing limitation
-
-The repository now contains the smoke-test harness, but this coding environment does not currently have a Godot editor executable installed, so the new scene could not be executed here.
-
-The repository-level wiring and file references were statically checked before commit. The first final-game test should run the smoke-test command above before any manual gameplay testing.
+1. Reach Lv.2 and build the Garage.
+2. Recruit Drivers before and after Garage upgrades and compare training time.
+3. Preview a raid and confirm Driver support increases per Garage level.
+4. Reach Lv.3 and build the Intel Office.
+5. Repeat the same test with Spies.
+6. Upgrade each facility through multiple levels.
+7. Restart and confirm facility levels persist.
+8. Raid Midtown Exchange.
+9. Progress to Lv.7 and verify Industrial Depot unlocks.
+10. Open Store and confirm every real-money action remains disabled.
+11. Run the smoke test and confirm FacilityEffects, StoreManager, and StoreUI exist.
 
 ## Next strong milestone
 
-The project is now structurally ready for a broader **content-completion and final QA phase**:
+The strongest remaining development direction is **content completion and economy depth**:
 
-- more building functions and district content;
-- real art/audio asset replacement;
-- monetization/store prototype screens without real purchases;
-- economy/balance simulation;
-- automated CI smoke test;
-- Android/Windows device testing;
-- UI overflow and localization checks;
-- full new-player-to-endgame playthrough;
-- bug triage and release checklist.
+- functional Safehouse bonuses;
+- functional Clinic and Barracks level effects;
+- multiple construction/recruitment queue unlocks;
+- district-specific missions;
+- additional alliance progression;
+- economy simulation/balance checks;
+- real art/audio replacement hooks;
+- localization-ready text data;
+- broader final QA and device testing.

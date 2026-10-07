@@ -7,11 +7,16 @@ signal changed
 @export var building_name: String = "Garage"
 @export var build_cash_cost: int = 12000
 @export var build_duration: float = 20.0
+@export var base_upgrade_cash_cost: int = 8000
+@export var base_upgrade_duration: float = 18.0
+@export var max_level: int = 5
 @export_multiline var description: String = "An empty property ready for development."
 
 var is_selected := false
 var is_constructing := false
 var is_built := false
+var level := 0
+var pending_level := 0
 
 
 func _ready() -> void:
@@ -24,22 +29,58 @@ func set_selected(value: bool) -> void:
 	queue_redraw()
 
 
-func begin_construction() -> void:
+func begin_construction(target_level: int = 1) -> void:
 	is_constructing = true
+	pending_level = maxi(1, target_level)
 	changed.emit()
 	queue_redraw()
 
 
-func complete_construction(_target_level: int = 1) -> void:
+func complete_construction(target_level: int = 1) -> void:
 	is_constructing = false
 	is_built = true
+	level = clampi(maxi(level, target_level), 1, max_level)
+	pending_level = 0
 	changed.emit()
 	queue_redraw()
 
 
-func restore_progress(built: bool) -> void:
+func can_upgrade() -> bool:
+	return is_built and not is_constructing and level < max_level
+
+
+func get_upgrade_cash_cost() -> int:
+	return base_upgrade_cash_cost * maxi(1, level)
+
+
+func get_upgrade_duration() -> float:
+	return base_upgrade_duration * float(maxi(1, level))
+
+
+func get_effect_summary() -> String:
+	if not is_built:
+		return "Not operational."
+
+	match building_name:
+		"Garage":
+			return "Driver support +%d%% • Driver training -%d%%" % [
+				level * 2,
+				level * 5
+			]
+		"Intel Office":
+			return "Spy support +%.1f%% • Spy training -%d%%" % [
+				float(level) * 2.5,
+				level * 5
+			]
+		_:
+			return "Facility Lv.%d operational." % level
+
+
+func restore_progress(built: bool, saved_level: int = 1) -> void:
 	is_built = built
+	level = clampi(saved_level, 1, max_level) if built else 0
 	is_constructing = false
+	pending_level = 0
 	changed.emit()
 	queue_redraw()
 
@@ -64,6 +105,15 @@ func _draw() -> void:
 	if is_built:
 		draw_rect(Rect2(-45, -90, 90, 65), Color(0.22, 0.24, 0.27), true)
 		draw_rect(Rect2(-24, -55, 48, 30), Color(0.48, 0.52, 0.56), true)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(-34, -100),
+			"LV.%d" % level,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			68,
+			15,
+			Color(0.95, 0.78, 0.30)
+		)
 	elif is_constructing:
 		for x in [-42, 0, 42]:
 			draw_line(Vector2(x, -72), Vector2(x, 5), Color(0.80, 0.64, 0.28), 5.0)

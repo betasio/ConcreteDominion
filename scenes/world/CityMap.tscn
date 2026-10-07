@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
@@ -12,6 +12,8 @@
 [ext_resource type="Resource" path="res://data/raids/northside_hq.tres" id="10_hq"]
 [ext_resource type="Resource" path="res://data/raids/casino_vault.tres" id="11_casino"]
 [ext_resource type="Resource" path="res://data/raids/financial_tower.tres" id="12_tower"]
+[ext_resource type="Resource" path="res://data/raids/midtown_exchange.tres" id="13_midtown"]
+[ext_resource type="Resource" path="res://data/raids/industrial_depot.tres" id="14_industrial"]
 
 [node name="CityMap" type="Node2D"]
 script = ExtResource("1_map")
@@ -54,6 +56,12 @@ data = ExtResource("11_casino")
 
 [node name="FinancialTower" parent="RaidTargets" instance=ExtResource("7_target")]
 data = ExtResource("12_tower")
+
+[node name="MidtownExchange" parent="RaidTargets" instance=ExtResource("7_target")]
+data = ExtResource("13_midtown")
+
+[node name="IndustrialDepot" parent="RaidTargets" instance=ExtResource("7_target")]
+data = ExtResource("14_industrial")
 
 [node name="Convoys" type="Node2D" parent="."]
 

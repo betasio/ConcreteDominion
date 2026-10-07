@@ -28,6 +28,8 @@ const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 @onready var northside_hq: RaidTarget = $RaidTargets/NorthsideHQ
 @onready var casino_vault: RaidTarget = $RaidTargets/CasinoVault
 @onready var financial_tower: RaidTarget = $RaidTargets/FinancialTower
+@onready var midtown_exchange: RaidTarget = $RaidTargets/MidtownExchange
+@onready var industrial_depot: RaidTarget = $RaidTargets/IndustrialDepot
 
 var selected_target: Node
 var active_convoy: ConvoyVisual
@@ -58,6 +60,8 @@ func _ready() -> void:
 	northside_hq.position = iso_to_screen(Vector2i(19, 15))
 	casino_vault.position = iso_to_screen(Vector2i(4, 15))
 	financial_tower.position = iso_to_screen(Vector2i(22, 10))
+	midtown_exchange.position = iso_to_screen(Vector2i(4, 10))
+	industrial_depot.position = iso_to_screen(Vector2i(22, 17))
 
 	safehouse.selected.connect(_select_building)
 	hospital.selected.connect(_select_building)
@@ -106,7 +110,7 @@ func get_persistent_buildings() -> Array:
 
 
 func get_raid_targets() -> Array:
-	return [downtown_bank, harbor_bank, northside_hq, casino_vault, financial_tower]
+	return [downtown_bank, harbor_bank, midtown_exchange, northside_hq, casino_vault, financial_tower, industrial_depot]
 
 
 func get_raid_target_by_id(target_id: String) -> RaidTarget:
@@ -171,6 +175,10 @@ func _get_convoy_route(target_id: String) -> PackedVector2Array:
 			cells.append_array([Vector2i(7, 7), Vector2i(7, 12), Vector2i(4, 12), Vector2i(4, 15)])
 		"financial_tower":
 			cells.append_array([Vector2i(17, 7), Vector2i(22, 7), Vector2i(22, 10)])
+		"midtown_exchange":
+			cells.append_array([Vector2i(7, 7), Vector2i(7, 10), Vector2i(4, 10)])
+		"industrial_depot":
+			cells.append_array([Vector2i(17, 12), Vector2i(22, 12), Vector2i(22, 17)])
 		_:
 			var target := get_raid_target_by_id(target_id)
 			if target != null:
@@ -225,7 +233,9 @@ func get_save_data() -> Dictionary:
 		"hospital_level": hospital.level,
 		"barracks_level": barracks.level,
 		"garage_built": lot_a.is_built,
+		"garage_level": lot_a.level,
 		"intel_built": lot_b.is_built,
+		"intel_level": lot_b.level,
 		"raid_targets": raid_target_data,
 		"view_mode": String(view_mode)
 	}
@@ -235,8 +245,8 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	safehouse.restore_progress(int(data.get("safehouse_level", safehouse.level)))
 	hospital.restore_progress(int(data.get("hospital_level", hospital.level)))
 	barracks.restore_progress(int(data.get("barracks_level", barracks.level)))
-	lot_a.restore_progress(bool(data.get("garage_built", lot_a.is_built)))
-	lot_b.restore_progress(bool(data.get("intel_built", lot_b.is_built)))
+	lot_a.restore_progress(bool(data.get("garage_built", lot_a.is_built)), int(data.get("garage_level", 1)))
+	lot_b.restore_progress(bool(data.get("intel_built", lot_b.is_built)), int(data.get("intel_level", 1)))
 
 	var raid_target_data = data.get("raid_targets", {})
 	if raid_target_data is Dictionary:

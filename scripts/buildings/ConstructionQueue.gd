@@ -54,12 +54,33 @@ func start_upgrade(building: Building) -> bool:
 	queue_changed.emit()
 	return true
 
+func start_facility_upgrade(lot: BuildLot) -> bool:
+	if is_busy() or not lot.can_upgrade():
+		return false
+	var next_level := lot.level + 1
+	var cash_cost := lot.get_upgrade_cash_cost()
+	var duration := lot.get_upgrade_duration()
+	if economy == null or not economy.spend_cash(cash_cost):
+		return false
+	lot.begin_construction(next_level)
+	active_job = {
+		"target": lot,
+		"label": "%s Lv.%d" % [lot.building_name, next_level],
+		"target_level": next_level,
+		"seconds_remaining": duration,
+		"cash_cost": cash_cost
+	}
+	_last_displayed_second = -1
+	queue_changed.emit()
+	return true
+
+
 func start_lot_build(lot: BuildLot) -> bool:
 	if is_busy() or lot.is_built:
 		return false
 	if economy == null or not economy.spend_cash(lot.build_cash_cost):
 		return false
-	lot.begin_construction()
+	lot.begin_construction(1)
 	active_job = {
 		"target": lot,
 		"label": lot.building_name,
@@ -134,7 +155,7 @@ func load_save_data(data: Dictionary, offline_seconds: float, world: Node) -> vo
 		if target is Building:
 			target.begin_construction(target_level)
 		elif target is BuildLot:
-			target.begin_construction()
+			target.begin_construction(target_level)
 		active_job = {
 			"target": target,
 			"label": String(data.get("label", "")),

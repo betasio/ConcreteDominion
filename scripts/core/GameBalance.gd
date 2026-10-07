@@ -15,6 +15,14 @@ var speedups: Dictionary = {
 	"hospital_gold_per_minute": 2
 }
 
+var facilities: Dictionary = {
+	"garage_driver_support_per_level": 0.02,
+	"garage_driver_training_reduction_per_level": 0.05,
+	"intel_spy_support_per_level": 0.025,
+	"intel_spy_training_reduction_per_level": 0.05,
+	"minimum_training_multiplier": 0.70
+}
+
 var progression: Dictionary = {
 	"base_xp_to_level": 100,
 	"xp_step_per_level": 75,
@@ -39,6 +47,10 @@ func get_progression_value(key: String, fallback: float) -> float:
 	return float(progression.get(key, fallback))
 
 
+func get_facility_value(key: String, fallback: float) -> float:
+	return float(facilities.get(key, fallback))
+
+
 func get_debug_summary() -> PackedStringArray:
 	return PackedStringArray([
 		"Recruit: Enforcer $%d / %.1fs" % [
@@ -52,6 +64,10 @@ func get_debug_summary() -> PackedStringArray:
 		"Recruit: Spy $%d / %.1fs" % [
 			int(recruitment[&"Spy"]["cash_each"]),
 			float(recruitment[&"Spy"]["seconds_each"])
+		],
+		"Facilities: Garage +%.1f%% Driver/Lv • Intel +%.1f%% Spy/Lv" % [
+			get_facility_value("garage_driver_support_per_level", 0.02) * 100.0,
+			get_facility_value("intel_spy_support_per_level", 0.025) * 100.0
 		],
 		"Gold/min: Recruit %d • Build %d • Clinic %d" % [
 			int(speedups["recruitment_gold_per_minute"]),

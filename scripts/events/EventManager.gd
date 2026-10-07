@@ -94,12 +94,16 @@ func _on_battle_resolved(result: Dictionary) -> void:
 			marks = 2
 		"harbor_bank":
 			marks = 4
+		"midtown_exchange":
+			marks = 5
 		"northside_hq":
 			marks = 6
 		"casino_vault":
 			marks = 9
 		"financial_tower":
 			marks = 12
+		"industrial_depot":
+			marks = 15
 
 	event_marks += marks
 	changed.emit()

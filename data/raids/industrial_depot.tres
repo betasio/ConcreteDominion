@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RaidTargetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RaidTargetData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_id = "industrial_depot"
+display_name = "Industrial Depot"
+district_name = "Industrial Belt"
+difficulty = "Mythic"
+max_hp = 23000.0
+hp_multiplier = 1.18
+modifier_name = "Heavy Barriers"
+modifier_description = "Reinforced vehicle barriers increase effective HP by 18%."
+weakness_role = &"Driver"
+weakness_bonus = 0.16
+reward_cash = 38000
+reward_xp = 520
+required_account_level = 7
+cooldown_seconds = 105.0
+accent_color = Color(0.72, 0.45, 0.24, 1)
+guaranteed_loot = {"Parts": 7, "Intel": 4, "Contraband": 2}

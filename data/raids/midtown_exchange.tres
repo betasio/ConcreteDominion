@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RaidTargetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RaidTargetData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_id = "midtown_exchange"
+display_name = "Midtown Exchange"
+district_name = "Midtown"
+difficulty = "Hard"
+max_hp = 12200.0
+hp_multiplier = 1.08
+modifier_name = "Layered Surveillance"
+modifier_description = "Dense camera coverage increases effective HP by 8%."
+weakness_role = &"Spy"
+weakness_bonus = 0.10
+reward_cash = 12500
+reward_xp = 180
+required_account_level = 3
+cooldown_seconds = 50.0
+accent_color = Color(0.42, 0.66, 0.48, 1)
+guaranteed_loot = {"Parts": 3, "Intel": 2}

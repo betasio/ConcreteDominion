@@ -30,7 +30,10 @@ func _ready() -> void:
 		"HUD",
 		"PauseMenu",
 		"AudioManager",
-		"UIFocusManager"
+		"UIFocusManager",
+		"FacilityEffects",
+		"StoreManager",
+		"StoreUI"
 	]:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
@@ -42,6 +45,8 @@ func _ready() -> void:
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
 	if balance == null or balance.get_recruitment_definition(&"Driver").is_empty():
 		_fail("GameBalance recruitment table missing Driver.")
+	if balance == null or balance.get_facility_value("garage_driver_support_per_level", 0.0) <= 0.0:
+		_fail("GameBalance facility tuning is missing.")
 
 	_finish()
 
