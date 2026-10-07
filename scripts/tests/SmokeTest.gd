@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 23:
+	if save == null or SaveManager.SAVE_VERSION < 24:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -167,6 +167,14 @@ func _ready() -> void:
 			_fail("Faction War ruleset is incomplete.")
 		if faction_manager.get_construction_time_multiplier() > 1.0 or faction_manager.get_territory_income_multiplier() < 1.0:
 			_fail("Faction research multipliers are invalid.")
+		if faction_manager.get_territory_lines().size() != 3:
+			_fail("Faction territory objective rules are incomplete.")
+		if faction_manager.get_war_rules_lines().size() < 5:
+			_fail("Faction War reward/season rules are incomplete.")
+		if faction_manager.get_matchmaking_rating() < 0:
+			_fail("Faction matchmaking rating is invalid.")
+		if faction_manager.get_territory_cash_multiplier() < 1.0:
+			_fail("Faction territory income objective multiplier is invalid.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CreateBox/Create") == null:
 		_fail("Player Faction creation UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily") == null:
@@ -177,6 +185,16 @@ func _ready() -> void:
 		_fail("Faction rally UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar") == null:
 		_fail("Faction War UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/MemberAdmin/Invite") == null:
+		_fail("Faction member administration UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CaptureTerritory") == null:
+		_fail("Faction territory objective UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/Rankings") == null:
+		_fail("Faction season rankings UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/Matchmaking") == null:
+		_fail("Faction matchmaking preview UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward") == null:
+		_fail("Faction War reward claim UI is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
