@@ -279,9 +279,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -410.0
-offset_top = -350.0
+offset_top = -450.0
 offset_right = 410.0
-offset_bottom = 350.0
+offset_bottom = 450.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -312,23 +312,39 @@ layout_mode = 2
 text = "TARGET: Downtown Bank"
 autowrap_mode = 2
 
-[node name="Roster" type="Label" parent="Root/RaidPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 78)
+[node name="AllianceRoster" type="Label" parent="Root/RaidPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
-text = "Frontline: AllianceBoss"
+text = "ALLIANCE"
+autowrap_mode = 2
+
+[node name="AllianceSlots" type="Label" parent="Root/RaidPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 94)
+layout_mode = 2
+text = "RAID SLOTS"
+autowrap_mode = 2
+
+[node name="Roster" type="Label" parent="Root/RaidPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Your specialist commitment"
 autowrap_mode = 2
 
 [node name="AddDriver" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Add Driver Support (+10%)"
+text = "Join Driver Slot"
 
 [node name="AddSpy" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Add Spy Support (+12%)"
+text = "Join Spy Slot"
+
+[node name="ToggleKira" type="Button" parent="Root/RaidPanel/Margin/VBox"]
+layout_mode = 2
+text = "Toggle Kira Online / Offline"
 
 [node name="Calculate" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Preview Raid Damage"
+text = "Preview Alliance Damage"
 
 [node name="Launch" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
@@ -339,7 +355,7 @@ layout_mode = 2
 text = "Ready to launch."
 
 [node name="Result" type="Label" parent="Root/RaidPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 128)
+custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
 text = "Add support allies, preview the damage, then launch."
 autowrap_mode = 2

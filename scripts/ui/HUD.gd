@@ -9,6 +9,7 @@ var hospital_queue: HospitalQueue
 var construction_queue: ConstructionQueue
 var recruitment_queue: RecruitmentQueue
 var synergy_raid: SynergyRaid
+var alliance_manager: AllianceManager
 var raid_battle: RaidBattle
 
 var selected_building: Building
@@ -48,6 +49,8 @@ var raid_spies := 0
 
 @onready var raid_panel: PanelContainer = $Root/RaidPanel
 @onready var raid_target_label: Label = $Root/RaidPanel/Margin/VBox/Target
+@onready var alliance_roster_label: Label = $Root/RaidPanel/Margin/VBox/AllianceRoster
+@onready var alliance_slots_label: Label = $Root/RaidPanel/Margin/VBox/AllianceSlots
 @onready var raid_roster_label: Label = $Root/RaidPanel/Margin/VBox/Roster
 @onready var raid_status_label: Label = $Root/RaidPanel/Margin/VBox/Status
 @onready var raid_result_label: Label = $Root/RaidPanel/Margin/VBox/Result
@@ -60,6 +63,7 @@ var raid_spies := 0
 func setup(
 	player_economy: PlayerEconomy,
 	loot: LootInventory,
+	alliance: AllianceManager,
 	roster: TroopRoster,
 	clinic: HospitalQueue,
 	construction: ConstructionQueue,
@@ -69,6 +73,7 @@ func setup(
 ) -> void:
 	economy = player_economy
 	loot_inventory = loot
+	alliance_manager = alliance
 	troop_roster = roster
 	hospital_queue = clinic
 	construction_queue = construction
@@ -84,6 +89,7 @@ func setup(
 	construction_queue.construction_completed.connect(_on_construction_completed)
 	recruitment_queue.queue_changed.connect(_refresh_recruitment)
 	recruitment_queue.recruitment_completed.connect(_on_recruitment_completed)
+	alliance_manager.changed.connect(_refresh_raid)
 	raid_battle.changed.connect(_refresh_raid)
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 
@@ -108,8 +114,9 @@ func setup(
 	finish_recruitment_button.pressed.connect(_finish_recruitment)
 	$Root/BarracksPanel/Margin/VBox/Close.pressed.connect(_close_barracks)
 
-	add_driver_button.pressed.connect(_add_driver_support)
-	add_spy_button.pressed.connect(_add_spy_support)
+	add_driver_button.pressed.connect(_join_driver_slot)
+	add_spy_button.pressed.connect(_join_spy_slot)
+	$Root/RaidPanel/Margin/VBox/ToggleKira.pressed.connect(_toggle_kira_online)
 	preview_raid_button.pressed.connect(_calculate_raid)
 	launch_raid_button.pressed.connect(_launch_raid)
 	$Root/RaidPanel/Margin/VBox/Reset.pressed.connect(_prepare_raid)
@@ -358,8 +365,8 @@ func show_raid_target(target: RaidTarget) -> void:
 	raid_panel.visible = true
 
 	if raid_battle.is_active():
-		raid_drivers = int(raid_battle.active_battle.get("drivers", 0))
-		raid_spies = int(raid_battle.active_battle.get("spies", 0))
+		raid_drivers = int(raid_battle.active_battle.get("local_drivers", 0))
+		raid_spies = int(raid_battle.active_battle.get("local_spies", 0))
 	else:
 		_prepare_raid()
 
@@ -373,8 +380,8 @@ func _open_raid() -> void:
 		selected_raid_target = get_node("/root/Main/CityMap").get_raid_target_by_id(
 			String(raid_battle.active_battle.get("target_id", ""))
 		)
-		raid_drivers = int(raid_battle.active_battle.get("drivers", 0))
-		raid_spies = int(raid_battle.active_battle.get("spies", 0))
+		raid_drivers = int(raid_battle.active_battle.get("local_drivers", 0))
+		raid_spies = int(raid_battle.active_battle.get("local_spies", 0))
 	elif selected_raid_target == null:
 		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
 		for target in targets:
@@ -397,32 +404,73 @@ func _close_raid() -> void:
 func _prepare_raid() -> void:
 	if raid_battle != null and raid_battle.is_active():
 		return
+
 	raid_drivers = 0
 	raid_spies = 0
+	alliance_manager.clear_local_player()
+	_rebuild_synergy_from_alliance()
+	raid_result_label.text = "Choose your role, review the alliance slots, then launch."
+	_refresh_raid()
+
+
+func _join_driver_slot() -> void:
+	if raid_battle.is_active() or troop_roster.get_count(&"Driver") <= 0:
+		return
+
+	if alliance_manager.assign_local_player(&"driver"):
+		raid_drivers = 1
+		raid_spies = 0
+		_rebuild_synergy_from_alliance()
+	_refresh_raid()
+
+
+func _join_spy_slot() -> void:
+	if raid_battle.is_active() or troop_roster.get_count(&"Spy") <= 0:
+		return
+
+	if alliance_manager.assign_local_player(&"spy"):
+		raid_drivers = 0
+		raid_spies = 1
+		_rebuild_synergy_from_alliance()
+	_refresh_raid()
+
+
+func _toggle_kira_online() -> void:
+	if raid_battle.is_active():
+		return
+
+	alliance_manager.toggle_member_online("driver_ally_02")
+	_rebuild_synergy_from_alliance()
+	_refresh_raid()
+
+
+func _rebuild_synergy_from_alliance() -> void:
 	synergy_raid.clear()
-	synergy_raid.join_raid("AllianceBoss", 45, 6000.0, &"frontline")
-	raid_result_label.text = "Add support allies, preview the damage, then launch."
-	_refresh_raid()
+	var snapshot := alliance_manager.build_participant_snapshot(
+		raid_drivers,
+		raid_spies
+	)
 
+	for participant in snapshot:
+		var role := StringName(participant["role"])
 
-func _add_driver_support() -> void:
-	if raid_battle.is_active() or raid_drivers >= troop_roster.get_count(&"Driver"):
-		return
-	raid_drivers += 1
-	synergy_raid.join_raid("Driver_%d" % raid_drivers, 12, 0.0, &"driver")
-	_refresh_raid()
+		if bool(participant["is_local"]):
+			if role == &"driver" and raid_drivers <= 0:
+				continue
+			if role == &"spy" and raid_spies <= 0:
+				continue
 
-
-func _add_spy_support() -> void:
-	if raid_battle.is_active() or raid_spies >= troop_roster.get_count(&"Spy"):
-		return
-	raid_spies += 1
-	synergy_raid.join_raid("Spy_%d" % raid_spies, 14, 0.0, &"spy")
-	_refresh_raid()
+		synergy_raid.join_raid(
+			String(participant["player_id"]),
+			int(participant["level"]),
+			float(participant["base_power"]),
+			role,
+			String(participant["name"])
+		)
 
 
 func _refresh_raid() -> void:
-	if synergy_raid == null or troop_roster == null or raid_battle == null:
+	if synergy_raid == null or troop_roster == null or raid_battle == null or alliance_manager == null:
 		return
 
 	var active := raid_battle.is_active()
@@ -442,7 +490,7 @@ func _refresh_raid() -> void:
 		return
 
 	var loot_preview := _format_loot(selected_raid_target.get_loot_preview())
-	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s + %s" % [
+	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward pool: $%s + %s" % [
 		selected_raid_target.get_display_name(),
 		_format_number(roundi(selected_raid_target.get_max_hp())),
 		selected_raid_target.get_difficulty(),
@@ -450,19 +498,30 @@ func _refresh_raid() -> void:
 		loot_preview
 	]
 
-	raid_roster_label.text = "Frontline: AllianceBoss (6,000 power)\nYour support: %d Driver(s), %d Spy(s)\nAvailable: %d Drivers, %d Spies" % [
-		raid_drivers,
-		raid_spies,
-		troop_roster.get_count(&"Driver"),
-		troop_roster.get_count(&"Spy")
-	]
+	_refresh_alliance_labels()
 
 	var target_available := selected_raid_target.is_available()
-	add_driver_button.disabled = active or not target_available or raid_drivers >= troop_roster.get_count(&"Driver")
-	add_spy_button.disabled = active or not target_available or raid_spies >= troop_roster.get_count(&"Spy")
+	var local_assigned := alliance_manager.is_member_assigned("local_player")
+	add_driver_button.text = "Join Driver Slot" if raid_drivers == 0 else "Driver Slot: You"
+	add_spy_button.text = "Join Spy Slot" if raid_spies == 0 else "Spy Slot: You"
+	add_driver_button.disabled = active or not target_available or troop_roster.get_count(&"Driver") <= 0 or raid_drivers > 0
+	add_spy_button.disabled = active or not target_available or troop_roster.get_count(&"Spy") <= 0 or raid_spies > 0
 	preview_raid_button.disabled = active or not target_available
 	launch_raid_button.disabled = active or not target_available
 	$Root/RaidPanel/Margin/VBox/Reset.disabled = active or not target_available
+	$Root/RaidPanel/Margin/VBox/ToggleKira.disabled = active
+
+	if local_assigned:
+		raid_roster_label.text = "Your specialist commitment: %s\nAvailable roster: %d Drivers, %d Spies" % [
+			"Driver" if raid_drivers > 0 else "Spy",
+			troop_roster.get_count(&"Driver"),
+			troop_roster.get_count(&"Spy")
+		]
+	else:
+		raid_roster_label.text = "You are not currently assigned to a raid slot.\nAvailable roster: %d Drivers, %d Spies" % [
+			troop_roster.get_count(&"Driver"),
+			troop_roster.get_count(&"Spy")
+		]
 
 	if active:
 		raid_status_label.text = "Raid convoy launching... %s" % _format_time(float(raid_battle.active_battle["seconds_remaining"]))
@@ -472,23 +531,58 @@ func _refresh_raid() -> void:
 		launch_raid_button.text = "Target Unavailable"
 	else:
 		raid_status_label.text = "Ready to launch."
-		launch_raid_button.text = "Launch Raid"
+		launch_raid_button.text = "Launch Alliance Raid"
 
 	if not active and not raid_battle.last_result.is_empty():
 		_show_raid_result(raid_battle.last_result)
+
+
+func _refresh_alliance_labels() -> void:
+	var member_lines: PackedStringArray = []
+
+	for member in alliance_manager.get_members():
+		var state := "ONLINE" if bool(member["online"]) else "OFFLINE"
+		member_lines.append("%s — Lv.%d — %s — %s" % [
+			String(member["name"]),
+			int(member["level"]),
+			String(member["preferred_role"]).capitalize(),
+			state
+		])
+
+	alliance_roster_label.text = "ALLIANCE\n" + "\n".join(member_lines)
+
+	var slot_lines: PackedStringArray = []
+	for slot in alliance_manager.get_raid_slots():
+		var member_id := String(slot["member_id"])
+		var member_name := "Empty"
+		if member_id != "":
+			var member := alliance_manager.get_member(member_id)
+			member_name = String(member.get("name", member_id))
+
+		slot_lines.append("%s: %s" % [
+			String(slot["role"]).capitalize(),
+			member_name
+		])
+
+	alliance_slots_label.text = "RAID SLOTS\n" + "\n".join(slot_lines)
 
 
 func _calculate_raid() -> void:
 	if selected_raid_target == null:
 		return
 
+	_rebuild_synergy_from_alliance()
 	var result := synergy_raid.calculate_raid_damage()
-	raid_result_label.text = "Preview damage: %s / %s HP\nDriver speed bonus: +%d%%\nSpy defense break: +%d%%\nTotal support: +%d%%" % [
+	var contribution_text := _format_contributions(
+		result.get("contributions", {}),
+		alliance_manager.build_participant_snapshot(raid_drivers, raid_spies)
+	)
+
+	raid_result_label.text = "Preview damage: %s / %s HP\nSupport: +%d%%\n%s" % [
 		_format_number(roundi(float(result["damage"]))),
-		_format_number(roundi(selected_raid_target.max_hp)),
-		roundi(float(result["speed_bonus"]) * 100.0),
-		roundi(float(result["defense_break_bonus"]) * 100.0),
-		roundi(float(result["support_bonus"]) * 100.0)
+		_format_number(roundi(selected_raid_target.get_max_hp())),
+		roundi(float(result["support_bonus"]) * 100.0),
+		contribution_text
 	]
 
 
@@ -497,7 +591,7 @@ func _launch_raid() -> void:
 		return
 
 	if raid_battle.start_battle(selected_raid_target, raid_drivers, raid_spies):
-		raid_result_label.text = "The crew is moving on %s..." % selected_raid_target.display_name
+		raid_result_label.text = "Alliance convoy moving on %s..." % selected_raid_target.get_display_name()
 		_refresh_raid()
 
 
@@ -510,17 +604,61 @@ func _show_raid_result(result: Dictionary) -> void:
 	var victory := bool(result.get("victory", false))
 	var outcome := "VICTORY" if victory else "DEFEAT"
 	var loot_text := _format_loot(result.get("loot", {}))
-	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nCash reward: $%s   Loot: %s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)\nWounded crew were sent to the Clinic." % [
+	var split_text := _format_reward_splits(
+		result.get("reward_splits", {}),
+		result.get("participants", [])
+	)
+
+	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nAlliance reward pool: $%s\nYour Cash: $%s   Loot: %s\n%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)" % [
 		outcome,
 		String(result.get("target_name", "Target")),
 		_format_number(roundi(float(result.get("damage", 0.0)))),
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),
-		_format_number(int(result.get("reward_cash", 0))),
+		_format_number(int(result.get("reward_pool", 0))),
+		_format_number(int(result.get("local_cash_reward", 0))),
 		loot_text,
+		split_text,
 		int(result.get("wounded_enforcers", 0)),
 		int(result.get("wounded_drivers", 0)),
 		int(result.get("wounded_spies", 0))
 	]
+
+
+func _format_contributions(contributions: Dictionary, participants: Array) -> String:
+	var lines: PackedStringArray = ["Contribution preview:"]
+
+	for participant in participants:
+		var player_id := String(participant.get("player_id", ""))
+		if player_id == "" or not contributions.has(player_id):
+			continue
+
+		lines.append("%s (%s): %s" % [
+			String(participant.get("name", player_id)),
+			String(participant.get("role", "")).capitalize(),
+			_format_number(roundi(float(contributions[player_id])))
+		])
+
+	return "\n".join(lines)
+
+
+func _format_reward_splits(splits: Dictionary, participants: Array) -> String:
+	if splits.is_empty():
+		return "No reward shares."
+
+	var names := {}
+	for participant in participants:
+		names[String(participant.get("player_id", ""))] = String(
+			participant.get("name", participant.get("player_id", ""))
+		)
+
+	var lines: PackedStringArray = ["Reward shares:"]
+	for player_id in splits.keys():
+		lines.append("%s: $%s" % [
+			String(names.get(String(player_id), player_id)),
+			_format_number(int(splits[player_id]))
+		])
+
+	return "\n".join(lines)
 
 
 func _close_selection() -> void:

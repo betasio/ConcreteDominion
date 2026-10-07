@@ -2,90 +2,111 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## District-map milestone
+## Alliance raid milestone
 
-The city has been expanded into a larger raid district and the raid system is now data-driven.
+Raids now use an explicit alliance roster and role-slot lobby instead of anonymous support counters.
 
-### Data-driven targets
+### Prototype alliance roster
 
-Raid balance lives in reusable Godot resources under:
+The local prototype includes simulated alliance members:
 
-`data/raids/`
+- **Vex** — Lv.45 — Frontline — 8,500 power — online
+- **Mia** — Lv.17 — Driver — online
+- **Noah** — Lv.14 — Spy — online
+- **Kira** — Lv.12 — Driver — starts offline
+- **You** — Lv.12 — selectable Driver or Spy support
 
-Each target resource defines:
-- target ID and display name
-- difficulty tier
-- HP
-- Cash reward
-- respawn cooldown
-- visual accent
-- guaranteed loot drops
+The lobby shows each member's online/offline state.
 
-Current targets:
+A prototype **Toggle Kira Online / Offline** button lets you test how member availability changes slot filling and expected raid damage.
 
-| Target | Tier | HP | Cash | Loot | Respawn |
-| --- | --- | ---: | ---: | --- | ---: |
-| Downtown Bank | Medium | 9,000 | $7,500 | Parts x2 | 30s |
-| Harbor Bank | Hard | 11,500 | $10,500 | Parts x3, Intel x1 | 45s |
-| Northside Turf HQ | Elite | 14,500 | $15,000 | Parts x4, Intel x2, Contraband x1 | 60s |
+## Raid slots
 
-Adding another target now means creating a new `.tres` data resource and assigning it to a `RaidTarget` scene instance rather than rewriting combat logic.
+Each alliance raid currently has four slots:
 
-## Visible raid convoys
+1. Frontline
+2. Driver
+3. Spy
+4. Driver
 
-Launching a raid spawns a convoy at the Safehouse and visibly moves it across the isometric district toward the selected Bank or Turf HQ.
+Online simulated allies auto-fill compatible empty slots.
 
-The convoy travel time matches the raid launch countdown. If the game closes mid-raid, reopening restores the active raid and recreates the convoy for the remaining travel time.
+The local player can take a Driver or Spy slot if they own at least one matching specialist troop.
 
-## Persistent loot inventory
+Raid participants are frozen when the raid launches. Going online/offline after launch does not rewrite who participated or who earned rewards.
 
-Victory rewards now include persistent loot:
+## Contribution scores
 
-- **Parts**
-- **Intel**
-- **Contraband**
+Each participant now receives a contribution score.
 
-The top HUD shows compact loot totals as `P / I / C`.
+- Frontline contribution is based on the strongest frontline power.
+- Each Driver contributes the damage value created by the Driver support multiplier.
+- Each Spy contributes the damage value created by the Spy defense-break multiplier.
 
-Cash and loot are both granted by the target's data resource. The raid result screen lists the drops earned.
+Current prototype support values:
 
-## Offline behavior
+- Driver: **+15%**
+- Spy: **+18%**
 
-Offline time now applies consistently to:
-- construction
-- recruitment
-- Clinic healing
-- raid travel/countdown
-- target respawn cooldowns
+The raid preview shows named member contribution scores.
 
-If a raid finishes while the game is closed, any extra offline time after the battle also reduces the defeated target's respawn cooldown.
+## Shared rewards
 
-## Core gameplay loop
+Cash rewards are now an **alliance reward pool**, not a single-player payout.
 
-1. Develop the Safehouse district.
-2. Recruit Enforcers, Drivers, and Spies.
-3. Pan across the larger city district.
-4. Click a data-driven Bank or Turf HQ.
-5. Add specialist alliance support.
-6. Preview damage.
+The prototype split uses:
+
+- 50% of the reward pool divided equally among participating members
+- 50% divided proportionally by contribution score
+
+This intentionally gives support players a meaningful baseline reward while still rewarding the member supplying frontline power.
+
+Only the local player's share is added to the local Cash balance. Simulated allies' shares are shown in the result panel.
+
+Target loot drops such as Parts, Intel, and Contraband are granted to the local player only when the local player actually occupied a raid slot.
+
+## Balance progression
+
+Current frontline/support tuning creates this progression:
+
+- Vex alone: 8,500 damage — cannot beat Downtown Bank
+- Vex + online alliance support: enough coordination for early targets
+- Harbor Bank benefits from filling the extra Driver slot with the local player or Kira
+- Northside Turf HQ remains a later progression target requiring stronger future alliance upgrades
+
+This preserves the game's intended design: powerful players matter, but they cannot simply solo the progression ladder.
+
+## Persistence
+
+The save file now also stores:
+
+- simulated alliance member online/offline states
+- current raid-slot assignments
+- frozen participants in an active raid
+- contribution/reward data in the most recent raid result
+
+Existing persistence for currencies, loot, troops, buildings, healing, recruitment, raid timers, convoys, and target cooldowns remains intact.
+
+## Suggested test
+
+1. Open **Downtown Bank**.
+2. Review the alliance roster and raid slots.
+3. Preview damage.
+4. Join a Driver or Spy slot.
+5. Preview again and compare contribution scores.
+6. Toggle Kira online/offline and watch the slot roster react.
 7. Launch the raid.
-8. Watch the convoy travel from the Safehouse.
-9. Resolve victory/defeat.
-10. Collect Cash and loot.
-11. Send wounded crew through the Clinic recovery loop.
-12. Move to another target while the defeated location respawns.
+8. Review the result panel for each named member's reward share.
+9. Confirm only your share is added to your Cash balance.
+10. Try Harbor Bank and compare the effect of a full support roster.
 
 ## Architecture
 
 ```text
-data/raids/
-├── downtown_bank.tres
-├── harbor_bank.tres
-└── northside_hq.tres
-
 Main
 ├── PlayerEconomy
 ├── LootInventory
+├── AllianceManager
 ├── TroopRoster
 ├── HospitalQueue
 ├── ConstructionQueue
@@ -94,27 +115,39 @@ Main
 ├── RaidBattle
 ├── SaveManager
 └── CityMap
-    ├── Buildings
-    ├── RaidTargets
-    ├── Convoys
-    └── StrategyCamera
 ```
 
-`RaidTargetData.gd` defines balance/configuration.  
-`RaidTarget.gd` owns map availability and cooldown state.  
-`RaidBattle.gd` resolves the selected target.  
-`ConvoyVisual.gd` handles the current prototype travel visualization.
+`AllianceManager.gd`
+- owns alliance member state
+- tracks online/offline status
+- owns role-slot assignments
+- produces frozen participant snapshots
 
-## Production note
+`SynergyRaid.gd`
+- calculates frontline + support damage
+- calculates per-member contribution values
 
-The current prototype remains client-authoritative for development speed. Before live multiplayer or monetization, currencies, loot, timers, raid participants, target state, battle resolution, and rewards should move to server authority.
+`RaidBattle.gd`
+- freezes participants at launch
+- resolves targets
+- calculates reward sharing
+- grants the local player's share and loot
+- handles local support wounds
+
+## Production direction
+
+The simulated alliance model is deliberately shaped like a future network model. Real server data can later replace the local member dictionaries while keeping the same concepts: member IDs, presence, roles, slot assignments, participant snapshots, contribution scores, and reward splits.
+
+Before live multiplayer or monetization, all of that state and all battle/reward decisions must be server-authoritative.
 
 ## Next strong milestone
 
-The next step should focus on presentation and real alliance structure:
-- alliance member roster and raid slots;
-- simulated online/offline members for prototype testing;
-- player contribution scores and reward sharing;
-- convoy paths instead of straight-line travel;
-- combat impact/VFX and a polished result overlay;
-- separate city/base view and larger world-map view.
+The best next step is a **separate world-map screen and alliance social layer**:
+
+- city/base view versus world-map view;
+- alliance panel with member profiles and activity;
+- join/leave/invite prototype flow;
+- alliance chat/message feed mockup;
+- route-based convoy movement;
+- raid invitations and join countdown;
+- polished raid result overlay and combat effects.

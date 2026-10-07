@@ -2,6 +2,7 @@ extends Node
 
 @onready var economy: PlayerEconomy = $PlayerEconomy
 @onready var loot_inventory: LootInventory = $LootInventory
+@onready var alliance_manager: AllianceManager = $AllianceManager
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
@@ -23,6 +24,7 @@ func _ready() -> void:
 		hospital_queue,
 		synergy_raid,
 		loot_inventory,
+		alliance_manager,
 		city_map
 	)
 
@@ -31,6 +33,7 @@ func _ready() -> void:
 	save_manager.setup(
 		economy,
 		loot_inventory,
+		alliance_manager,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
@@ -49,6 +52,7 @@ func _ready() -> void:
 	hud.setup(
 		economy,
 		loot_inventory,
+		alliance_manager,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
