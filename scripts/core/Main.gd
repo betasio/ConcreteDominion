@@ -216,6 +216,9 @@ func _ready() -> void:
 		recruitment_queue,
 		synergy_raid,
 		raid_battle,
+		city_map,
+		core_building_effects,
+		progression,
 		settings
 	)
 

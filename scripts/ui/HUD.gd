@@ -15,6 +15,9 @@ var alliance_manager: AllianceManager
 var alliance_social: AllianceSocial
 var raid_battle: RaidBattle
 var settings_manager: SettingsManager
+var city_map: Node
+var core_effects: CoreBuildingEffects
+var progression: PlayerProgression
 
 var selected_building: Building
 var selected_lot: BuildLot
@@ -88,6 +91,9 @@ func setup(
 	recruitment: RecruitmentQueue,
 	raid: SynergyRaid,
 	battle: RaidBattle,
+	world: Node,
+	building_effects: CoreBuildingEffects,
+	player_progression: PlayerProgression,
 	settings: SettingsManager = null
 ) -> void:
 	economy = player_economy
@@ -100,6 +106,9 @@ func setup(
 	recruitment_queue = recruitment
 	synergy_raid = raid
 	raid_battle = battle
+	city_map = world
+	core_effects = building_effects
+	progression = player_progression
 	settings_manager = settings
 
 	economy.changed.connect(_refresh_all)
@@ -157,7 +166,7 @@ func setup(
 	_refresh_all()
 	_refresh_alliance_social()
 	_refresh_alliance_profiles()
-	set_view_mode_display(get_node("/root/Main/CityMap").get_view_mode())
+	set_view_mode_display(city_map.get_view_mode() if city_map != null else &"base")
 
 
 func show_building(building: Building) -> void:
@@ -236,14 +245,13 @@ func _refresh_selection() -> void:
 		return
 
 	if selected_building != null:
-		var core_effects: CoreBuildingEffects = get_node("/root/Main/CoreBuildingEffects")
 		level_label.text = "Level %d%s" % [
 			selected_building.level,
 			" (upgrading)" if selected_building.is_constructing else ""
 		]
 		selection_description.text = "%s\n\n%s" % [
 			selected_building.description,
-			core_effects.get_building_effect_summary(selected_building)
+			core_effects.get_building_effect_summary(selected_building) if core_effects != null else ""
 		]
 		var cash_cost := selected_building.get_upgrade_cash_cost()
 		if selected_building.level >= selected_building.max_level:
@@ -254,8 +262,7 @@ func _refresh_selection() -> void:
 			upgrade_button.disabled = construction_queue.is_busy() or selected_building.is_constructing or economy.cash < cash_cost
 
 	if selected_lot != null:
-		var progression: PlayerProgression = get_node("/root/Main/PlayerProgression")
-		var unlocked := progression.is_building_unlocked(selected_lot.building_name)
+		var unlocked := progression.is_building_unlocked(selected_lot.building_name) if progression != null else true
 		var required_level := progression.get_building_unlock_level(selected_lot.building_name)
 
 		if selected_lot.is_built:
@@ -377,8 +384,7 @@ func _refresh_hospital() -> void:
 		return
 
 	if hospital_queue.wounded_queue.is_empty():
-		var effects := get_node_or_null("/root/Main/CoreBuildingEffects") as CoreBuildingEffects
-		var slots: int = effects.get_clinic_slots() if effects != null else 1
+		var slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
 		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d" % slots
 		cost_label.text = "Instant heal cost: 0 Gold"
 		instant_button.disabled = true
@@ -395,8 +401,7 @@ func _refresh_hospital() -> void:
 			_format_time(float(entry["seconds_remaining"]))
 		])
 
-	var effects := get_node_or_null("/root/Main/CoreBuildingEffects") as CoreBuildingEffects
-	var clinic_slots: int = effects.get_clinic_slots() if effects != null else 1
+	var clinic_slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
 	queue_label.text = "Treatment slots: %d\n%s" % [clinic_slots, "\n".join(lines)]
 	var cost := hospital_queue.get_instant_heal_cost()
 	cost_label.text = "Instant heal cost: %d Gold" % cost
@@ -492,13 +497,13 @@ func _open_raid() -> void:
 	raid_panel.visible = true
 
 	if raid_battle.is_active():
-		selected_raid_target = get_node("/root/Main/CityMap").get_raid_target_by_id(
+		selected_raid_target = city_map.get_raid_target_by_id(
 			String(raid_battle.active_battle.get("target_id", ""))
 		)
 		raid_drivers = int(raid_battle.active_battle.get("local_drivers", 0))
 		raid_spies = int(raid_battle.active_battle.get("local_spies", 0))
 	elif selected_raid_target == null:
-		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
+		var targets: Array = city_map.get_raid_targets() if city_map != null else []
 		for target in targets:
 			if target.visible and target.is_available():
 				selected_raid_target = target
@@ -592,7 +597,7 @@ func _refresh_raid() -> void:
 
 	if active:
 		var active_id := String(raid_battle.active_battle.get("target_id", ""))
-		selected_raid_target = get_node("/root/Main/CityMap").get_raid_target_by_id(active_id)
+		selected_raid_target = city_map.get_raid_target_by_id(active_id) if city_map != null else null
 
 	if selected_raid_target == null:
 		raid_target_label.text = "No raid target selected."
@@ -853,7 +858,7 @@ func _close_alliance_panel() -> void:
 
 func _create_raid_invite() -> void:
 	if selected_raid_target == null:
-		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
+		var targets: Array = city_map.get_raid_targets() if city_map != null else []
 		for target in targets:
 			if target.is_available():
 				selected_raid_target = target
