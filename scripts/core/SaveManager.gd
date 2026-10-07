@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 20
+const SAVE_VERSION := 21
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -337,6 +337,31 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 				"milestones_claimed": {"2": false, "4": false}
 			}
 		data["missions"] = mission_data
+
+	if version < 21:
+		var mission_data_v21 = data.get("missions", {})
+		if not (mission_data_v21 is Dictionary):
+			mission_data_v21 = {}
+		var chapter_meta = mission_data_v21.get("_chapter_meta", {})
+		if not (chapter_meta is Dictionary):
+			chapter_meta = {}
+		if not chapter_meta.has("chapter_2_choice"):
+			chapter_meta["chapter_2_choice"] = ""
+		mission_data_v21["_chapter_meta"] = chapter_meta
+		data["missions"] = mission_data_v21
+
+		var world_control_data = data.get("world_control", {})
+		if not (world_control_data is Dictionary):
+			world_control_data = {}
+		if not world_control_data.has("faction_rivalry"):
+			world_control_data["faction_rivalry"] = {
+				"dock_rats": 0,
+				"iron_serpents": 0,
+				"meridian_boys": 0,
+				"northside_crew": 0,
+				"velvet_circle": 0
+			}
+		data["world_control"] = world_control_data
 
 	data["schema_meta"] = {
 		"migrated_from": version,
