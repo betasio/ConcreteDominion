@@ -123,6 +123,16 @@ func _ready() -> void:
 		_fail("Faction rivalry baseline is invalid.")
 	elif world_control.get_rivalry_reward_multiplier("harbor_bank") < 1.0:
 		_fail("Faction rivalry reward scaling is invalid.")
+	else:
+		var harbor_dossier := world_control.get_faction_dossier("harbor_bank")
+		if String(harbor_dossier.get("boss", "")).is_empty() or String(harbor_dossier.get("perk", "")).is_empty():
+			_fail("Harbor rival dossier is incomplete.")
+		if world_control.get_rivalry_lines().is_empty():
+			_fail("Rivalry dossier list is empty.")
+		if game.get_node_or_null("WorldControlUI/Root/Panel/Margin/VBox/Rivalries") == null:
+			_fail("Rivalry dossier UI is missing.")
+		if game.get_node_or_null("WorldControlUI/Root/VictoryPanel/Margin/VBox/Summary") == null:
+			_fail("District victory presentation is missing.")
 
 	var resources := game.get_node_or_null("ResourceProductionManager") as ResourceProductionManager
 	if resources == null:
@@ -139,6 +149,10 @@ func _ready() -> void:
 	var faction_rules := game.get_node_or_null("FactionRules") as FactionRules
 	if faction_rules == null or faction_rules.get_encounter_cycle("harbor_bank").is_empty():
 		_fail("Faction rules are invalid.")
+	elif faction_rules.get_boss_name("harbor_bank").is_empty() or faction_rules.get_boss_name("midtown_exchange").is_empty():
+		_fail("Named rival bosses are missing.")
+	elif faction_rules.get_perk_summary("harbor_bank").is_empty():
+		_fail("Faction gameplay identity is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
