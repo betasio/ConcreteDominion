@@ -59,7 +59,7 @@ func _ready() -> void:
 	city_map.setup_progression(progression)
 	alliance_social.setup(alliance_manager)
 	hospital_queue.setup(economy, troop_roster, balance, core_building_effects)
-	construction_queue.setup(economy, balance, core_building_effects)
+	construction_queue.setup(economy, balance, core_building_effects, faction_manager)
 	recruitment_queue.setup(economy, troop_roster, balance, facility_effects, core_building_effects)
 	combat_loadout.setup(loot_inventory, progression)
 
