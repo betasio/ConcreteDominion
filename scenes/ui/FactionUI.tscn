@@ -119,6 +119,35 @@ layout_mode = 2
 text = "MEMBERS & RANKS"
 autowrap_mode = 2
 
+[node name="MemberAdmin" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Invite" type="Button" parent="Root/Panel/Margin/Scroll/VBox/MemberAdmin"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Invite Prospect"
+
+[node name="AcceptInvite" type="Button" parent="Root/Panel/Margin/Scroll/VBox/MemberAdmin"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Accept Invite"
+
+[node name="Promote" type="Button" parent="Root/Panel/Margin/Scroll/VBox/MemberAdmin"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Promote"
+
+[node name="Remove" type="Button" parent="Root/Panel/Margin/Scroll/VBox/MemberAdmin"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Remove"
+
+[node name="InviteStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "0 pending invite(s)"
+autowrap_mode = 2
+
 [node name="Research" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
@@ -156,6 +185,33 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Cancel Rally"
 
+[node name="Territory" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "FACTION TERRITORY"
+autowrap_mode = 2
+
+[node name="CaptureTerritory" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Capture Next Faction Objective"
+
+[node name="Season" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "SEASON"
+autowrap_mode = 2
+
+[node name="Rankings" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+text = "FACTION RANKINGS"
+autowrap_mode = 2
+
+[node name="Matchmaking" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+text = "WAR MATCHMAKING"
+autowrap_mode = 2
+
 [node name="War" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "FACTION WAR"
@@ -180,6 +236,20 @@ text = "Start Prototype War"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Run War Attack"
+
+[node name="WarRewardButtons" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ClaimWarReward" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarRewardButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Claim War Reward"
+
+[node name="ClearWar" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarRewardButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Archive Completed War"
 
 [node name="Leave" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
