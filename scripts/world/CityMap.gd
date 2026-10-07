@@ -26,6 +26,8 @@ const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 @onready var downtown_bank: RaidTarget = $RaidTargets/DowntownBank
 @onready var harbor_bank: RaidTarget = $RaidTargets/HarborBank
 @onready var northside_hq: RaidTarget = $RaidTargets/NorthsideHQ
+@onready var casino_vault: RaidTarget = $RaidTargets/CasinoVault
+@onready var financial_tower: RaidTarget = $RaidTargets/FinancialTower
 
 var selected_target: Node
 var active_convoy: ConvoyVisual
@@ -54,6 +56,8 @@ func _ready() -> void:
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
 	northside_hq.position = iso_to_screen(Vector2i(19, 15))
+	casino_vault.position = iso_to_screen(Vector2i(4, 15))
+	financial_tower.position = iso_to_screen(Vector2i(22, 10))
 
 	safehouse.selected.connect(_select_building)
 	hospital.selected.connect(_select_building)
@@ -102,7 +106,7 @@ func get_persistent_buildings() -> Array:
 
 
 func get_raid_targets() -> Array:
-	return [downtown_bank, harbor_bank, northside_hq]
+	return [downtown_bank, harbor_bank, northside_hq, casino_vault, financial_tower]
 
 
 func get_raid_target_by_id(target_id: String) -> RaidTarget:
@@ -163,6 +167,10 @@ func _get_convoy_route(target_id: String) -> PackedVector2Array:
 			cells.append_array([Vector2i(17, 7), Vector2i(19, 7), Vector2i(19, 6)])
 		"northside_hq":
 			cells.append_array([Vector2i(12, 12), Vector2i(17, 12), Vector2i(17, 15), Vector2i(19, 15)])
+		"casino_vault":
+			cells.append_array([Vector2i(7, 7), Vector2i(7, 12), Vector2i(4, 12), Vector2i(4, 15)])
+		"financial_tower":
+			cells.append_array([Vector2i(17, 7), Vector2i(22, 7), Vector2i(22, 10)])
 		_:
 			var target := get_raid_target_by_id(target_id)
 			if target != null:

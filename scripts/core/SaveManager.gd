@@ -5,13 +5,15 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
 var progression: PlayerProgression
 var missions: MissionTracker
 var retention: RetentionManager
+var player_profile: PlayerProfile
+var mailbox: MailboxManager
 var alliance: AllianceManager
 var alliance_social: AllianceSocial
 var roster: TroopRoster
@@ -34,6 +36,8 @@ func setup(
 	player_progression: PlayerProgression,
 	mission_tracker: MissionTracker,
 	retention_manager: RetentionManager,
+	profile: PlayerProfile,
+	mailbox_manager: MailboxManager,
 	alliance_manager: AllianceManager,
 	social: AllianceSocial,
 	troop_roster: TroopRoster,
@@ -48,6 +52,8 @@ func setup(
 	progression = player_progression
 	missions = mission_tracker
 	retention = retention_manager
+	player_profile = profile
+	mailbox = mailbox_manager
 	alliance = alliance_manager
 	alliance_social = social
 	roster = troop_roster
@@ -62,6 +68,8 @@ func setup(
 	progression.changed.connect(mark_dirty)
 	missions.changed.connect(mark_dirty)
 	retention.changed.connect(mark_dirty)
+	player_profile.changed.connect(mark_dirty)
+	mailbox.changed.connect(mark_dirty)
 	alliance.changed.connect(mark_dirty)
 	alliance_social.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
@@ -73,7 +81,6 @@ func setup(
 
 	for building in city_map.get_persistent_buildings():
 		building.changed.connect(mark_dirty)
-
 	for target in city_map.get_raid_targets():
 		target.changed.connect(mark_dirty)
 
@@ -81,7 +88,6 @@ func setup(
 func _process(delta: float) -> void:
 	if not _dirty or _is_loading:
 		return
-
 	_autosave_timer -= delta
 	if _autosave_timer <= 0.0:
 		save_game()
@@ -106,6 +112,8 @@ func save_game() -> bool:
 		"progression": progression.get_save_data(),
 		"missions": missions.get_save_data(),
 		"retention": retention.get_save_data(),
+		"profile": player_profile.get_save_data(),
+		"mailbox": mailbox.get_save_data(),
 		"alliance": alliance.get_save_data(),
 		"alliance_social": alliance_social.get_save_data(),
 		"roster": roster.get_save_data(),
@@ -123,7 +131,6 @@ func save_game() -> bool:
 
 	file.store_string(JSON.stringify(data, "	"))
 	file.close()
-
 	_dirty = false
 	_autosave_timer = 0.0
 	save_completed.emit()
@@ -140,10 +147,9 @@ func load_game() -> bool:
 		load_completed.emit(false)
 		return false
 
-	var text := file.get_as_text()
+	var parsed = JSON.parse_string(file.get_as_text())
 	file.close()
 
-	var parsed = JSON.parse_string(text)
 	if not parsed is Dictionary:
 		push_warning("Save file is invalid; starting with defaults.")
 		load_completed.emit(false)
@@ -154,12 +160,13 @@ func load_game() -> bool:
 	var elapsed := maxf(0.0, Time.get_unix_time_from_system() - saved_at)
 
 	_is_loading = true
-
 	economy.load_save_data(data.get("economy", {}))
 	loot_inventory.load_save_data(data.get("loot", {}))
 	progression.load_save_data(data.get("progression", {}))
 	missions.load_save_data(data.get("missions", {}))
 	retention.load_save_data(data.get("retention", {}))
+	player_profile.load_save_data(data.get("profile", {}))
+	mailbox.load_save_data(data.get("mailbox", {}))
 	alliance.load_save_data(data.get("alliance", {}))
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
 	roster.load_save_data(data.get("roster", {}))
@@ -168,11 +175,9 @@ func load_game() -> bool:
 	construction.load_save_data(data.get("construction", {}), elapsed, city_map)
 	recruitment.load_save_data(data.get("recruitment", {}), elapsed)
 	raid_battle.load_save_data(data.get("raid_battle", {}), elapsed)
-
 	_is_loading = false
 	_dirty = false
 	_autosave_timer = 0.0
-
 	load_completed.emit(true)
 	return true
 
@@ -180,9 +185,7 @@ func load_game() -> bool:
 func delete_save() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
 		return true
-
-	var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
-	return error == OK
+	return DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH)) == OK
 
 
 func _notification(what: int) -> void:

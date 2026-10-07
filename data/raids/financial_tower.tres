@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RaidTargetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/RaidTargetData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+target_id = "financial_tower"
+display_name = "Financial Tower"
+difficulty = "Mythic"
+max_hp = 24000.0
+reward_cash = 32000
+reward_xp = 450
+required_account_level = 6
+cooldown_seconds = 90.0
+accent_color = Color(0.82, 0.72, 0.30, 1)
+guaranteed_loot = {"Parts": 6, "Intel": 4, "Contraband": 2}
