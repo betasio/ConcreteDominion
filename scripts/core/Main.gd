@@ -170,6 +170,7 @@ func _ready() -> void:
 		loot_inventory,
 		city_map,
 		world_control,
+		faction_manager,
 		recruitment_queue,
 		construction_queue,
 		raid_battle
