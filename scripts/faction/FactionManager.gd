@@ -11,6 +11,9 @@ signal daily_reward_claimed
 signal faction_gift_earned
 signal rally_started(target_id: String)
 signal war_started(opponent_name: String)
+signal territory_captured(territory_id: String)
+signal member_role_changed(member_id: String, role: String)
+signal member_removed(member_id: String)
 
 const ROLE_LEADER := "Leader"
 const ROLE_UNDERBOSS := "Underboss"
@@ -20,6 +23,7 @@ const ROLE_MEMBER := "Member"
 const DAILY_REQUIRED := 3
 const WAR_DURATION_SECONDS := 24.0 * 60.0 * 60.0
 const RALLY_DURATION_SECONDS := 10.0 * 60.0
+const MAX_MEMBERS_BASE := 20
 
 var economy: PlayerEconomy
 var loot: LootInventory
@@ -53,6 +57,38 @@ var gift_charges := 0
 var active_rally: Dictionary = {}
 var active_war: Dictionary = {}
 
+var season_points := 0
+var season_wins := 0
+var war_reward_claimed := false
+var pending_invites: Array[Dictionary] = []
+
+var faction_territory: Dictionary = {
+	"dockyard_exchange": {
+		"name":"Dockyard Exchange",
+		"required_level":2,
+		"power":1500,
+		"owned":false,
+		"season_points":60,
+		"treasury_reward":3000
+	},
+	"midtown_signal": {
+		"name":"Midtown Signal Tower",
+		"required_level":3,
+		"power":2300,
+		"owned":false,
+		"season_points":90,
+		"treasury_reward":5000
+	},
+	"financial_courthouse": {
+		"name":"Financial Courthouse",
+		"required_level":4,
+		"power":3400,
+		"owned":false,
+		"season_points":140,
+		"treasury_reward":8000
+	}
+}
+
 
 func setup(
 	player_economy: PlayerEconomy,
@@ -76,12 +112,12 @@ func _process(delta: float) -> void:
 		active_rally["seconds_remaining"] = maxf(0.0, float(active_rally.get("seconds_remaining", 0.0)) - delta)
 		if float(active_rally["seconds_remaining"]) <= 0.0:
 			active_rally.clear()
-		did_change = true
+			did_change = true
 
 	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
 		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - delta)
 		if float(active_war["seconds_remaining"]) <= 0.0:
-			active_war["status"] = "complete"
+			_complete_war()
 			did_change = true
 
 	if did_change:
@@ -128,12 +164,13 @@ func join_prototype_faction() -> bool:
 	faction_id = "prototype_black_crown"
 	faction_name = "Black Crown"
 	faction_tag = "CROWN"
-	faction_level = 2
-	faction_xp = 80
-	treasury_cash = 12500
+	faction_level = 3
+	faction_xp = 120
+	treasury_cash = 18000
 	members = [
 		{"id":"player_ace","name":"Ace","role":ROLE_LEADER,"power":12800,"contribution":420,"online":true},
 		{"id":"player_nova","name":"Nova","role":ROLE_OFFICER,"power":9100,"contribution":310,"online":true},
+		{"id":"player_ghost","name":"Ghost","role":ROLE_MEMBER,"power":7600,"contribution":190,"online":false},
 		{"id":local_member_id,"name":"You","role":ROLE_UNDERBOSS,"power":0,"contribution":0,"online":true}
 	]
 	_reset_faction_activity()
@@ -175,6 +212,12 @@ func _reset_faction_activity() -> void:
 	gift_charges = 0
 	active_rally.clear()
 	active_war.clear()
+	pending_invites.clear()
+	season_points = 0
+	season_wins = 0
+	war_reward_claimed = false
+	for territory_id in faction_territory.keys():
+		faction_territory[territory_id]["owned"] = false
 
 
 func get_local_role() -> String:
@@ -182,6 +225,10 @@ func get_local_role() -> String:
 		if String(member.get("id", "")) == local_member_id:
 			return String(member.get("role", ROLE_MEMBER))
 	return ""
+
+
+func can_manage_members() -> bool:
+	return get_local_role() in [ROLE_LEADER, ROLE_UNDERBOSS]
 
 
 func can_manage_research() -> bool:
@@ -199,12 +246,74 @@ func can_start_war() -> bool:
 func get_permissions_summary() -> String:
 	var role := get_local_role()
 	if role == ROLE_LEADER:
-		return "Leader — manage research, rallies, wars, ranks, and Faction direction."
+		return "Leader — manage members, research, rallies, wars, ranks, and Faction direction."
 	if role == ROLE_UNDERBOSS:
-		return "Underboss — manage research, rallies, and Faction wars."
+		return "Underboss — manage members, research, rallies, and Faction wars."
 	if role == ROLE_OFFICER:
 		return "Officer — manage research and start rallies."
 	return "Member — contribute, join rallies, earn gifts, and fight in wars."
+
+
+func get_member_limit() -> int:
+	return MAX_MEMBERS_BASE + maxi(0, faction_level - 1) * 2
+
+
+func invite_prototype_member() -> bool:
+	if not has_faction() or not can_manage_members() or members.size() + pending_invites.size() >= get_member_limit():
+		return false
+	var invite_id := "invite_%d" % (pending_invites.size() + 1)
+	pending_invites.append({
+		"id": invite_id,
+		"name": "Prospect %d" % (pending_invites.size() + 1),
+		"power": 5000 + pending_invites.size() * 700
+	})
+	changed.emit()
+	return true
+
+
+func accept_next_prototype_invite() -> bool:
+	if pending_invites.is_empty() or members.size() >= get_member_limit():
+		return false
+	var invite: Dictionary = pending_invites.pop_front()
+	members.append({
+		"id": String(invite["id"]),
+		"name": String(invite["name"]),
+		"role": ROLE_MEMBER,
+		"power": int(invite["power"]),
+		"contribution": 0,
+		"online": true
+	})
+	changed.emit()
+	return true
+
+
+func promote_prototype_member() -> bool:
+	if not can_manage_members():
+		return false
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		if member_id == local_member_id or String(member.get("role", "")) != ROLE_MEMBER:
+			continue
+		member["role"] = ROLE_OFFICER
+		member_role_changed.emit(member_id, ROLE_OFFICER)
+		changed.emit()
+		return true
+	return false
+
+
+func remove_prototype_member() -> bool:
+	if not can_manage_members():
+		return false
+	for i in range(members.size() - 1, -1, -1):
+		var member: Dictionary = members[i]
+		var member_id := String(member.get("id", ""))
+		if member_id == local_member_id or String(member.get("role", "")) == ROLE_LEADER:
+			continue
+		members.remove_at(i)
+		member_removed.emit(member_id)
+		changed.emit()
+		return true
+	return false
 
 
 func get_xp_for_next_level() -> int:
@@ -437,19 +546,150 @@ func get_rally_summary() -> String:
 	]
 
 
+func get_total_member_power() -> int:
+	var total := 0
+	for member in members:
+		total += maxi(0, int(member.get("power", 0)))
+	return total
+
+
+func get_next_territory_id() -> String:
+	for territory_id in ["dockyard_exchange", "midtown_signal", "financial_courthouse"]:
+		var territory: Dictionary = faction_territory[territory_id]
+		if not bool(territory["owned"]) and faction_level >= int(territory["required_level"]):
+			return territory_id
+	return ""
+
+
+func can_capture_next_territory() -> bool:
+	var territory_id := get_next_territory_id()
+	if territory_id.is_empty() or not can_start_rally():
+		return false
+	var territory: Dictionary = faction_territory[territory_id]
+	return get_total_member_power() * get_rally_power_multiplier() >= float(territory["power"])
+
+
+func capture_next_territory() -> bool:
+	var territory_id := get_next_territory_id()
+	if territory_id.is_empty() or not can_capture_next_territory():
+		return false
+
+	var territory: Dictionary = faction_territory[territory_id]
+	territory["owned"] = true
+	season_points += int(territory["season_points"])
+	treasury_cash += int(territory["treasury_reward"])
+	award_faction_xp(30)
+	gift_charges += 1
+	faction_gift_earned.emit()
+	territory_captured.emit(territory_id)
+	changed.emit()
+	return true
+
+
+func get_territory_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	for territory_id in ["dockyard_exchange", "midtown_signal", "financial_courthouse"]:
+		var territory: Dictionary = faction_territory[territory_id]
+		var state := "OWNED" if bool(territory["owned"]) else ("LOCKED" if faction_level < int(territory["required_level"]) else "TARGET")
+		lines.append("%s — %s — Power %s — +%d season pts" % [
+			String(territory["name"]),
+			state,
+			_format_number(int(territory["power"])),
+			int(territory["season_points"])
+		])
+	return lines
+
+
+func get_owned_territory_count() -> int:
+	var count := 0
+	for territory_id in faction_territory.keys():
+		if bool(faction_territory[territory_id]["owned"]):
+			count += 1
+	return count
+
+
+func get_territory_cash_multiplier() -> float:
+	return 1.0 + float(get_owned_territory_count()) * 0.03
+
+
+func get_matchmaking_candidates() -> Array[Dictionary]:
+	if not has_faction():
+		return []
+	var rating := get_matchmaking_rating()
+	return [
+		{"id":"prototype_red_hands","name":"Red Hands","rating":rating - 35,"members":18},
+		{"id":"prototype_night_union","name":"Night Union","rating":rating + 10,"members":21},
+		{"id":"prototype_royal_five","name":"Royal Five","rating":rating + 55,"members":17}
+	]
+
+
+func get_matchmaking_rating() -> int:
+	return faction_level * 250 + get_total_member_power() / 100 + season_points
+
+
+func get_rankings() -> Array[Dictionary]:
+	if not has_faction():
+		return []
+	var ours := {"name":faction_name,"tag":faction_tag,"points":season_points}
+	var rows: Array[Dictionary] = [
+		{"name":"Night Union","tag":"NITE","points":maxi(40, season_points + 90)},
+		{"name":"Red Hands","tag":"RED","points":maxi(30, season_points + 35)},
+		ours,
+		{"name":"Royal Five","tag":"R5","points":maxi(0, season_points - 25)}
+	]
+	rows.sort_custom(func(a: Dictionary, b: Dictionary): return int(a["points"]) > int(b["points"]))
+	return rows
+
+
+func get_ranking_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	var rank := 1
+	for row in get_rankings():
+		lines.append("#%d [%s] %s — %d pts" % [rank, String(row["tag"]), String(row["name"]), int(row["points"])])
+		rank += 1
+	return lines
+
+
+func get_season_tier() -> String:
+	if season_points >= 700:
+		return "DIAMOND"
+	if season_points >= 400:
+		return "GOLD"
+	if season_points >= 200:
+		return "SILVER"
+	return "BRONZE"
+
+
+func get_season_summary() -> String:
+	return "%s • %d season points • %d war win(s) • %d territory objective(s)" % [
+		get_season_tier(),
+		season_points,
+		season_wins,
+		get_owned_territory_count()
+	]
+
+
 func start_prototype_war() -> bool:
 	if not can_start_war() or not active_war.is_empty():
 		return false
+	var candidates := get_matchmaking_candidates()
+	if candidates.is_empty():
+		return false
+	var opponent: Dictionary = candidates[0]
 	active_war = {
-		"opponent_id": "prototype_red_hands",
-		"opponent_name": "Red Hands",
+		"opponent_id": String(opponent["id"]),
+		"opponent_name": String(opponent["name"]),
+		"opponent_rating": int(opponent["rating"]),
 		"seconds_remaining": WAR_DURATION_SECONDS,
 		"our_score": 0,
 		"their_score": 0,
 		"attacks_remaining": 3,
-		"status": "active"
+		"status": "active",
+		"result": "",
+		"reward_tier": ""
 	}
-	war_started.emit("Red Hands")
+	war_reward_claimed = false
+	war_started.emit(String(opponent["name"]))
 	changed.emit()
 	return true
 
@@ -467,18 +707,23 @@ func perform_prototype_war_attack() -> Dictionary:
 			contribution = int(member.get("contribution", 0))
 			break
 
-	var our_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5)
-	var their_points := 95 + faction_level * 10
+	var territory_bonus := get_owned_territory_count() * 10
+	var our_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5) + territory_bonus
+	var their_points := 95 + faction_level * 10 + int(active_war.get("opponent_rating", 0)) / 100
 	active_war["our_score"] = int(active_war.get("our_score", 0)) + our_points
 	active_war["their_score"] = int(active_war.get("their_score", 0)) + their_points
 	active_war["attacks_remaining"] = attacks - 1
 	_add_local_contribution(20)
 	award_faction_xp(15)
+
 	if our_points > their_points:
 		gift_charges += 1
 		faction_gift_earned.emit()
-	changed.emit()
 
+	if int(active_war["attacks_remaining"]) <= 0:
+		_complete_war()
+
+	changed.emit()
 	return {
 		"our_points": our_points,
 		"their_points": their_points,
@@ -486,27 +731,82 @@ func perform_prototype_war_attack() -> Dictionary:
 	}
 
 
+func _complete_war() -> void:
+	if active_war.is_empty() or String(active_war.get("status", "")) == "complete":
+		return
+	active_war["status"] = "complete"
+	var won := int(active_war.get("our_score", 0)) > int(active_war.get("their_score", 0))
+	active_war["result"] = "VICTORY" if won else "DEFEAT"
+	if won:
+		season_wins += 1
+		season_points += 120
+		active_war["reward_tier"] = "GOLD" if int(active_war.get("our_score", 0)) >= 450 else "SILVER"
+	else:
+		season_points += 35
+		active_war["reward_tier"] = "BRONZE"
+	war_reward_claimed = false
+
+
+func can_claim_war_reward() -> bool:
+	return not active_war.is_empty() and String(active_war.get("status", "")) == "complete" and not war_reward_claimed
+
+
+func claim_war_reward() -> bool:
+	if not can_claim_war_reward() or economy == null or loot == null:
+		return false
+	war_reward_claimed = true
+	var tier := String(active_war.get("reward_tier", "BRONZE"))
+	match tier:
+		"GOLD":
+			economy.add_cash(8000)
+			economy.add_gold(6)
+			loot.add_loot({"Parts":3,"Intel":2})
+		"SILVER":
+			economy.add_cash(5000)
+			economy.add_gold(3)
+			loot.add_loot({"Parts":2,"Intel":1})
+		_:
+			economy.add_cash(2500)
+			economy.add_gold(1)
+			loot.add_item("Parts", 1)
+	changed.emit()
+	return true
+
+
+func clear_completed_war() -> bool:
+	if active_war.is_empty() or String(active_war.get("status", "")) != "complete" or not war_reward_claimed:
+		return false
+	active_war.clear()
+	changed.emit()
+	return true
+
+
 func get_war_summary() -> String:
 	if active_war.is_empty():
 		return "No active Faction War."
 	var status := String(active_war.get("status", "active"))
-	return "%s • %s • Score %d–%d • Attacks %d • %s" % [
+	var extra := ""
+	if status == "complete":
+		extra = " • %s • %s reward" % [String(active_war.get("result", "")), String(active_war.get("reward_tier", "BRONZE"))]
+	return "%s • %s • Score %d–%d • Attacks %d • %s%s" % [
 		String(active_war.get("opponent_name", "Opponent")),
 		status.to_upper(),
 		int(active_war.get("our_score", 0)),
 		int(active_war.get("their_score", 0)),
 		int(active_war.get("attacks_remaining", 0)),
-		_format_time(float(active_war.get("seconds_remaining", 0.0)))
+		_format_time(float(active_war.get("seconds_remaining", 0.0))),
+		extra
 	]
 
 
 func get_war_rules_lines() -> PackedStringArray:
 	return PackedStringArray([
-		"24-hour war window",
+		"24-hour war window with server-ready opponent/rating fields",
 		"3 attacks per member in the prototype ruleset",
-		"Attack score scales with Faction level, contribution, and Raid Coordination",
-		"Winning attacks generate shared gift chests",
-		"Live PvP matchmaking and server authority will replace prototype simulation"
+		"Score scales with Faction level, contribution, Raid Coordination, and held objectives",
+		"Victory adds 120 season points; defeat still grants 35 participation points",
+		"Bronze/Silver/Gold reward tiers are claimable after war completion",
+		"Live matchmaking and server authority will replace prototype opponents"
 	])
 
 
@@ -540,6 +840,14 @@ func get_member_lines() -> PackedStringArray:
 	return lines
 
 
+func get_invite_summary() -> String:
+	return "%d pending invite(s) • %d/%d member slots used" % [
+		pending_invites.size(),
+		members.size(),
+		get_member_limit()
+	]
+
+
 func get_summary() -> String:
 	if not has_faction():
 		return "No Faction joined."
@@ -570,7 +878,12 @@ func get_save_data() -> Dictionary:
 		"daily_tasks": daily_tasks.duplicate(true),
 		"gift_charges": gift_charges,
 		"active_rally": active_rally.duplicate(true),
-		"active_war": active_war.duplicate(true)
+		"active_war": active_war.duplicate(true),
+		"war_reward_claimed": war_reward_claimed,
+		"season_points": season_points,
+		"season_wins": season_wins,
+		"pending_invites": pending_invites.duplicate(true),
+		"faction_territory": faction_territory.duplicate(true)
 	}
 
 
@@ -585,6 +898,9 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	daily_claimed = bool(data.get("daily_claimed", daily_claimed))
 	daily_mastery_claimed = bool(data.get("daily_mastery_claimed", daily_mastery_claimed))
 	gift_charges = maxi(0, int(data.get("gift_charges", gift_charges)))
+	war_reward_claimed = bool(data.get("war_reward_claimed", war_reward_claimed))
+	season_points = maxi(0, int(data.get("season_points", season_points)))
+	season_wins = maxi(0, int(data.get("season_wins", season_wins)))
 
 	var saved_members = data.get("members", [])
 	if saved_members is Array:
@@ -608,6 +924,19 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 					int(daily_tasks[task_id]["goal"])
 				)
 
+	var saved_invites = data.get("pending_invites", [])
+	pending_invites.clear()
+	if saved_invites is Array:
+		for invite in saved_invites:
+			if invite is Dictionary:
+				pending_invites.append(invite.duplicate(true))
+
+	var saved_territory = data.get("faction_territory", {})
+	if saved_territory is Dictionary:
+		for territory_id in faction_territory.keys():
+			if saved_territory.has(territory_id) and saved_territory[territory_id] is Dictionary:
+				faction_territory[territory_id]["owned"] = bool(saved_territory[territory_id].get("owned", false))
+
 	var saved_rally = data.get("active_rally", {})
 	active_rally = saved_rally.duplicate(true) if saved_rally is Dictionary else {}
 	if not active_rally.is_empty():
@@ -620,7 +949,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
 		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
 		if float(active_war["seconds_remaining"]) <= 0.0:
-			active_war["status"] = "complete"
+			_complete_war()
 
 	_refresh_daily_period()
 	changed.emit()
