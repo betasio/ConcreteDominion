@@ -37,6 +37,14 @@ var task_cycle_remaining: float = TASK_CYCLE_SECONDS
 var active_patrol: Dictionary = {}
 var _encounter_cursor := 0
 
+var faction_rivalry: Dictionary = {
+	"dock_rats": 0,
+	"iron_serpents": 0,
+	"meridian_boys": 0,
+	"northside_crew": 0,
+	"velvet_circle": 0
+}
+
 var factions: Dictionary = {
 	"downtown_bank": "Dock Rats",
 	"harbor_bank": "Iron Serpents",
@@ -195,6 +203,33 @@ func get_rival_trait(target_id: String) -> String:
 	return faction_rules.get_trait_name(target_id) if faction_rules != null else ""
 
 
+func get_rivalry_score(target_id: String) -> int:
+	var faction_id := faction_rules.get_faction_id(target_id) if faction_rules != null else ""
+	return int(faction_rivalry.get(faction_id, 0))
+
+
+func get_rivalry_label(target_id: String) -> String:
+	var score := get_rivalry_score(target_id)
+	if score >= 5:
+		return "VENDETTA"
+	if score >= 3:
+		return "HOSTILE"
+	if score >= 1:
+		return "NOTICED"
+	return "COLD"
+
+
+func get_rivalry_reward_multiplier(target_id: String) -> float:
+	return 1.0 + minf(0.25, float(get_rivalry_score(target_id)) * 0.05)
+
+
+func _increase_rivalry(target_id: String, amount: int = 1) -> void:
+	if faction_rules == null:
+		return
+	var faction_id := faction_rules.get_faction_id(target_id)
+	faction_rivalry[faction_id] = mini(10, int(faction_rivalry.get(faction_id, 0)) + maxi(0, amount))
+
+
 func can_discover(target_id: String) -> bool:
 	if is_discovered(target_id) or not districts.has(target_id) or progression == null:
 		return false
@@ -272,6 +307,7 @@ func resolve_patrol() -> Dictionary:
 	var cash_reward := int(active_patrol.get("cash_reward", 0)) if victory else 0
 
 	if victory:
+		_increase_rivalry(target_id)
 		economy.add_cash(cash_reward)
 		if loot != null:
 			if encounter_type == "surveillance":
@@ -315,7 +351,11 @@ func get_district_lines() -> PackedStringArray:
 		if is_owned(target_id):
 			state = "CONTESTED %d%%" % roundi(get_pressure(target_id) * 100.0) if is_contested(target_id) else "OWNED %d%%" % roundi(get_pressure(target_id) * 100.0)
 		elif is_discovered(target_id):
-			state = "RIVAL: %s • %s" % [get_rival_faction(target_id), get_rival_trait(target_id)]
+			state = "RIVAL: %s • %s • %s" % [
+				get_rival_faction(target_id),
+				get_rival_trait(target_id),
+				get_rivalry_label(target_id)
+			]
 		lines.append("%s — %s — $%d/hr" % [
 			String(data["name"]),
 			state,
@@ -421,7 +461,12 @@ func _create_encounter(target_id: String, encounter_type: String, power_multipli
 		"type": encounter_type,
 		"role": role,
 		"power": roundi(float(data["patrol_power"]) * power_multiplier * faction_power),
-		"cash_reward": roundi(float(data["cash_per_hour"]) * (1.0 if encounter_type == "turf_push" else 0.75) * faction_cash),
+		"cash_reward": roundi(
+			float(data["cash_per_hour"])
+			* (1.0 if encounter_type == "turf_push" else 0.75)
+			* faction_cash
+			* get_rivalry_reward_multiplier(target_id)
+		),
 		"trait": get_rival_trait(target_id)
 	}
 	patrol_spawned.emit(target_id)
@@ -517,6 +562,7 @@ func get_save_data() -> Dictionary:
 		"task_cycle_remaining": task_cycle_remaining,
 		"active_patrol": active_patrol.duplicate(true),
 		"encounter_cursor": _encounter_cursor,
+		"faction_rivalry": faction_rivalry.duplicate(true),
 		"alliance_tasks": _get_task_save()
 	}
 
@@ -571,6 +617,11 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			+ minf(offline, 4.0 * 60.0 * 60.0) * PRESSURE_PER_SECOND * pressure_multiplier
 		)
 		pressure[target_id] = offline_pressure
+
+	var saved_rivalry = data.get("faction_rivalry", {})
+	if saved_rivalry is Dictionary:
+		for faction_id in faction_rivalry.keys():
+			faction_rivalry[faction_id] = clampi(int(saved_rivalry.get(faction_id, faction_rivalry[faction_id])), 0, 10)
 
 	var saved_tasks = data.get("alliance_tasks", {})
 	if saved_tasks is Dictionary:
