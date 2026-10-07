@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 22
+const SAVE_VERSION := 23
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -208,7 +208,7 @@ func load_game() -> bool:
 	mailbox.load_save_data(data.get("mailbox", {}))
 	alliance.load_save_data(data.get("alliance", {}))
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
-	faction.load_save_data(data.get("faction", {}))
+	faction.load_save_data(data.get("faction", {}), elapsed)
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	world_control.load_save_data(data.get("world_control", {}), elapsed)
@@ -372,6 +372,26 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 	if version < 22:
 		if not data.has("faction"):
 			data["faction"] = {}
+
+	if version < 23:
+		var faction_data = data.get("faction", {})
+		if not (faction_data is Dictionary):
+			faction_data = {}
+		if not faction_data.has("daily_period"):
+			faction_data["daily_period"] = -1
+		if not faction_data.has("daily_claimed"):
+			faction_data["daily_claimed"] = false
+		if not faction_data.has("daily_mastery_claimed"):
+			faction_data["daily_mastery_claimed"] = false
+		if not faction_data.has("daily_tasks"):
+			faction_data["daily_tasks"] = {}
+		if not faction_data.has("gift_charges"):
+			faction_data["gift_charges"] = 0
+		if not faction_data.has("active_rally"):
+			faction_data["active_rally"] = {}
+		if not faction_data.has("active_war"):
+			faction_data["active_war"] = {}
+		data["faction"] = faction_data
 
 	data["schema_meta"] = {
 		"migrated_from": version,
