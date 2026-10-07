@@ -6,11 +6,15 @@ var faction: FactionManager
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var summary: Label = $Root/Panel/Margin/Scroll/VBox/Summary
+@onready var season_identity_label: Label = $Root/Panel/Margin/Scroll/VBox/SeasonIdentity
 @onready var season_label: Label = $Root/Panel/Margin/Scroll/VBox/Season
 @onready var featured_label: Label = $Root/Panel/Margin/Scroll/VBox/Featured
 @onready var leaderboard_label: Label = $Root/Panel/Margin/Scroll/VBox/Leaderboard
 @onready var season_reward_label: Label = $Root/Panel/Margin/Scroll/VBox/SeasonReward
 @onready var season_reward_button: Button = $Root/Panel/Margin/Scroll/VBox/ClaimSeasonReward
+@onready var prestige_label: Label = $Root/Panel/Margin/Scroll/VBox/Prestige
+@onready var equip_prestige_button: Button = $Root/Panel/Margin/Scroll/VBox/EquipPrestige
+@onready var last_season_label: Label = $Root/Panel/Margin/Scroll/VBox/LastSeason
 @onready var contracts: Label = $Root/Panel/Margin/Scroll/VBox/Contracts
 @onready var rival_button: Button = $Root/Panel/Margin/Scroll/VBox/RivalOperation
 @onready var boss_button: Button = $Root/Panel/Margin/Scroll/VBox/BossRematch
@@ -32,6 +36,7 @@ func setup(endgame_manager: EndgameManager, faction_manager: FactionManager) -> 
 	claim_button.pressed.connect(_claim_cache)
 	mastery_button.pressed.connect(_claim_mastery)
 	season_reward_button.pressed.connect(_claim_season_reward)
+	equip_prestige_button.pressed.connect(_equip_next_prestige)
 	_refresh()
 
 
@@ -76,6 +81,11 @@ func _claim_season_reward() -> void:
 	_refresh()
 
 
+func _equip_next_prestige() -> void:
+	endgame.equip_next_prestige_badge()
+	_refresh()
+
+
 func _refresh() -> void:
 	if endgame == null or faction == null:
 		return
@@ -93,6 +103,10 @@ func _refresh() -> void:
 		]
 	) if unlocked else "DOMINION LOCKED\nComplete Chapter 6 • Roads of Iron to unlock repeatable citywide operations."
 
+	season_identity_label.text = "%s\n%s" % [
+		String(status["season_name"]).to_upper(),
+		String(status["season_subtitle"])
+	]
 	season_label.text = "DOMINION SEASON • WEEK %d/%d\n%s • %d seasonal influence • Featured wins %d" % [
 		int(status["season_week"]),
 		EndgameManager.SEASON_WEEKS,
@@ -106,11 +120,20 @@ func _refresh() -> void:
 	season_reward_label.text = "SEASON TIER REWARD\n%s" % endgame.get_season_reward_summary(next_tier)
 	season_reward_button.text = "Claim %s Tier Reward" % next_tier if not next_tier.is_empty() else "Next Tier Reward Locked"
 
+	prestige_label.text = "SEASON PRESTIGE\n" + "\n".join(endgame.get_prestige_badge_lines())
+	equip_prestige_button.text = "Equip Next Prestige Badge" if not endgame.prestige_badges.is_empty() else "No Prestige Badge Earned"
+	equip_prestige_button.disabled = endgame.prestige_badges.is_empty()
+	last_season_label.text = "LAST SEASON RESULT\n%s" % endgame.get_last_season_result_text()
+
+	season_identity_label.visible = unlocked
 	season_label.visible = unlocked
 	featured_label.visible = unlocked
 	leaderboard_label.visible = unlocked
 	season_reward_label.visible = unlocked
 	season_reward_button.visible = unlocked
+	prestige_label.visible = unlocked
+	equip_prestige_button.visible = unlocked
+	last_season_label.visible = unlocked
 	contracts.text = "WEEKLY DOMINION CONTRACTS\n" + "\n".join(endgame.get_contract_lines())
 	contracts.visible = unlocked
 	rival_button.visible = unlocked
