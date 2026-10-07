@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 19
+const SAVE_VERSION := 20
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -327,6 +327,16 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 		if not retention_data.has("lifetime_construction_completed"):
 			retention_data["lifetime_construction_completed"] = 0
 		data["retention"] = retention_data
+
+	if version < 20:
+		var mission_data = data.get("missions", {})
+		if not (mission_data is Dictionary):
+			mission_data = {}
+		if not mission_data.has("_chapter_meta"):
+			mission_data["_chapter_meta"] = {
+				"milestones_claimed": {"2": false, "4": false}
+			}
+		data["missions"] = mission_data
 
 	data["schema_meta"] = {
 		"migrated_from": version,
