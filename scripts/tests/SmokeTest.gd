@@ -61,7 +61,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 31:
+	if save == null or SaveManager.SAVE_VERSION < 32:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -245,8 +245,8 @@ func _ready() -> void:
 			_fail("Dominion marks are invalid.")
 		if endgame.get_dominion_rank().is_empty():
 			_fail("Dominion rank progression is invalid.")
-		if EndgameManager.SEASON_MODIFIERS.size() != 4:
-			_fail("Dominion seasonal modifier rotation is incomplete.")
+		if EndgameManager.SEASON_MODIFIERS.size() != 4 or EndgameManager.SEASON_IDENTITIES.size() != 4:
+			_fail("Dominion seasonal identity/modifier rotation is incomplete.")
 		var modifier := endgame.get_current_modifier()
 		if String(modifier.get("district_id", "")).is_empty() or String(modifier.get("family_id", "")).is_empty():
 			_fail("Dominion citywide modifier is invalid.")
@@ -254,6 +254,10 @@ func _ready() -> void:
 			_fail("Dominion seasonal leaderboard is incomplete.")
 		if endgame.get_season_reward_summary().is_empty():
 			_fail("Dominion seasonal reward tiers are invalid.")
+		if endgame.get_season_name().is_empty() or endgame.get_season_subtitle().is_empty():
+			_fail("Dominion named season identity is invalid.")
+		if endgame.get_last_season_result_text().is_empty():
+			_fail("Dominion season result presentation is invalid.")
 		if endgame.world_control != world_control or endgame.faction != faction_manager:
 			_fail("Dominion runtime dependencies are not wired.")
 		if world_control != null and not world_control.family_encounter_resolved.is_connected(endgame._on_family_encounter_resolved):
@@ -270,6 +274,10 @@ func _ready() -> void:
 		_fail("Dominion seasonal leaderboard UI is missing.")
 	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/ClaimSeasonReward") == null:
 		_fail("Dominion seasonal tier reward UI is missing.")
+	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/SeasonBanner") == null:
+		_fail("Dominion season banner presentation is missing.")
+	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/Prestige") == null or game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/EquipPrestige") == null:
+		_fail("Dominion prestige presentation is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
