@@ -325,8 +325,12 @@ func get_chapter_5_choice() -> String:
 
 
 func _refresh_faction_state() -> void:
-	if faction != null and faction.has_faction():
+	if faction == null:
+		return
+	if faction.has_faction():
 		_set_progress("join_faction", 1)
+	if faction.get_owned_territory_count() > 0:
+		_set_progress("capture_faction_objective", 1)
 
 
 func _on_faction_joined(_faction_name: String) -> void:
