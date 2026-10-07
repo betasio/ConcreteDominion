@@ -32,6 +32,19 @@ const TEXTURE_OVERRIDE_PATHS := {
 	"raid_target": "res://assets/art/world/raid_target.png"
 }
 
+const CHARACTER_ATLAS_PATH := "res://assets/generated/characters/character_atlas.webp"
+const CHARACTER_ATLAS_SIZE := Vector2i(512, 256)
+const CHARACTER_CELL := 128
+const CHARACTER_REGIONS := {
+	"vex": Rect2(0, 0, 128, 128),
+	"mia": Rect2(128, 0, 128, 128),
+	"noah": Rect2(256, 0, 128, 128),
+	"kira": Rect2(384, 0, 128, 128),
+	"enforcer": Rect2(0, 128, 128, 128),
+	"driver": Rect2(128, 128, 128, 128),
+	"spy": Rect2(256, 128, 128, 128)
+}
+
 const DECOR_ATLAS_PATH := "res://assets/generated/presentation/presentation_atlas.webp"
 const DECOR_ATLAS_SIZE := Vector2i(256, 160)
 const DECOR_REGIONS := {
@@ -51,6 +64,7 @@ const AUDIO_PATHS := {
 }
 
 var _city_atlas: ImageTexture
+var _character_atlas: Texture2D
 var _decor_atlas: Texture2D
 var _atlas_load_attempted := false
 var _atlas_error := ""
@@ -58,6 +72,7 @@ var _atlas_error := ""
 
 func _ready() -> void:
 	_ensure_city_atlas()
+	_ensure_character_atlas()
 
 
 func apply_to_city(city_map: Node) -> void:
@@ -115,6 +130,35 @@ func get_decor_texture(key: String) -> Texture2D:
 	return region
 
 
+func get_character_portrait(key: String) -> Texture2D:
+	_ensure_character_atlas()
+	var normalized := key.to_lower()
+	if _character_atlas == null or not CHARACTER_REGIONS.has(normalized):
+		return null
+
+	var region := AtlasTexture.new()
+	region.atlas = _character_atlas
+	region.region = CHARACTER_REGIONS[normalized]
+	region.filter_clip = true
+	return region
+
+
+func get_unit_portrait(role: StringName) -> Texture2D:
+	return get_character_portrait(String(role).to_lower())
+
+
+func is_character_atlas_ready() -> bool:
+	_ensure_character_atlas()
+	return _character_atlas != null
+
+
+func get_character_atlas_size() -> Vector2i:
+	_ensure_character_atlas()
+	if _character_atlas == null:
+		return Vector2i.ZERO
+	return Vector2i(_character_atlas.get_width(), _character_atlas.get_height())
+
+
 func is_decor_atlas_ready() -> bool:
 	_ensure_decor_atlas()
 	return _decor_atlas != null
@@ -157,6 +201,8 @@ func get_missing_asset_lines() -> PackedStringArray:
 		lines.append("City art atlas -> %s" % _atlas_error)
 	if not is_decor_atlas_ready():
 		lines.append("Presentation atlas -> %s" % DECOR_ATLAS_PATH)
+	if not is_character_atlas_ready():
+		lines.append("Character atlas -> %s" % CHARACTER_ATLAS_PATH)
 
 	for key in AUDIO_PATHS.keys():
 		var path := String(AUDIO_PATHS[key])
@@ -212,3 +258,18 @@ func _ensure_decor_atlas() -> void:
 	if not ResourceLoader.exists(DECOR_ATLAS_PATH):
 		return
 	_decor_atlas = load(DECOR_ATLAS_PATH) as Texture2D
+
+
+
+func _ensure_character_atlas() -> void:
+	if _character_atlas != null:
+		return
+	if not ResourceLoader.exists(CHARACTER_ATLAS_PATH):
+		return
+	_character_atlas = load(CHARACTER_ATLAS_PATH) as Texture2D
+	if _character_atlas != null and Vector2i(_character_atlas.get_width(), _character_atlas.get_height()) != CHARACTER_ATLAS_SIZE:
+		push_warning("Character atlas size mismatch: got %s, expected %s." % [
+			Vector2i(_character_atlas.get_width(), _character_atlas.get_height()),
+			CHARACTER_ATLAS_SIZE
+		])
+		_character_atlas = null
