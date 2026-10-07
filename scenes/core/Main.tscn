@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/combat/RaidBattle.gd" id="11_battle"]
 [ext_resource type="Script" path="res://scripts/core/LootInventory.gd" id="12_loot"]
 [ext_resource type="Script" path="res://scripts/alliance/AllianceManager.gd" id="13_alliance"]
+[ext_resource type="Script" path="res://scripts/alliance/AllianceSocial.gd" id="14_social"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -25,6 +26,9 @@ script = ExtResource("12_loot")
 
 [node name="AllianceManager" type="Node" parent="."]
 script = ExtResource("13_alliance")
+
+[node name="AllianceSocial" type="Node" parent="."]
+script = ExtResource("14_social")
 
 [node name="TroopRoster" type="Node" parent="."]
 script = ExtResource("7_roster")

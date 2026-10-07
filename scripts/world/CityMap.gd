@@ -3,6 +3,7 @@ extends Node2D
 signal building_selected(building: Building)
 signal lot_selected(lot: BuildLot)
 signal raid_target_selected(target: RaidTarget)
+signal view_mode_changed(mode: StringName)
 
 const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 
@@ -12,6 +13,9 @@ const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 @export var tile_height: float = 64.0
 
 @onready var camera: Camera2D = $StrategyCamera
+@onready var buildings_layer: Node2D = $Buildings
+@onready var raid_targets_layer: Node2D = $RaidTargets
+@onready var convoy_layer: Node2D = $Convoys
 @onready var safehouse: Building = $Buildings/Safehouse
 @onready var hospital: Building = $Buildings/Hospital
 @onready var barracks: Building = $Buildings/Barracks
@@ -20,10 +24,10 @@ const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 @onready var downtown_bank: RaidTarget = $RaidTargets/DowntownBank
 @onready var harbor_bank: RaidTarget = $RaidTargets/HarborBank
 @onready var northside_hq: RaidTarget = $RaidTargets/NorthsideHQ
-@onready var convoy_layer: Node2D = $Convoys
 
 var selected_target: Node
 var active_convoy: ConvoyVisual
+var view_mode: StringName = &"base"
 
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
@@ -51,7 +55,35 @@ func _ready() -> void:
 	for target in get_raid_targets():
 		target.selected.connect(_select_raid_target)
 
+	set_view_mode(&"base")
 	queue_redraw()
+
+
+func set_view_mode(mode: StringName) -> void:
+	if mode != &"base" and mode != &"world":
+		return
+
+	view_mode = mode
+	_clear_selection()
+
+	if view_mode == &"base":
+		buildings_layer.visible = true
+		raid_targets_layer.visible = false
+		convoy_layer.visible = false
+		camera.position = safehouse.position + Vector2(0, 60)
+		camera.zoom = Vector2(1.0, 1.0)
+	else:
+		buildings_layer.visible = false
+		raid_targets_layer.visible = true
+		convoy_layer.visible = true
+		camera.position = Vector2(0, 140)
+		camera.zoom = Vector2(0.72, 0.72)
+
+	view_mode_changed.emit(view_mode)
+
+
+func get_view_mode() -> StringName:
+	return view_mode
 
 
 func get_persistent_buildings() -> Array:
@@ -67,6 +99,17 @@ func get_raid_target_by_id(target_id: String) -> RaidTarget:
 		if target.get_target_id() == target_id:
 			return target
 	return null
+
+
+func focus_raid_target_by_id(target_id: String) -> void:
+	var target := get_raid_target_by_id(target_id)
+	if target == null:
+		return
+
+	if view_mode != &"world":
+		set_view_mode(&"world")
+
+	focus_raid_target(target)
 
 
 func launch_convoy_to(target_id: String, travel_time: float) -> void:
@@ -133,7 +176,8 @@ func get_save_data() -> Dictionary:
 		"barracks_level": barracks.level,
 		"garage_built": lot_a.is_built,
 		"intel_built": lot_b.is_built,
-		"raid_targets": raid_target_data
+		"raid_targets": raid_target_data,
+		"view_mode": String(view_mode)
 	}
 
 
@@ -151,6 +195,8 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 				raid_target_data.get(target.get_target_id(), {}),
 				offline_seconds
 			)
+
+	set_view_mode(StringName(data.get("view_mode", "base")))
 
 
 func _draw() -> void:
@@ -171,6 +217,9 @@ func iso_to_screen(cell: Vector2i) -> Vector2:
 
 
 func focus_building(building_type: StringName) -> void:
+	if view_mode != &"base":
+		set_view_mode(&"base")
+
 	var target: Building
 	if building_type == &"hospital":
 		target = hospital
@@ -186,6 +235,9 @@ func focus_building(building_type: StringName) -> void:
 
 
 func focus_raid_target(target: RaidTarget) -> void:
+	if view_mode != &"world":
+		set_view_mode(&"world")
+
 	_select_raid_target(target)
 	camera.position = target.position + Vector2(0, -40)
 
@@ -193,9 +245,13 @@ func focus_raid_target(target: RaidTarget) -> void:
 func _clear_selection() -> void:
 	if selected_target != null and selected_target.has_method("set_selected"):
 		selected_target.call("set_selected", false)
+	selected_target = null
 
 
 func _select_building(building: Building) -> void:
+	if view_mode != &"base":
+		return
+
 	_clear_selection()
 	selected_target = building
 	building.set_selected(true)
@@ -203,6 +259,9 @@ func _select_building(building: Building) -> void:
 
 
 func _select_lot(lot: BuildLot) -> void:
+	if view_mode != &"base":
+		return
+
 	_clear_selection()
 	selected_target = lot
 	lot.set_selected(true)
@@ -210,6 +269,9 @@ func _select_lot(lot: BuildLot) -> void:
 
 
 func _select_raid_target(target: RaidTarget) -> void:
+	if view_mode != &"world":
+		return
+
 	_clear_selection()
 	selected_target = target
 	target.set_selected(true)

@@ -1,6 +1,8 @@
 extends CanvasLayer
 
 signal focus_building_requested(building_type: StringName)
+signal view_mode_requested(mode: StringName)
+signal focus_raid_target_requested(target_id: String)
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -10,6 +12,7 @@ var construction_queue: ConstructionQueue
 var recruitment_queue: RecruitmentQueue
 var synergy_raid: SynergyRaid
 var alliance_manager: AllianceManager
+var alliance_social: AllianceSocial
 var raid_battle: RaidBattle
 
 var selected_building: Building
@@ -59,11 +62,21 @@ var raid_spies := 0
 @onready var preview_raid_button: Button = $Root/RaidPanel/Margin/VBox/Calculate
 @onready var launch_raid_button: Button = $Root/RaidPanel/Margin/VBox/Launch
 
+@onready var base_button: Button = $Root/ViewBar/Base
+@onready var world_button: Button = $Root/ViewBar/World
+@onready var alliance_panel: PanelContainer = $Root/AlliancePanel
+@onready var alliance_feed_label: Label = $Root/AlliancePanel/Margin/VBox/Feed
+@onready var invite_status_label: Label = $Root/AlliancePanel/Margin/VBox/InviteStatus
+@onready var invite_button: Button = $Root/AlliancePanel/Margin/VBox/CreateInvite
+@onready var invite_driver_button: Button = $Root/AlliancePanel/Margin/VBox/JoinDriver
+@onready var invite_spy_button: Button = $Root/AlliancePanel/Margin/VBox/JoinSpy
+
 
 func setup(
 	player_economy: PlayerEconomy,
 	loot: LootInventory,
 	alliance: AllianceManager,
+	social: AllianceSocial,
 	roster: TroopRoster,
 	clinic: HospitalQueue,
 	construction: ConstructionQueue,
@@ -74,6 +87,7 @@ func setup(
 	economy = player_economy
 	loot_inventory = loot
 	alliance_manager = alliance
+	alliance_social = social
 	troop_roster = roster
 	hospital_queue = clinic
 	construction_queue = construction
@@ -90,12 +104,16 @@ func setup(
 	recruitment_queue.queue_changed.connect(_refresh_recruitment)
 	recruitment_queue.recruitment_completed.connect(_on_recruitment_completed)
 	alliance_manager.changed.connect(_refresh_raid)
+	alliance_social.changed.connect(_refresh_alliance_social)
 	raid_battle.changed.connect(_refresh_raid)
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 
 	$Root/HospitalShortcut.pressed.connect(_on_hospital_shortcut)
 	$Root/BarracksShortcut.pressed.connect(_on_barracks_shortcut)
 	$Root/RaidShortcut.pressed.connect(_open_raid)
+	$Root/AllianceShortcut.pressed.connect(_open_alliance_panel)
+	base_button.pressed.connect(func(): view_mode_requested.emit(&"base"))
+	world_button.pressed.connect(func(): view_mode_requested.emit(&"world"))
 
 	$Root/SelectionPanel/Margin/VBox/Close.pressed.connect(_close_selection)
 	open_hospital_button.pressed.connect(_open_hospital)
@@ -122,7 +140,15 @@ func setup(
 	$Root/RaidPanel/Margin/VBox/Reset.pressed.connect(_prepare_raid)
 	$Root/RaidPanel/Margin/VBox/Close.pressed.connect(_close_raid)
 
+	invite_button.pressed.connect(_create_raid_invite)
+	invite_driver_button.pressed.connect(func(): _join_social_invite(&"driver"))
+	invite_spy_button.pressed.connect(func(): _join_social_invite(&"spy"))
+	$Root/AlliancePanel/Margin/VBox/PostMessage.pressed.connect(_post_alliance_message)
+	$Root/AlliancePanel/Margin/VBox/Close.pressed.connect(_close_alliance_panel)
+
 	_refresh_all()
+	_refresh_alliance_social()
+	set_view_mode_display(get_node("/root/Main/CityMap").get_view_mode())
 
 
 func show_building(building: Building) -> void:
@@ -159,6 +185,23 @@ func show_lot(lot: BuildLot) -> void:
 	build_button.visible = not lot.is_built
 	_refresh_selection()
 	selection_panel.visible = true
+
+
+func set_view_mode_display(mode: StringName) -> void:
+	var is_base := mode == &"base"
+	base_button.disabled = is_base
+	world_button.disabled = not is_base
+
+	$Root/HospitalShortcut.visible = is_base
+	$Root/BarracksShortcut.visible = is_base
+	$Root/RaidShortcut.visible = not is_base
+
+	if is_base:
+		raid_panel.visible = false
+	else:
+		selection_panel.visible = false
+		hospital_panel.visible = false
+		barracks_panel.visible = false
 
 
 func _refresh_all() -> void:
@@ -687,3 +730,82 @@ func _format_loot(loot: Dictionary) -> String:
 	for item_name in loot.keys():
 		parts.append("%s x%d" % [String(item_name), int(loot[item_name])])
 	return ", ".join(parts)
+
+
+
+func _open_alliance_panel() -> void:
+	alliance_panel.visible = true
+	_refresh_alliance_social()
+
+
+func _close_alliance_panel() -> void:
+	alliance_panel.visible = false
+
+
+func _create_raid_invite() -> void:
+	if selected_raid_target == null:
+		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
+		for target in targets:
+			if target.is_available():
+				selected_raid_target = target
+				break
+
+	if selected_raid_target == null:
+		return
+
+	alliance_social.create_raid_invite(
+		selected_raid_target.get_target_id(),
+		selected_raid_target.get_display_name()
+	)
+	_refresh_alliance_social()
+
+
+func _join_social_invite(role: StringName) -> void:
+	if alliance_social.active_invite.is_empty():
+		return
+
+	if role == &"driver" and troop_roster.get_count(&"Driver") <= 0:
+		return
+
+	if role == &"spy" and troop_roster.get_count(&"Spy") <= 0:
+		return
+
+	if alliance_social.join_local_invite(role):
+		raid_drivers = 1 if role == &"driver" else 0
+		raid_spies = 1 if role == &"spy" else 0
+		var target_id := alliance_social.get_invite_target_id()
+		if target_id != "":
+			focus_raid_target_requested.emit(target_id)
+		_rebuild_synergy_from_alliance()
+		_refresh_raid()
+		_refresh_alliance_social()
+
+
+func _post_alliance_message() -> void:
+	alliance_social.post_message("Ready for the next hit.")
+	_refresh_alliance_social()
+
+
+func _refresh_alliance_social() -> void:
+	if alliance_social == null:
+		return
+
+	alliance_feed_label.text = alliance_social.get_feed_text()
+
+	if alliance_social.active_invite.is_empty():
+		invite_status_label.text = "No active raid invite."
+		invite_driver_button.disabled = true
+		invite_spy_button.disabled = true
+		return
+
+	var joined_names := alliance_social.get_invite_joined_names()
+	var joined_text := "None" if joined_names.is_empty() else ", ".join(joined_names)
+
+	invite_status_label.text = "RAID INVITE: %s\nExpires in %s\nJoined: %s" % [
+		alliance_social.get_invite_target_name(),
+		_format_time(alliance_social.get_invite_seconds_remaining()),
+		joined_text
+	]
+
+	invite_driver_button.disabled = troop_roster.get_count(&"Driver") <= 0
+	invite_spy_button.disabled = troop_roster.get_count(&"Spy") <= 0

@@ -2,103 +2,132 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Alliance raid milestone
+## Base / World / Alliance milestone
 
-Raids now use an explicit alliance roster and role-slot lobby instead of anonymous support counters.
+The prototype now has three distinct layers of play:
 
-### Prototype alliance roster
+### Base view
 
-The local prototype includes simulated alliance members:
+Use **BASE** to return to the player's district.
 
-- **Vex** — Lv.45 — Frontline — 8,500 power — online
-- **Mia** — Lv.17 — Driver — online
-- **Noah** — Lv.14 — Spy — online
-- **Kira** — Lv.12 — Driver — starts offline
-- **You** — Lv.12 — selectable Driver or Spy support
+Base view focuses on:
 
-The lobby shows each member's online/offline state.
+- Safehouse
+- Underground Clinic
+- Crew Barracks
+- build lots
+- upgrades
+- recruitment
+- healing
 
-A prototype **Toggle Kira Online / Offline** button lets you test how member availability changes slot filling and expected raid damage.
+Raid targets are hidden so the base screen feels like a management space instead of a crowded world map.
 
-## Raid slots
+### World view
 
-Each alliance raid currently has four slots:
+Use **WORLD** to switch to the raid district.
 
-1. Frontline
-2. Driver
-3. Spy
-4. Driver
+World view:
 
-Online simulated allies auto-fill compatible empty slots.
+- hides base-building interactions
+- zooms the strategy camera outward
+- shows Banks and Turf HQ raid targets
+- displays raid convoys
+- allows target selection and raid preparation
 
-The local player can take a Driver or Spy slot if they own at least one matching specialist troop.
+The current view is persisted in the local save.
 
-Raid participants are frozen when the raid launches. Going online/offline after launch does not rewrite who participated or who earned rewards.
+## Alliance Hub
 
-## Contribution scores
+The new **Alliance** button opens a persistent social/activity panel.
 
-Each participant now receives a contribution score.
+The Alliance Hub currently includes:
 
-- Frontline contribution is based on the strongest frontline power.
-- Each Driver contributes the damage value created by the Driver support multiplier.
-- Each Spy contributes the damage value created by the Spy defense-break multiplier.
+- activity/message feed
+- active raid invite status
+- invite countdown
+- joined-member list
+- create raid invite action
+- join invite as Driver
+- join invite as Spy
+- prototype message posting
 
-Current prototype support values:
+The message feed and active invite are saved locally.
 
-- Driver: **+15%**
-- Spy: **+18%**
+## Raid invitations
 
-The raid preview shows named member contribution scores.
+Select a world target and press:
 
-## Shared rewards
+**Invite Alliance to Selected Target**
 
-Cash rewards are now an **alliance reward pool**, not a single-player payout.
+A 15-second invite opens.
 
-The prototype split uses:
+Simulated alliance members respond over time:
 
-- 50% of the reward pool divided equally among participating members
-- 50% divided proportionally by contribution score
+- Mia can respond as Driver
+- Noah can respond as Spy
+- Kira can respond if she is currently online
 
-This intentionally gives support players a meaningful baseline reward while still rewarding the member supplying frontline power.
+The joined-member list updates while the invite is active.
 
-Only the local player's share is added to the local Cash balance. Simulated allies' shares are shown in the result panel.
+The local player can join as Driver or Spy if the required specialist troop is available.
 
-Target loot drops such as Parts, Intel, and Contraband are granted to the local player only when the local player actually occupied a raid slot.
+Joining an invite focuses the invited target in **World view**, preserving the existing raid-slot and contribution system.
 
-## Balance progression
+## Alliance simulation
 
-Current frontline/support tuning creates this progression:
+Current prototype members:
 
-- Vex alone: 8,500 damage — cannot beat Downtown Bank
-- Vex + online alliance support: enough coordination for early targets
-- Harbor Bank benefits from filling the extra Driver slot with the local player or Kira
-- Northside Turf HQ remains a later progression target requiring stronger future alliance upgrades
+- Vex — frontline
+- Mia — Driver
+- Noah — Spy
+- Kira — Driver
+- You — Driver or Spy
 
-This preserves the game's intended design: powerful players matter, but they cannot simply solo the progression ladder.
+The raid lobby still handles:
+
+- explicit role slots
+- online/offline members
+- named contribution scores
+- frozen participant snapshots
+- shared Cash reward pools
+- local loot eligibility
+
+The social system sits above that combat model rather than duplicating it.
 
 ## Persistence
 
-The save file now also stores:
+Save version 6 now tracks:
 
-- simulated alliance member online/offline states
-- current raid-slot assignments
-- frozen participants in an active raid
-- contribution/reward data in the most recent raid result
+- Cash and Gold
+- loot inventory
+- troop roster
+- buildings and build lots
+- healing
+- recruitment
+- construction
+- active raids
+- target cooldowns
+- alliance presence and raid slots
+- alliance activity feed
+- active raid invite
+- Base / World view selection
 
-Existing persistence for currencies, loot, troops, buildings, healing, recruitment, raid timers, convoys, and target cooldowns remains intact.
+Offline time is applied to gameplay timers and raid invitations.
 
 ## Suggested test
 
-1. Open **Downtown Bank**.
-2. Review the alliance roster and raid slots.
-3. Preview damage.
-4. Join a Driver or Spy slot.
-5. Preview again and compare contribution scores.
-6. Toggle Kira online/offline and watch the slot roster react.
-7. Launch the raid.
-8. Review the result panel for each named member's reward share.
-9. Confirm only your share is added to your Cash balance.
-10. Try Harbor Bank and compare the effect of a full support roster.
+1. Start in **BASE**.
+2. Open the Clinic or Barracks to verify base interactions.
+3. Press **WORLD**.
+4. Select Downtown Bank or Harbor Bank.
+5. Open **Alliance**.
+6. Create an alliance raid invite.
+7. Watch Mia/Noah respond during the invite countdown.
+8. Join the invite as Driver or Spy.
+9. Confirm the invited target is focused in World view.
+10. Open/preview the raid and inspect the named alliance slots.
+11. Launch the raid and review contribution/reward sharing.
+12. Restart the game and confirm the selected view and social feed persist.
 
 ## Architecture
 
@@ -107,6 +136,7 @@ Main
 ├── PlayerEconomy
 ├── LootInventory
 ├── AllianceManager
+├── AllianceSocial
 ├── TroopRoster
 ├── HospitalQueue
 ├── ConstructionQueue
@@ -114,40 +144,61 @@ Main
 ├── SynergyRaid
 ├── RaidBattle
 ├── SaveManager
-└── CityMap
+├── CityMap
+└── HUD
 ```
 
-`AllianceManager.gd`
-- owns alliance member state
-- tracks online/offline status
-- owns role-slot assignments
-- produces frozen participant snapshots
+### AllianceManager
 
-`SynergyRaid.gd`
-- calculates frontline + support damage
-- calculates per-member contribution values
+Owns durable alliance gameplay state:
 
-`RaidBattle.gd`
-- freezes participants at launch
-- resolves targets
-- calculates reward sharing
-- grants the local player's share and loot
-- handles local support wounds
+- members
+- presence
+- role preferences
+- raid slot assignments
+
+### AllianceSocial
+
+Owns prototype social state:
+
+- activity feed
+- raid invites
+- invite countdown
+- simulated invite responses
+
+### CityMap
+
+Now owns the presentation mode:
+
+- `base`
+- `world`
+
+This keeps the world/base distinction separate from HUD button implementation.
 
 ## Production direction
 
-The simulated alliance model is deliberately shaped like a future network model. Real server data can later replace the local member dictionaries while keeping the same concepts: member IDs, presence, roles, slot assignments, participant snapshots, contribution scores, and reward splits.
+The current alliance feed and invitation responses are local simulations.
 
-Before live multiplayer or monetization, all of that state and all battle/reward decisions must be server-authoritative.
+A future backend can replace them with:
+
+- real alliance membership
+- presence events
+- chat messages
+- push notifications
+- raid invitation events
+- server countdown timestamps
+- authoritative slot reservation
+
+The game-facing interfaces can remain largely the same.
 
 ## Next strong milestone
 
-The best next step is a **separate world-map screen and alliance social layer**:
+Good next additions are:
 
-- city/base view versus world-map view;
-- alliance panel with member profiles and activity;
-- join/leave/invite prototype flow;
-- alliance chat/message feed mockup;
-- route-based convoy movement;
-- raid invitations and join countdown;
-- polished raid result overlay and combat effects.
+- route-based convoy movement along streets instead of straight lines
+- alliance profile/member detail cards
+- join/leave/invite-to-alliance flow
+- unread alliance notifications
+- a polished raid result overlay
+- simple impact/explosion/combat VFX
+- target reward crates and inventory-use mechanics

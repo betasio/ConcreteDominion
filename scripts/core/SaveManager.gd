@@ -5,11 +5,12 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
 var alliance: AllianceManager
+var alliance_social: AllianceSocial
 var roster: TroopRoster
 var hospital: HospitalQueue
 var construction: ConstructionQueue
@@ -28,6 +29,7 @@ func setup(
 	player_economy: PlayerEconomy,
 	loot: LootInventory,
 	alliance_manager: AllianceManager,
+	social: AllianceSocial,
 	troop_roster: TroopRoster,
 	hospital_queue: HospitalQueue,
 	construction_queue: ConstructionQueue,
@@ -38,6 +40,7 @@ func setup(
 	economy = player_economy
 	loot_inventory = loot
 	alliance = alliance_manager
+	alliance_social = social
 	roster = troop_roster
 	hospital = hospital_queue
 	construction = construction_queue
@@ -48,11 +51,13 @@ func setup(
 	economy.changed.connect(mark_dirty)
 	loot_inventory.changed.connect(mark_dirty)
 	alliance.changed.connect(mark_dirty)
+	alliance_social.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
 	hospital.queue_changed.connect(mark_dirty)
 	construction.queue_changed.connect(mark_dirty)
 	recruitment.queue_changed.connect(mark_dirty)
 	raid_battle.changed.connect(mark_dirty)
+	city_map.view_mode_changed.connect(func(_mode): mark_dirty())
 
 	for building in city_map.get_persistent_buildings():
 		building.changed.connect(mark_dirty)
@@ -87,6 +92,7 @@ func save_game() -> bool:
 		"economy": economy.get_save_data(),
 		"loot": loot_inventory.get_save_data(),
 		"alliance": alliance.get_save_data(),
+		"alliance_social": alliance_social.get_save_data(),
 		"roster": roster.get_save_data(),
 		"hospital": hospital.get_save_data(),
 		"construction": construction.get_save_data(),
@@ -137,6 +143,7 @@ func load_game() -> bool:
 	economy.load_save_data(data.get("economy", {}))
 	loot_inventory.load_save_data(data.get("loot", {}))
 	alliance.load_save_data(data.get("alliance", {}))
+	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	hospital.load_save_data(data.get("hospital", {}), elapsed)

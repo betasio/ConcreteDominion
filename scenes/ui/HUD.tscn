@@ -51,6 +51,36 @@ text = "Gold: 250"
 layout_mode = 2
 text = "Loot P:0 I:0 C:0"
 
+[node name="ViewBar" type="HBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 2
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 86.0
+offset_right = 150.0
+offset_bottom = 136.0
+grow_horizontal = 2
+theme_override_constants/separation = 8
+
+[node name="Base" type="Button" parent="Root/ViewBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BASE"
+
+[node name="World" type="Button" parent="Root/ViewBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "WORLD"
+
+[node name="AllianceShortcut" type="Button" parent="Root"]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 92.0
+offset_right = 196.0
+offset_bottom = 142.0
+text = "Alliance"
+
 [node name="HospitalShortcut" type="Button" parent="Root"]
 layout_mode = 1
 anchors_preset = 1
@@ -86,6 +116,66 @@ offset_right = -24.0
 offset_bottom = 258.0
 grow_horizontal = 0
 text = "Alliance Raid"
+
+[node name="AlliancePanel" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 24.0
+offset_top = -300.0
+offset_right = 500.0
+offset_bottom = 300.0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/AlliancePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Root/AlliancePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "ALLIANCE HUB"
+
+[node name="Feed" type="Label" parent="Root/AlliancePanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+text = "Alliance channel connected."
+autowrap_mode = 2
+
+[node name="InviteStatus" type="Label" parent="Root/AlliancePanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+text = "No active raid invite."
+autowrap_mode = 2
+
+[node name="CreateInvite" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+text = "Invite Alliance to Selected Target"
+
+[node name="JoinDriver" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+text = "Join Invite as Driver"
+
+[node name="JoinSpy" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+text = "Join Invite as Spy"
+
+[node name="PostMessage" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+text = "Post: Ready for the next hit."
+
+[node name="Close" type="Button" parent="Root/AlliancePanel/Margin/VBox"]
+layout_mode = 2
+text = "Close"
 
 [node name="SelectionPanel" type="PanelContainer" parent="Root"]
 visible = false
@@ -414,6 +504,6 @@ offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Click Banks/Turf HQs → Add support → Raid\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
+text = "BASE ↔ WORLD • Alliance invites on the left\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2
