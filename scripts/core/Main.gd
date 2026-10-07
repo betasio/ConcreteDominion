@@ -23,6 +23,9 @@ extends Node
 @onready var raid_battle: RaidBattle = $RaidBattle
 @onready var world_control: WorldControlManager = $WorldControlManager
 @onready var resource_production: ResourceProductionManager = $ResourceProductionManager
+@onready var localized_text: LocalizedText = $LocalizedText
+@onready var faction_rules: FactionRules = $FactionRules
+@onready var achievements: AchievementManager = $AchievementManager
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
 @onready var hud = $HUD
@@ -36,6 +39,7 @@ extends Node
 @onready var store_manager: StoreManager = $StoreManager
 @onready var store_ui: StoreUI = $StoreUI
 @onready var world_control_ui: WorldControlUI = $WorldControlUI
+@onready var achievement_ui: AchievementUI = $AchievementUI
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var ui_focus_manager: UIFocusManager = $UIFocusManager
@@ -67,6 +71,7 @@ func _ready() -> void:
 	)
 
 	resource_production.setup(city_map.lot_c, city_map.lot_d, loot_inventory)
+	faction_rules.setup(localized_text)
 
 	world_control.setup(
 		economy,
@@ -77,6 +82,7 @@ func _ready() -> void:
 		alliance_manager,
 		city_map,
 		core_building_effects,
+		faction_rules,
 		raid_battle
 	)
 
@@ -131,9 +137,11 @@ func _ready() -> void:
 		raid_battle,
 		world_control,
 		resource_production,
+		achievements,
 		city_map
 	)
 	save_manager.load_game()
+	achievements.setup(progression, alliance_manager, city_map, world_control, economy)
 
 	mission_tracker.setup(
 		progression,
@@ -156,6 +164,7 @@ func _ready() -> void:
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
 	store_ui.setup(store_manager)
 	world_control_ui.setup(world_control, city_map, resource_production)
+	achievement_ui.setup(achievements, localized_text)
 	city_map.turf_overlay.setup(world_control, city_map)
 
 	settings.changed.connect(_apply_runtime_settings)
@@ -170,7 +179,8 @@ func _ready() -> void:
 		combat_strategy_ui.get_node("Root") as Control,
 		settings_ui.get_node("Root") as Control,
 		store_ui.get_node("Root") as Control,
-		world_control_ui.get_node("Root") as Control
+		world_control_ui.get_node("Root") as Control,
+		achievement_ui.get_node("Root") as Control
 	]
 	safe_area_manager.setup(safe_roots)
 	settings_ui.setup(settings, save_manager, balance, safe_roots)
@@ -180,6 +190,8 @@ func _ready() -> void:
 	retention.login_reward_claimed.connect(func(_reward): audio_manager.play_reward())
 	retention.achievement_unlocked.connect(func(_achievement_id): audio_manager.play_reward())
 	event_manager.milestone_claimed.connect(func(_points): audio_manager.play_reward())
+	achievements.achievement_unlocked.connect(func(_achievement_id): audio_manager.play_reward())
+	achievements.dominion_completed.connect(audio_manager.play_reward)
 	mission_tracker.mission_completed.connect(func(_mission_id): audio_manager.play_reward())
 
 	hud.setup(

@@ -23,6 +23,7 @@ var hospital: HospitalQueue
 var alliance: AllianceManager
 var city_map: Node
 var core_effects: CoreBuildingEffects
+var faction_rules: FactionRules
 
 var discovered: Dictionary = {"downtown_bank": true}
 var owned: Dictionary = {}
@@ -93,6 +94,7 @@ func setup(
 	alliance_manager: AllianceManager,
 	world: Node,
 	building_effects: CoreBuildingEffects,
+	rules: FactionRules,
 	raid_battle: RaidBattle
 ) -> void:
 	economy = player_economy
@@ -103,6 +105,7 @@ func setup(
 	alliance = alliance_manager
 	city_map = world
 	core_effects = building_effects
+	faction_rules = rules
 
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 	progression.leveled_up.connect(_on_progression_changed)
@@ -140,7 +143,8 @@ func _process(delta: float) -> void:
 				continue
 			var current := float(pressure.get(target_id, 0.0))
 			if not bool(contested.get(target_id, false)):
-				current = minf(1.0, current + delta * PRESSURE_PER_SECOND)
+				var pressure_multiplier := faction_rules.get_pressure_multiplier(String(target_id)) if faction_rules != null else 1.0
+				current = minf(1.0, current + delta * PRESSURE_PER_SECOND * pressure_multiplier)
 				pressure[target_id] = current
 				if current >= 1.0:
 					contested[target_id] = true
@@ -182,7 +186,13 @@ func get_owner_label(target_id: String) -> String:
 
 
 func get_rival_faction(target_id: String) -> String:
+	if faction_rules != null:
+		return faction_rules.get_faction_name(target_id)
 	return String(factions.get(target_id, "Rival Crew"))
+
+
+func get_rival_trait(target_id: String) -> String:
+	return faction_rules.get_trait_name(target_id) if faction_rules != null else ""
 
 
 func can_discover(target_id: String) -> bool:
@@ -305,7 +315,7 @@ func get_district_lines() -> PackedStringArray:
 		if is_owned(target_id):
 			state = "CONTESTED %d%%" % roundi(get_pressure(target_id) * 100.0) if is_contested(target_id) else "OWNED %d%%" % roundi(get_pressure(target_id) * 100.0)
 		elif is_discovered(target_id):
-			state = "RIVAL: %s" % get_rival_faction(target_id)
+			state = "RIVAL: %s • %s" % [get_rival_faction(target_id), get_rival_trait(target_id)]
 		lines.append("%s — %s — $%d/hr" % [
 			String(data["name"]),
 			state,
@@ -375,8 +385,8 @@ func _spawn_patrol() -> void:
 		return
 
 	var target_id := owned_ids[_encounter_cursor % owned_ids.size()]
-	var types := ["roadblock", "surveillance", "convoy_ambush"]
-	var encounter_type := types[_encounter_cursor % types.size()]
+	var cycle := faction_rules.get_encounter_cycle(target_id) if faction_rules != null else ["roadblock", "surveillance", "convoy_ambush"]
+	var encounter_type := String(cycle[_encounter_cursor % cycle.size()])
 	_encounter_cursor += 1
 	_create_encounter(target_id, encounter_type, 1.0)
 
@@ -389,6 +399,8 @@ func _create_encounter(target_id: String, encounter_type: String, power_multipli
 	if not districts.has(target_id):
 		return
 	var data: Dictionary = districts[target_id]
+	var faction_power := faction_rules.get_encounter_power_multiplier(target_id) if faction_rules != null else 1.0
+	var faction_cash := faction_rules.get_cash_multiplier(target_id) if faction_rules != null else 1.0
 	var role := &"Enforcer"
 	match encounter_type:
 		"surveillance":
@@ -404,8 +416,9 @@ func _create_encounter(target_id: String, encounter_type: String, power_multipli
 		"faction": get_rival_faction(target_id),
 		"type": encounter_type,
 		"role": role,
-		"power": roundi(float(data["patrol_power"]) * power_multiplier),
-		"cash_reward": roundi(float(data["cash_per_hour"]) * (1.0 if encounter_type == "turf_push" else 0.75))
+		"power": roundi(float(data["patrol_power"]) * power_multiplier * faction_power),
+		"cash_reward": roundi(float(data["cash_per_hour"]) * (1.0 if encounter_type == "turf_push" else 0.75) * faction_cash),
+		"trait": get_rival_trait(target_id)
 	}
 	patrol_spawned.emit(target_id)
 
@@ -547,7 +560,12 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	for target_id in owned.keys():
 		if not bool(owned[target_id]) or bool(contested.get(target_id, false)):
 			continue
-		var offline_pressure := minf(0.99, float(pressure.get(target_id, 0.0)) + minf(offline, 4.0 * 60.0 * 60.0) * PRESSURE_PER_SECOND)
+		var pressure_multiplier := faction_rules.get_pressure_multiplier(String(target_id)) if faction_rules != null else 1.0
+		var offline_pressure := minf(
+			0.99,
+			float(pressure.get(target_id, 0.0))
+			+ minf(offline, 4.0 * 60.0 * 60.0) * PRESSURE_PER_SECOND * pressure_multiplier
+		)
 		pressure[target_id] = offline_pressure
 
 	var saved_tasks = data.get("alliance_tasks", {})

@@ -109,7 +109,7 @@ func _refresh() -> void:
 	else:
 		patrol_label.text = "RIVAL ENCOUNTER\n%s • %s\n%s requires %s power: %d" % [
 			String(control.active_patrol["district_name"]),
-			String(control.active_patrol["faction"]),
+			String(control.active_patrol["faction"]) + " • " + String(control.active_patrol.get("trait", "")),
 			String(control.active_patrol["type"]).replace("_", " ").capitalize(),
 			String(control.active_patrol["role"]),
 			int(control.active_patrol["power"])

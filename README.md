@@ -2,213 +2,267 @@
 
 A cross-platform 2.5D isometric RTS prototype built with Godot 4 and GDScript.
 
-## Rival factions + contested turf milestone
+## Faction identity + localization + endgame milestone
 
-The World map now supports persistent rival crews, visible ownership states, contested turf pressure, richer PvE encounters, resource-production facilities, and renewable Alliance tasks.
+This milestone makes rival factions mechanically distinct, adds district-specific encounter patterns, introduces a localization-ready text catalog for new content, and adds persistent achievements plus a non-terminal endgame goal.
 
-## Rival factions
+## Faction personalities
 
-Discovered districts that the player has not yet captured now show a named rival owner.
+Rival crews now have data-driven gameplay profiles instead of functioning as names only.
 
-Current prototype factions:
+### Dock Rats — Scrappy
 
-- Downtown Core — Dock Rats
-- Harbor District — Iron Serpents
-- Midtown — Meridian Boys
-- Northside — Northside Crew
-- High Roller Strip — Velvet Circle
-- Financial District — Velvet Circle
-- Industrial Belt — Iron Serpents
+- pressure growth: 85% of baseline;
+- encounter strength: 92% of baseline;
+- encounter Cash: 95% of baseline;
+- preferred encounter: Roadblock.
 
-Capturing the district through its normal Alliance Raid transfers the turf to the player.
+They are intended to be the forgiving early-game rival.
 
-## Turf pressure
+### Iron Serpents — Armored
 
-Owned districts now accumulate rival pressure while the game is active.
+- pressure growth: 105%;
+- encounter strength: 112%;
+- encounter Cash: 108%;
+- preferred encounter: Convoy Ambush.
 
-Pressure does not automatically delete ownership.
+They emphasize Driver/transport encounters and stronger defenses.
 
-When pressure reaches 100%, the district becomes **CONTESTED** and generates a dedicated turf-push encounter.
+### Meridian Boys — Watchful
 
-Contested districts:
+- pressure growth: 95%;
+- encounter strength: 105%;
+- encounter Cash: baseline;
+- preferred encounter: Surveillance Sweep.
 
-- remain owned by the player;
-- continue producing Cash at 65% of normal output;
-- display an orange ownership ring and pressure state;
-- return to normal after a successful turf defense.
+They lean toward Spy gameplay.
 
-If the player loses a turf-push encounter, ownership is still retained. Pressure falls to 80% so the player has time to rebuild and try again.
+### Northside Crew — Aggressive
 
-Offline pressure is deliberately capped below the contested threshold. Returning after a break therefore never causes automatic territory loss or an unavoidable instant defeat.
+- pressure growth: 118%;
+- encounter strength: 108%;
+- encounter Cash: 105%;
+- preferred encounter: Roadblock.
 
-## Territory overlays
+They pressure owned turf more quickly without ever automatically deleting ownership.
 
-The World map now draws procedural ownership overlays around discovered targets.
+### Velvet Circle — Connected
 
-Colors indicate:
+- pressure growth: baseline;
+- encounter strength: 115%;
+- encounter Cash: 118%;
+- preferred encounter: Surveillance Sweep.
 
-- green — player-controlled turf;
-- red — rival-controlled discovered district;
-- orange — contested player turf.
+They are higher-risk, higher-reward late-game rivals.
 
-Owned districts also display their current pressure bar and ownership label.
+## District-specific encounter rules
 
-No imported map textures are required.
+Encounter rotation is now configured per district.
 
-## Richer rival encounters
+Examples:
 
-World encounters now rotate between troop-role requirements.
+- Downtown: Roadblock / Convoy Ambush
+- Harbor: Convoy Ambush / Roadblock
+- Midtown: Surveillance / Roadblock
+- Northside: Roadblock / Turf Push
+- Casino: Surveillance / Convoy Ambush
+- Financial: Surveillance / Roadblock
+- Industrial: Convoy Ambush / Roadblock
 
-### Roadblock
-Uses Enforcer power.
+Faction modifiers are applied after the district's own patrol-power value, so both district tier and rival identity matter.
 
-### Surveillance Sweep
-Uses Spy power and can reward Intel.
+## Visible faction traits
 
-### Convoy Ambush
-Uses Driver power and can reward Parts.
+Territory Command now surfaces each rival faction's trait alongside its name.
 
-### Turf Push
-Triggered by 100% district pressure and uses Enforcer power at increased difficulty.
+Active encounters also display the rival trait.
 
-This gives the existing specialist roster more purpose outside Alliance Raids.
+This makes mechanical differences understandable to the player instead of hiding them in balance tables.
 
-Failure still follows the no-permanent-death rule. At most one relevant participating troop enters the Clinic.
+## Localization-ready content layer
 
-## Resource-production buildings
+A new `LocalizedText` service owns stable string keys for newly added faction and achievement content.
 
-Two additional base build lots are now available.
+Examples:
 
-### Scrapyard — Account Lv.4
+- `FACTION_IRON_SERPENTS`
+- `TRAIT_ARMORED`
+- `ENCOUNTER_SURVEILLANCE`
+- `ACH_DOMINION`
+- `ACH_DESC_DOMINION`
 
-Produces Parts.
+If Godot has a translation for a key, the service uses it.
 
-Current rate:
+If no translation exists, it falls back to the built-in English copy.
 
-- +2 Parts/hour per building level;
-- maximum level 5;
-- six-hour resource bank.
+This means future language packs can replace strings without changing gameplay code.
 
-### Data Hub — Account Lv.5
+The existing older prototype UI still contains hard-coded English copy; migrating all legacy text into localization keys remains a future content-polish task.
 
-Produces Intel.
+## Achievements
 
-Current rate:
+A persistent AchievementManager now evaluates long-term milestones.
 
-- +1 Intel/hour per building level;
-- maximum level 5;
-- six-hour resource bank.
+Current achievements:
 
-Both facilities:
+### First Territory
+Capture any district.
 
-- use the existing Construction Queue;
-- use normal Cash upgrade costs/timers;
-- support Gold Finish Now through the shared construction system;
-- generate resources while offline;
-- persist build state, level, and banked output.
+Reward: 5 Gold.
 
-The Territory panel contains a single collection action for both resource facilities.
+### Citywide
+Own every district.
 
-## Updated city unlock ladder
+Reward: 20 Gold.
 
-- Lv.2 — Harbor District + Garage
-- Lv.3 — Midtown + Intel Office
-- Lv.4 — Northside + Scrapyard
-- Lv.5 — High Roller Strip + Data Hub
-- Lv.6 — Financial District
-- Lv.7 — Industrial Belt
+### Trusted Crew
+Reach Alliance Level 4.
 
-## Renewable Alliance tasks
+Reward: 10 Gold.
 
-Alliance tasks now refresh on a 24-hour cycle instead of remaining permanently completed.
+### Made Boss
+Reach Account Level 7.
 
-The panel displays the live refresh countdown.
+Reward: 10 Gold.
 
-Existing tasks still reward Cash and Alliance XP:
+### Command Center
+Upgrade Safehouse to Level 5.
 
-- Hit the Streets — raid wins
-- Keep It Moving — turf-income collections
-- Clean the Block — rival encounter clears
+Reward: 10 Gold.
 
-Task-cycle timing is persistent and advances across offline time.
+### Supply Network
+Build both Scrapyard and Data Hub.
 
-## Territory income behavior
+Reward: 8 Gold.
 
-Normal turf Cash production remains capped at eight hours.
+### Specialist Crew
+Reach Specialist Level 3 with Enforcer, Driver, and Spy.
 
-Contested districts reduce only current production rate. Previously banked Cash is preserved and is not destroyed when a district becomes contested.
+Reward: 12 Gold.
+
+### Concrete Dominion
+Complete the full prototype endgame requirements.
+
+Reward: 100 Gold.
+
+Achievement rewards are one-time and persist across saves.
+
+## Endgame goal
+
+The game now has a clear long-term completion target without forcing the player to stop playing.
+
+To complete **Concrete Dominion**, the player must:
+
+- own all seven districts;
+- reach Account Level 7;
+- reach Alliance Level 4;
+- upgrade Safehouse to Level 5;
+- upgrade Underground Clinic to Level 5;
+- upgrade Crew Barracks to Level 5;
+- reach at least Garage Level 3;
+- reach at least Intel Office Level 3;
+- build the Scrapyard;
+- build the Data Hub.
+
+Completing the goal unlocks the achievement and grants a one-time 100 Gold completion reward.
+
+The world remains playable afterward.
+
+## Achievement UI
+
+A new **Achievements** shortcut opens an endgame/progression panel.
+
+It shows:
+
+- current Dominion completion requirement;
+- all available achievements;
+- LOCKED / UNLOCKED state;
+- human-readable achievement descriptions.
+
+It participates in the existing:
+
+- safe-area handling;
+- large-text setting;
+- keyboard/controller focus;
+- automatic UI click audio.
+
+## Reward safety
+
+Achievement state is loaded before the manager evaluates a restored city.
+
+This prevents an existing save from receiving duplicate achievement Gold simply because its building/territory state was reconstructed during startup.
 
 ## Persistence
 
-Save schema is now **version 16**.
+Save schema is now **version 17**.
 
-New persistent state includes:
+New persistent data:
 
-- Scrapyard built state and level;
-- Data Hub built state and level;
-- Parts resource bank;
-- Intel resource bank;
-- resource-production timing;
-- rival pressure per district;
-- contested states;
-- encounter rotation;
-- active encounter details;
-- Alliance task refresh timer.
+- achievement unlock state;
+- Dominion reward-claimed state.
 
-Older saves default the new resource facilities to unbuilt and safely initialize the new banks.
+Older saves receive an empty achievement state, then achievements are evaluated once against the loaded account/city.
+
+Any milestone already satisfied will unlock normally once and persist from that point onward.
 
 ## Architecture additions
 
 ```text
-CityMap
-├── Buildings
-│   ├── BuildLotC → Scrapyard
-│   └── BuildLotD → Data Hub
-└── TurfOverlay
-
 Main
-├── WorldControlManager
-└── ResourceProductionManager
+├── LocalizedText
+├── FactionRules
+├── AchievementManager
+└── AchievementUI
 
-scripts/buildings/
-└── ResourceProductionManager.gd
+scripts/content/
+└── LocalizedText.gd
 
 scripts/world/
-├── WorldControlManager.gd
-└── TurfOverlay.gd
+└── FactionRules.gd
+
+scripts/progression/
+└── AchievementManager.gd
+
+scripts/ui/
+└── AchievementUI.gd
+
+scenes/ui/
+└── AchievementUI.tscn
 ```
 
 ## Recommended future test path
 
-When final testing begins:
+When final runtime testing begins:
 
-1. Reach Lv.4 and build Scrapyard.
-2. Confirm Parts production begins and survives restart/offline time.
-3. Reach Lv.5 and build Data Hub.
-4. Confirm Intel production and the six-hour cap.
-5. Enter World view and verify red rival ownership rings.
-6. Capture a district and verify its overlay turns green.
-7. Allow pressure to increase and confirm its pressure bar.
-8. Reach 100% pressure and confirm a turf-push encounter appears.
-9. Win the defense and verify pressure drops and full income returns.
-10. Lose a turf defense and confirm the district remains owned.
-11. Clear Roadblock, Surveillance Sweep, and Convoy Ambush encounters with their matching troop roles.
-12. Verify Surveillance rewards Intel and Convoy Ambush can reward Parts.
-13. Complete Alliance tasks and confirm they reset when the refresh cycle expires.
-14. Restart with active pressure/encounter/task timers and confirm persistence.
+1. Inspect each discovered rival and confirm its faction + trait.
+2. Compare pressure growth between Dock Rats and Northside Crew.
+3. Compare encounter power/reward differences between factions.
+4. Verify district-specific encounter rotations.
+5. Unlock First Territory and confirm the Gold reward happens once.
+6. Restart and confirm it is not rewarded again.
+7. Build Scrapyard + Data Hub and verify Supply Network unlocks.
+8. Raise all three specialists to Level 3 and verify Specialist Crew.
+9. Reach Account Lv.7 and Alliance Lv.4.
+10. Max Safehouse, Clinic, and Barracks.
+11. Own all seven districts.
+12. Complete the final Dominion requirements and verify the one-time 100 Gold reward.
+13. Continue playing after Dominion completion.
+14. Switch/add a Godot translation later and confirm text keys can be replaced without touching gameplay scripts.
 15. Run the smoke-test scene.
 
 ## Next development direction
 
-The strongest next milestone is approaching final content and QA:
+The project is now close to the point where adding more systems has diminishing returns.
 
-- additional NPC faction personalities and progression;
-- district-specific encounter modifiers;
-- more city build lots and visual variety;
-- localization-ready text resources;
-- economy/balance simulation;
-- real audio/art replacement;
-- tutorial/onboarding polish;
-- achievement/endgame goals;
-- automated CI smoke testing;
-- full Godot runtime and device QA.
+The strongest next phase is **balance simulation + final QA infrastructure**:
+
+- simulate progression/economy pacing;
+- check Cash/Gold sinks against income;
+- check raid power curves;
+- check healing/recruitment/build timing;
+- validate F2P specialist usefulness at every district tier;
+- add automated data validation;
+- add CI smoke-test workflow;
+- migrate remaining UI text to localization keys;
+- replace procedural placeholder audio/art;
+- then perform the first full Godot runtime/device playthrough.

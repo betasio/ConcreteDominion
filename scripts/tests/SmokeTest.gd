@@ -38,13 +38,17 @@ func _ready() -> void:
 		"StoreUI",
 		"WorldControlManager",
 		"WorldControlUI",
-		"ResourceProductionManager"
+		"ResourceProductionManager",
+		"LocalizedText",
+		"FactionRules",
+		"AchievementManager",
+		"AchievementUI"
 	]:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 16:
+	if save == null or SaveManager.SAVE_VERSION < 17:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -70,6 +74,18 @@ func _ready() -> void:
 	var resources := game.get_node_or_null("ResourceProductionManager") as ResourceProductionManager
 	if resources == null:
 		_fail("Resource production manager is missing.")
+
+	var text_catalog := game.get_node_or_null("LocalizedText") as LocalizedText
+	if text_catalog == null or not text_catalog.has_key("ACH_DOMINION"):
+		_fail("Localization catalog is invalid.")
+
+	var faction_rules := game.get_node_or_null("FactionRules") as FactionRules
+	if faction_rules == null or faction_rules.get_encounter_cycle("harbor_bank").is_empty():
+		_fail("Faction rules are invalid.")
+
+	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
+	if achievement_manager == null:
+		_fail("Achievement manager is missing.")
 
 	var city := game.get_node_or_null("CityMap")
 	if city == null or city.get_node_or_null("TurfOverlay") == null:

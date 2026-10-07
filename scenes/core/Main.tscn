@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3]
+[gd_scene load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -40,9 +40,19 @@
 [ext_resource type="Script" path="res://scripts/world/WorldControlManager.gd" id="38_world_control"]
 [ext_resource type="PackedScene" path="res://scenes/ui/WorldControlUI.tscn" id="39_world_control_ui"]
 [ext_resource type="Script" path="res://scripts/buildings/ResourceProductionManager.gd" id="40_resource_production"]
+[ext_resource type="Script" path="res://scripts/content/LocalizedText.gd" id="41_localized"]
+[ext_resource type="Script" path="res://scripts/world/FactionRules.gd" id="42_factions"]
+[ext_resource type="Script" path="res://scripts/progression/AchievementManager.gd" id="43_achievements"]
+[ext_resource type="PackedScene" path="res://scenes/ui/AchievementUI.tscn" id="44_achievement_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
+
+[node name="LocalizedText" type="Node" parent="."]
+script = ExtResource("41_localized")
+
+[node name="FactionRules" type="Node" parent="."]
+script = ExtResource("42_factions")
 
 [node name="GameBalance" type="Node" parent="."]
 script = ExtResource("27_balance")
@@ -113,6 +123,9 @@ script = ExtResource("38_world_control")
 [node name="ResourceProductionManager" type="Node" parent="."]
 script = ExtResource("40_resource_production")
 
+[node name="AchievementManager" type="Node" parent="."]
+script = ExtResource("43_achievements")
+
 [node name="SaveManager" type="Node" parent="."]
 script = ExtResource("10_save")
 
@@ -149,3 +162,5 @@ script = ExtResource("33_focus")
 [node name="StoreUI" parent="." instance=ExtResource("36_store_ui")]
 
 [node name="WorldControlUI" parent="." instance=ExtResource("39_world_control_ui")]
+
+[node name="AchievementUI" parent="." instance=ExtResource("44_achievement_ui")]
