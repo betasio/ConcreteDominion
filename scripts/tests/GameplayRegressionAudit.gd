@@ -155,6 +155,9 @@ func _test_dominion_save_clamps() -> void:
 		"scored_operation_wins": 999,
 		"claimed_season_tiers": ["SILVER","INVALID","SILVER"],
 		"pending_season_tiers": ["GOLD","INVALID","GOLD"],
+		"pending_season_prestige": {"GOLD":"STEEL GOLD","INVALID":"BAD"},
+		"prestige_badges": ["VELVET SILVER","VELVET SILVER",""],
+		"equipped_prestige_badge": "NOT OWNED",
 		"operation_cursor": -999,
 		"boss_cursor": 999
 	})
@@ -172,6 +175,12 @@ func _test_dominion_save_clamps() -> void:
 		_fail("Dominion weekly seasonal scoring cap was not enforced.")
 	if endgame.claimed_season_tiers != ["SILVER"] or endgame.pending_season_tiers != ["GOLD"]:
 		_fail("Dominion seasonal tier save sanitization failed.")
+	if String(endgame.pending_season_prestige.get("GOLD", "")) != "STEEL GOLD":
+		_fail("Dominion delayed prestige mapping was not restored.")
+	if endgame.prestige_badges != ["VELVET SILVER"]:
+		_fail("Dominion prestige badge save sanitization failed.")
+	if endgame.equipped_prestige_badge != "VELVET SILVER":
+		_fail("Dominion equipped prestige badge fallback failed.")
 	endgame.queue_free()
 
 
@@ -191,6 +200,10 @@ func _test_dominion_season_rollover() -> void:
 		_fail("Dominion season rollover did not reset current-season influence.")
 	if endgame.pending_season_tiers != ["GOLD"]:
 		_fail("Dominion season rollover did not preserve an earned unclaimed tier.")
+	if String(endgame.pending_season_prestige.get("GOLD", "")).is_empty():
+		_fail("Dominion season rollover did not preserve the prior season prestige identity.")
+	if String(endgame.last_season_result.get("season_name", "")).is_empty():
+		_fail("Dominion season rollover did not preserve the prior season result summary.")
 	endgame.queue_free()
 
 
