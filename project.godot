@@ -27,3 +27,7 @@ textures/default_filters/use_nearest_mipmap_filter=false
 
 pointing/emulate_touch_from_mouse=false
 pointing/emulate_mouse_from_touch=false
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/ui.en.translation")

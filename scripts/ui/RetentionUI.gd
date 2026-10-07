@@ -2,6 +2,7 @@ class_name RetentionUI
 extends CanvasLayer
 
 var retention: RetentionManager
+var text_catalog: LocalizedText
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -17,8 +18,10 @@ var retention: RetentionManager
 @onready var tutorial_label: Label = $Root/TutorialBanner/Label
 
 
-func setup(retention_manager: RetentionManager) -> void:
+func setup(retention_manager: RetentionManager, localized_text: LocalizedText) -> void:
 	retention = retention_manager
+	text_catalog = localized_text
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	retention.changed.connect(_refresh)
 
 	shortcut.pressed.connect(_toggle_panel)
@@ -69,7 +72,7 @@ func _refresh() -> void:
 	var daily := retention.get_daily_status()
 	var weekly := retention.get_weekly_status()
 
-	shortcut.text = "Rewards • Day %d" % maxi(1, retention.login_streak)
+	shortcut.text = "%s • Day %d" % [text_catalog.text("UI_REWARDS"), maxi(1, retention.login_streak)]
 
 	login_label.text = "LOGIN STREAK: %d day(s)\n7-day cycle rewards include Cash, Gold, loot, and XP." % retention.login_streak
 	login_button.text = "Claim Today's Login Reward" if retention.can_claim_login_reward() else "Login Reward Claimed"

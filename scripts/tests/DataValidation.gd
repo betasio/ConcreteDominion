@@ -125,13 +125,24 @@ func _validate_required_resources() -> void:
 		"res://scenes/tests/BalanceAudit.tscn",
 		"res://scripts/core/GameBalance.gd",
 		"res://scripts/world/FactionRules.gd",
-		"res://scripts/content/LocalizedText.gd"
+		"res://scripts/content/LocalizedText.gd",
+		"res://scripts/content/PresentationCatalog.gd",
+		"res://scripts/tutorial/TutorialManager.gd",
+		"res://scenes/ui/TutorialUI.tscn"
 	]:
 		if not ResourceLoader.exists(path):
 			_fail("Required resource is missing: %s" % path)
 
-	if SaveManager.SAVE_VERSION < 17:
-		_fail("Save schema unexpectedly regressed below v17.")
+	if SaveManager.SAVE_VERSION < 18:
+		_fail("Save schema unexpectedly regressed below v18.")
+
+	for path in [
+		"res://localization/ui.csv",
+		"res://export_presets.cfg",
+		"res://assets/README.md"
+	]:
+		if not FileAccess.file_exists(path):
+			_fail("Release-readiness file is missing: %s" % path)
 
 
 func _fail(message: String) -> void:

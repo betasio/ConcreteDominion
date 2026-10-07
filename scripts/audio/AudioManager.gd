@@ -3,6 +3,7 @@ extends Node
 
 var _player: AudioStreamPlayer
 var _generator: AudioStreamGenerator
+var _catalog: PresentationCatalog
 
 
 func _ready() -> void:
@@ -17,21 +18,22 @@ func _ready() -> void:
 	_player.stream = _generator
 
 
-func setup(root: Node) -> void:
+func setup(root: Node, presentation_catalog: PresentationCatalog = null) -> void:
+	_catalog = presentation_catalog
 	_connect_buttons_recursive(root)
 	get_tree().node_added.connect(_on_node_added)
 
 
 func play_ui_click() -> void:
-	_play_tone(620.0, 0.045, 0.08)
+	_play_asset_or_tone("ui_click", 620.0, 0.045, 0.08)
 
 
 func play_reward() -> void:
-	_play_tone(920.0, 0.10, 0.11)
+	_play_asset_or_tone("reward", 920.0, 0.10, 0.11)
 
 
 func play_raid_result(victory: bool) -> void:
-	_play_tone(760.0 if victory else 220.0, 0.16, 0.14)
+	_play_asset_or_tone("raid_victory" if victory else "raid_defeat", 760.0 if victory else 220.0, 0.16, 0.14)
 
 
 func _on_node_added(node: Node) -> void:
@@ -52,6 +54,19 @@ func _connect_button(button: Button) -> void:
 	var callback := Callable(self, "play_ui_click")
 	if not button.pressed.is_connected(callback):
 		button.pressed.connect(callback)
+
+
+func _play_asset_or_tone(key: String, frequency: float, duration: float, amplitude: float) -> void:
+	if _catalog != null:
+		var stream := _catalog.get_audio(key)
+		if stream != null:
+			_player.stop()
+			_player.stream = stream
+			_player.play()
+			return
+	if _player.stream != _generator:
+		_player.stream = _generator
+	_play_tone(frequency, duration, amplitude)
 
 
 func _play_tone(frequency: float, duration: float, amplitude: float) -> void:

@@ -4,6 +4,7 @@ extends CanvasLayer
 var profile: PlayerProfile
 var mailbox: MailboxManager
 var progression: PlayerProgression
+var text_catalog: LocalizedText
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -18,11 +19,14 @@ var progression: PlayerProgression
 func setup(
 	player_profile: PlayerProfile,
 	mailbox_manager: MailboxManager,
-	player_progression: PlayerProgression
+	player_progression: PlayerProgression,
+	localized_text: LocalizedText
 ) -> void:
 	profile = player_profile
 	mailbox = mailbox_manager
 	progression = player_progression
+	text_catalog = localized_text
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 
 	profile.changed.connect(_refresh)
 	mailbox.changed.connect(_refresh)
@@ -61,20 +65,21 @@ func _refresh() -> void:
 	if profile == null:
 		return
 
-	shortcut.text = "%s • Profile" % profile.display_name
+	shortcut.text = "%s • %s" % [profile.display_name, text_catalog.text("UI_PROFILE")]
 	name_edit.text = profile.display_name
-	avatar_button.text = "Avatar: %s  (Change)" % profile.get_avatar_name()
+	avatar_button.text = "%s: %s  (%s)" % [text_catalog.text("UI_AVATAR"), profile.get_avatar_name(), text_catalog.text("UI_CHANGE")]
 
-	power_label.text = "Account Lv.%d\nPower Rating: %s" % [
+	power_label.text = "Account Lv.%d\n%s: %s" % [
 		progression.account_level,
+		text_catalog.text("UI_POWER_RATING"),
 		_format_number(profile.get_power_rating())
 	]
 
-	badges_label.text = "BADGES\n" + " • ".join(profile.get_badges())
+	badges_label.text = text_catalog.text("UI_BADGES") + "\n" + " • ".join(profile.get_badges())
 
 	var lines := PackedStringArray()
 	for message in mailbox.messages:
-		var state := "CLAIMED" if bool(message["claimed"]) else "REWARD READY"
+		var state := text_catalog.text("UI_CLAIMED") if bool(message["claimed"]) else text_catalog.text("UI_REWARD_READY")
 		lines.append("%s — %s\n%s" % [
 			String(message["subject"]),
 			state,
@@ -82,12 +87,12 @@ func _refresh() -> void:
 		])
 
 	if lines.is_empty():
-		inbox_label.text = "INBOX\nNo messages."
+		inbox_label.text = text_catalog.text("UI_INBOX") + "\n" + text_catalog.text("UI_NO_MESSAGES")
 	else:
-		inbox_label.text = "INBOX\n" + "\n\n".join(lines)
+		inbox_label.text = text_catalog.text("UI_INBOX") + "\n" + "\n\n".join(lines)
 
 	var count := mailbox.get_unclaimed_count()
-	claim_all_button.text = "Claim All Mail Rewards (%d)" % count
+	claim_all_button.text = "%s (%d)" % [text_catalog.text("UI_CLAIM_ALL"), count]
 	claim_all_button.disabled = count <= 0
 
 

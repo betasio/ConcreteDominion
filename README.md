@@ -413,3 +413,85 @@ BalanceAudit now hard-checks:
 - early Clinic recovery affordability.
 
 DataValidation now rejects core/facility construction timers that fall back into the old prototype-compressed range.
+
+
+## Release-readiness milestone
+
+The first full headless QA run on Godot 4.7.2 passed project import, DataValidation, BalanceAudit, and SmokeTest before this milestone was started.
+
+### Persistent onboarding
+
+New saves now begin with a lightweight six-step tutorial:
+
+1. understand the core city loop;
+2. complete a recruitment job;
+3. upgrade the Safehouse;
+4. enter World view;
+5. occupy a Driver or Spy Alliance support slot;
+6. win the first raid.
+
+Progress is persistent through save schema **18**.
+
+Players can skip the tutorial at any time.
+
+The onboarding is event-driven rather than modal: normal gameplay remains available while the current objective is displayed.
+
+### Localization source
+
+`localization/ui.csv` is now the translation-source spreadsheet for the keyed UI/faction/tutorial copy.
+
+The project registers the generated English translation resource in `project.godot`.
+
+LocalizedText still retains English fallbacks, so a missing/import-failed translation resource never leaves raw keys on screen.
+
+High-frequency surfaces now use localization keys:
+
+- Store
+- Territory Command
+- Progression
+- Achievements
+- Rewards
+- Events
+- Profile/mailbox
+- Combat tactics
+- Tutorial
+
+Legacy content strings such as individual mission descriptions and raid data can continue moving into the same catalog without changing the architecture.
+
+### Presentation asset replacement hooks
+
+Procedural visuals and generated audio remain safe fallbacks, but PresentationCatalog now checks documented replacement paths.
+
+See `assets/README.md`.
+
+If replacement PNG/OGG files are present, they are used automatically for:
+
+- Safehouse
+- Clinic
+- Barracks
+- Garage
+- Intel Office
+- Scrapyard
+- Data Hub
+- raid-target art
+- UI click
+- reward sound
+- raid victory/defeat sound
+
+This allows real art/audio to be integrated incrementally without rewriting gameplay systems.
+
+### Windows + Android export presets
+
+`export_presets.cfg` now defines:
+
+- **Windows Desktop** debug/release packaging;
+- **Android** ARM64 APK packaging using package ID `com.betasio.concretedominion`.
+
+Godot requires export templates for command-line packaging, and Android requires JDK/SDK tooling. The CI workflow now installs Godot export templates, JDK 17, Android platform/build-tools 35, then attempts both exports.
+
+CI artifacts:
+
+- `concrete-dominion-windows-debug`
+- `concrete-dominion-android-debug`
+
+The Android artifact is an unsigned-store-development/debug-style build path for QA, not a Google Play release package. Production publishing still requires secure release signing/credentials outside version control.

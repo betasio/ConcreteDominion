@@ -5,6 +5,7 @@ signal selected(target: RaidTarget)
 signal changed
 
 @export var data: RaidTargetData
+@export var art_texture: Texture2D
 
 var cooldown_remaining := 0.0
 var is_selected := false
@@ -174,6 +175,15 @@ func load_save_data(saved: Dictionary, offline_seconds: float = 0.0) -> void:
 
 func _draw() -> void:
 	var accent := data.accent_color if data != null else Color(0.72, 0.52, 0.18)
+	if art_texture != null:
+		var size := art_texture.get_size()
+		var scale_factor := minf(190.0 / maxf(1.0, size.x), 155.0 / maxf(1.0, size.y))
+		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -48), size * scale_factor), false)
+		_draw_status_bar(accent)
+		if is_selected:
+			draw_arc(Vector2(0, -38), 114.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
+		draw_string(ThemeDB.fallback_font, Vector2(-82, 65), get_display_name().to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 164, 17, Color(0.95, 0.91, 0.78))
+		return
 	var id := get_target_id()
 	var unlocked := is_unlocked()
 

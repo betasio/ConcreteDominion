@@ -24,8 +24,10 @@ extends Node
 @onready var world_control: WorldControlManager = $WorldControlManager
 @onready var resource_production: ResourceProductionManager = $ResourceProductionManager
 @onready var localized_text: LocalizedText = $LocalizedText
+@onready var presentation_catalog: PresentationCatalog = $PresentationCatalog
 @onready var faction_rules: FactionRules = $FactionRules
 @onready var achievements: AchievementManager = $AchievementManager
+@onready var tutorial: TutorialManager = $TutorialManager
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
 @onready var hud = $HUD
@@ -40,6 +42,7 @@ extends Node
 @onready var store_ui: StoreUI = $StoreUI
 @onready var world_control_ui: WorldControlUI = $WorldControlUI
 @onready var achievement_ui: AchievementUI = $AchievementUI
+@onready var tutorial_ui: TutorialUI = $TutorialUI
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var ui_focus_manager: UIFocusManager = $UIFocusManager
@@ -72,6 +75,7 @@ func _ready() -> void:
 
 	resource_production.setup(city_map.lot_c, city_map.lot_d, loot_inventory)
 	faction_rules.setup(localized_text)
+	presentation_catalog.apply_to_city(city_map)
 
 	world_control.setup(
 		economy,
@@ -100,6 +104,8 @@ func _ready() -> void:
 		progression,
 		raid_battle
 	)
+
+	tutorial.setup(recruitment_queue, construction_queue, city_map, alliance_manager, raid_battle)
 
 	player_profile.setup(
 		progression,
@@ -138,6 +144,7 @@ func _ready() -> void:
 		world_control,
 		resource_production,
 		achievements,
+		tutorial,
 		city_map
 	)
 	save_manager.load_game()
@@ -158,13 +165,14 @@ func _ready() -> void:
 		)
 
 	progression_ui.setup(progression, mission_tracker, loot_inventory, localized_text)
-	retention_ui.setup(retention)
-	profile_ui.setup(player_profile, mailbox, progression)
-	event_ui.setup(event_manager)
-	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
+	retention_ui.setup(retention, localized_text)
+	profile_ui.setup(player_profile, mailbox, progression, localized_text)
+	event_ui.setup(event_manager, localized_text)
+	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map, localized_text)
 	store_ui.setup(store_manager, localized_text)
 	world_control_ui.setup(world_control, city_map, resource_production, localized_text)
 	achievement_ui.setup(achievements, localized_text)
+	tutorial_ui.setup(tutorial, localized_text)
 	city_map.turf_overlay.setup(world_control, city_map)
 
 	settings.changed.connect(_apply_runtime_settings)
@@ -180,13 +188,14 @@ func _ready() -> void:
 		settings_ui.get_node("Root") as Control,
 		store_ui.get_node("Root") as Control,
 		world_control_ui.get_node("Root") as Control,
-		achievement_ui.get_node("Root") as Control
+		achievement_ui.get_node("Root") as Control,
+		tutorial_ui.get_node("Root") as Control
 	]
 	safe_area_manager.setup(safe_roots)
 	settings_ui.setup(settings, save_manager, balance, safe_roots)
 	pause_menu.setup(save_manager)
 	ui_focus_manager.setup(self)
-	audio_manager.setup(self)
+	audio_manager.setup(self, presentation_catalog)
 	retention.login_reward_claimed.connect(func(_reward): audio_manager.play_reward())
 	retention.achievement_unlocked.connect(func(_achievement_id): audio_manager.play_reward())
 	event_manager.milestone_claimed.connect(func(_points): audio_manager.play_reward())

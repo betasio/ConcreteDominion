@@ -12,6 +12,9 @@ var text_catalog: LocalizedText
 func setup(manager: AchievementManager, localized_text: LocalizedText) -> void:
 	achievements = manager
 	text_catalog = localized_text
+	$Root/Shortcut.text = text_catalog.text("UI_ACHIEVEMENTS")
+	$Root/Panel/Margin/VBox/Title.text = text_catalog.text("UI_ACHIEVEMENTS_TITLE")
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	achievements.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle)

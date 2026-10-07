@@ -12,6 +12,7 @@ signal changed
 @export var max_level: int = 5
 @export var base_upgrade_cash_cost: int = 5000
 @export var base_upgrade_duration: float = 15.0
+@export var art_texture: Texture2D
 
 var is_selected := false
 var is_constructing := false
@@ -64,6 +65,23 @@ func restore_progress(saved_level: int) -> void:
 
 
 func _draw() -> void:
+	if art_texture != null:
+		var size := art_texture.get_size()
+		var scale_factor := minf(180.0 / maxf(1.0, size.x), 145.0 / maxf(1.0, size.y))
+		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -45), size * scale_factor), false)
+		if is_constructing:
+			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
+		if is_selected:
+			draw_arc(Vector2(0, -35), 112.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
+		var art_level_text := "Lv.%d" % level
+		if is_constructing:
+			art_level_text += " → %d" % pending_level
+		elif level >= max_level:
+			art_level_text += " MAX"
+		draw_string(ThemeDB.fallback_font, Vector2(-72, 62), display_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 144, 18, Color(0.95, 0.91, 0.78))
+		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)
+		return
+
 	var footprint := PackedVector2Array([
 		Vector2(0, -58),
 		Vector2(92, -12),

@@ -2,6 +2,7 @@ class_name EventUI
 extends CanvasLayer
 
 var event_manager: EventManager
+var text_catalog: LocalizedText
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -11,8 +12,10 @@ var event_manager: EventManager
 @onready var milestones_box: VBoxContainer = $Root/Panel/Margin/VBox/Milestones
 
 
-func setup(manager: EventManager) -> void:
+func setup(manager: EventManager, localized_text: LocalizedText) -> void:
 	event_manager = manager
+	text_catalog = localized_text
+	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	event_manager.changed.connect(_refresh)
 	shortcut.pressed.connect(_toggle_panel)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle_panel)
@@ -33,9 +36,9 @@ func _refresh() -> void:
 	if event_manager == null:
 		return
 
-	shortcut.text = "EVENT • %d Marks" % event_manager.event_marks
+	shortcut.text = "%s • %d Marks" % [text_catalog.text("UI_EVENT"), event_manager.event_marks]
 	title_label.text = event_manager.event_name
-	marks_label.text = "Event Marks: %d" % event_manager.event_marks
+	marks_label.text = "%s: %d" % [text_catalog.text("UI_EVENT_MARKS"), event_manager.event_marks]
 	_refresh_timer()
 
 	for child in milestones_box.get_children():
@@ -57,7 +60,7 @@ func _refresh_timer() -> void:
 	var remaining := event_manager.get_seconds_remaining()
 	var days := floori(remaining / 86400.0)
 	var hours := floori(fmod(remaining, 86400.0) / 3600.0)
-	timer_label.text = "Time remaining: %dd %dh" % [days, hours]
+	timer_label.text = "%s: %dd %dh" % [text_catalog.text("UI_TIME_REMAINING"), days, hours]
 
 
 func _claim(required: int) -> void:

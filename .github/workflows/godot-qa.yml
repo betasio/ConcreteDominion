@@ -13,7 +13,7 @@ jobs:
   qa:
     name: Headless validation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -24,7 +24,13 @@ jobs:
         with:
           version: 4.7.2
           use-dotnet: false
-          include-templates: false
+          include-templates: true
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
       - name: Verify engine
         run: godot --version
@@ -40,3 +46,31 @@ jobs:
 
       - name: Run smoke test
         run: godot --headless --path . res://scenes/tests/SmokeTest.tscn
+
+      - name: Prepare export directories
+        run: mkdir -p build/windows build/android
+
+      - name: Export Windows debug build
+        run: godot --headless --path . --export-debug "Windows Desktop" build/windows/ConcreteDominion.exe
+
+      - name: Prepare Android SDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "build-tools;35.0.1" "platforms;android-35"
+
+      - name: Export Android debug APK
+        run: godot --headless --path . --export-debug "Android" build/android/ConcreteDominion.apk
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-windows-debug
+          path: build/windows/**
+          if-no-files-found: error
+
+      - name: Upload Android build
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-android-debug
+          path: build/android/ConcreteDominion.apk
+          if-no-files-found: error

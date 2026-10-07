@@ -42,15 +42,18 @@ func _ready() -> void:
 		"WorldControlUI",
 		"ResourceProductionManager",
 		"LocalizedText",
+		"PresentationCatalog",
 		"FactionRules",
 		"AchievementManager",
-		"AchievementUI"
+		"TutorialManager",
+		"AchievementUI",
+		"TutorialUI"
 	]:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 17:
+	if save == null or SaveManager.SAVE_VERSION < 18:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -84,6 +87,8 @@ func _ready() -> void:
 		_fail("Localization catalog is invalid.")
 	elif not text_catalog.has_key("UI_TERRITORY_TITLE") or not text_catalog.has_key("UI_STORE_TITLE"):
 		_fail("High-traffic UI localization keys are missing.")
+	elif not text_catalog.has_key("TUTORIAL_WELCOME_TITLE") or not text_catalog.has_key("UI_TACTICS"):
+		_fail("Tutorial/secondary UI localization keys are missing.")
 
 	var faction_rules := game.get_node_or_null("FactionRules") as FactionRules
 	if faction_rules == null or faction_rules.get_encounter_cycle("harbor_bank").is_empty():
@@ -92,6 +97,14 @@ func _ready() -> void:
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
 		_fail("Achievement manager is missing.")
+
+	var tutorial_manager := game.get_node_or_null("TutorialManager") as TutorialManager
+	if tutorial_manager == null or tutorial_manager.current_step < TutorialManager.STEP_WELCOME:
+		_fail("Tutorial manager is invalid.")
+
+	var presentation := game.get_node_or_null("PresentationCatalog") as PresentationCatalog
+	if presentation == null:
+		_fail("Presentation catalog is missing.")
 
 	var city := game.get_node_or_null("CityMap")
 	if city == null or city.get_node_or_null("TurfOverlay") == null:
