@@ -341,6 +341,10 @@ func show_raid_target(target: RaidTarget) -> void:
 	selected_building = null
 	selected_lot = null
 	selected_raid_target = target
+
+	if not target.changed.is_connected(_refresh_raid):
+		target.changed.connect(_refresh_raid)
+
 	raid_panel.visible = true
 
 	if raid_battle.is_active():
