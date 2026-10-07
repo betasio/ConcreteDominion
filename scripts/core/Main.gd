@@ -21,6 +21,7 @@ extends Node
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
 @onready var combat_loadout: CombatLoadout = $CombatLoadout
 @onready var raid_battle: RaidBattle = $RaidBattle
+@onready var world_control: WorldControlManager = $WorldControlManager
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
 @onready var hud = $HUD
@@ -33,6 +34,7 @@ extends Node
 @onready var settings_ui: SettingsDiagnosticsUI = $SettingsDiagnosticsUI
 @onready var store_manager: StoreManager = $StoreManager
 @onready var store_ui: StoreUI = $StoreUI
+@onready var world_control_ui: WorldControlUI = $WorldControlUI
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var audio_manager: AudioManager = $AudioManager
 @onready var ui_focus_manager: UIFocusManager = $UIFocusManager
@@ -61,6 +63,18 @@ func _ready() -> void:
 		combat_loadout,
 		core_building_effects,
 		city_map
+	)
+
+	world_control.setup(
+		economy,
+		loot_inventory,
+		progression,
+		troop_roster,
+		hospital_queue,
+		alliance_manager,
+		city_map,
+		core_building_effects,
+		raid_battle
 	)
 
 	retention.setup(
@@ -112,6 +126,7 @@ func _ready() -> void:
 		construction_queue,
 		recruitment_queue,
 		raid_battle,
+		world_control,
 		city_map
 	)
 	save_manager.load_game()
@@ -136,6 +151,7 @@ func _ready() -> void:
 	event_ui.setup(event_manager)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
 	store_ui.setup(store_manager)
+	world_control_ui.setup(world_control, city_map)
 
 	settings.changed.connect(_apply_runtime_settings)
 	_apply_runtime_settings()
@@ -148,7 +164,8 @@ func _ready() -> void:
 		event_ui.get_node("Root") as Control,
 		combat_strategy_ui.get_node("Root") as Control,
 		settings_ui.get_node("Root") as Control,
-		store_ui.get_node("Root") as Control
+		store_ui.get_node("Root") as Control,
+		world_control_ui.get_node("Root") as Control
 	]
 	safe_area_manager.setup(safe_roots)
 	settings_ui.setup(settings, save_manager, balance, safe_roots)
@@ -178,6 +195,7 @@ func _ready() -> void:
 	city_map.lot_selected.connect(_on_lot_selected)
 	city_map.raid_target_selected.connect(_on_raid_target_selected)
 	city_map.view_mode_changed.connect(hud.set_view_mode_display)
+	city_map.view_mode_changed.connect(func(_mode): world_control.refresh_visibility())
 
 	hud.focus_building_requested.connect(city_map.focus_building)
 	hud.view_mode_requested.connect(city_map.set_view_mode)

@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 14
+const SAVE_VERSION := 15
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -24,6 +24,7 @@ var hospital: HospitalQueue
 var construction: ConstructionQueue
 var recruitment: RecruitmentQueue
 var raid_battle: RaidBattle
+var world_control: WorldControlManager
 var city_map: Node
 
 var _autosave_timer := 0.0
@@ -51,6 +52,7 @@ func setup(
 	construction_queue: ConstructionQueue,
 	recruitment_queue: RecruitmentQueue,
 	battle: RaidBattle,
+	control: WorldControlManager,
 	world: Node
 ) -> void:
 	economy = player_economy
@@ -69,6 +71,7 @@ func setup(
 	construction = construction_queue
 	recruitment = recruitment_queue
 	raid_battle = battle
+	world_control = control
 	city_map = world
 
 	economy.changed.connect(mark_dirty)
@@ -87,6 +90,7 @@ func setup(
 	construction.queue_changed.connect(mark_dirty)
 	recruitment.queue_changed.connect(mark_dirty)
 	raid_battle.changed.connect(mark_dirty)
+	world_control.changed.connect(mark_dirty)
 	city_map.view_mode_changed.connect(func(_mode): mark_dirty())
 
 	for building in city_map.get_persistent_buildings():
@@ -133,8 +137,11 @@ func save_game() -> bool:
 		"construction": construction.get_save_data(),
 		"recruitment": recruitment.get_save_data(),
 		"raid_battle": raid_battle.get_save_data(),
+		"world_control": world_control.get_save_data(),
 		"world": city_map.get_save_data()
 	}
+
+	_backup_current_save()
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -183,6 +190,7 @@ func load_game() -> bool:
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
+	world_control.load_save_data(data.get("world_control", {}), elapsed)
 	hospital.load_save_data(data.get("hospital", {}), elapsed)
 	construction.load_save_data(data.get("construction", {}), elapsed, city_map)
 	recruitment.load_save_data(data.get("recruitment", {}), elapsed)
@@ -254,6 +262,28 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 			if bool(world.get("intel_built", false)) and not world.has("intel_level"):
 				world["intel_level"] = 1
 			data["world"] = world
+
+	if version < 15 and not data.has("world_control"):
+		var saved_level := 1
+		var progression_data = data.get("progression", {})
+		if progression_data is Dictionary:
+			saved_level = maxi(1, int(progression_data.get("account_level", 1)))
+		var migrated_discovered := {"downtown_bank": true}
+		var unlocks := {
+			"harbor_bank": 2,
+			"midtown_exchange": 3,
+			"northside_hq": 4,
+			"casino_vault": 5,
+			"financial_tower": 6,
+			"industrial_depot": 7
+		}
+		for target_id in unlocks.keys():
+			if saved_level >= int(unlocks[target_id]):
+				migrated_discovered[target_id] = true
+		data["world_control"] = {
+			"discovered": migrated_discovered,
+			"owned": {}
+		}
 
 	data["schema_meta"] = {
 		"migrated_from": version,

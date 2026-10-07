@@ -127,6 +127,8 @@ func focus_raid_target_by_id(target_id: String) -> void:
 
 	if view_mode != &"world":
 		set_view_mode(&"world")
+	if not target.visible:
+		return
 
 	focus_raid_target(target)
 

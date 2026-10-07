@@ -498,7 +498,7 @@ func _open_raid() -> void:
 	elif selected_raid_target == null:
 		var targets: Array = get_node("/root/Main/CityMap").get_raid_targets()
 		for target in targets:
-			if target.is_available():
+			if target.visible and target.is_available():
 				selected_raid_target = target
 				break
 		if selected_raid_target == null and not targets.is_empty():

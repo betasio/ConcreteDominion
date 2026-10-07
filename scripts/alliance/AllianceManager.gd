@@ -50,6 +50,18 @@ func get_progression_summary() -> String:
 	]
 
 
+func award_alliance_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	alliance_xp += amount
+	while alliance_xp >= get_xp_for_next_level():
+		alliance_xp -= get_xp_for_next_level()
+		alliance_level += 1
+		_rebuild_slots_preserving_assignments()
+		alliance_leveled_up.emit(alliance_level)
+	changed.emit()
+
+
 func award_raid_result(result: Dictionary) -> void:
 	if not bool(result.get("victory", false)):
 		return
@@ -69,14 +81,7 @@ func award_raid_result(result: Dictionary) -> void:
 		"industrial_depot":
 			earned = 78
 
-	alliance_xp += earned
-	while alliance_xp >= get_xp_for_next_level():
-		alliance_xp -= get_xp_for_next_level()
-		alliance_level += 1
-		_rebuild_slots_preserving_assignments()
-		alliance_leveled_up.emit(alliance_level)
-
-	changed.emit()
+	award_alliance_xp(earned)
 
 
 func reset_raid_slots() -> void:

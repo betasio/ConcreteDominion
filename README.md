@@ -2,203 +2,238 @@
 
 A cross-platform 2.5D isometric RTS prototype built with Godot 4 and GDScript.
 
-## Core city progression milestone
+## Territory control + world endgame milestone
 
-The three starting buildings now have real long-term gameplay effects instead of only level numbers.
+The World map now has a persistent territory-control loop instead of functioning only as a raid-target selector.
 
-### Safehouse
+## District discovery and fog
 
-Safehouse upgrades now provide:
+Only Downtown Core is discovered by default on a fresh save.
 
-- 4% construction-time reduction per level above Lv.1;
-- 2% Alliance Raid Cash reward bonus per level above Lv.1.
+Higher districts are hidden by fog until they are discovered.
 
-Construction-speed reduction is centrally capped through GameBalance.
+Districts can be revealed in two ways:
 
-Current Safehouse upgrade defaults:
+- spend Intel through Territory Command;
+- use the Safehouse Command Scan when its cooldown is ready.
 
-- base upgrade cost: $8,000 x current level;
-- base upgrade duration: 20 seconds x current level before Safehouse reduction;
-- max level: 5.
+A district still respects its Account Level requirement before it can be discovered.
 
-### Underground Clinic
+Current Intel reveal costs:
 
-Clinic upgrades now provide:
+- Downtown Core: free/default
+- Harbor District: Intel x1
+- Midtown: Intel x1
+- Northside: Intel x2
+- High Roller Strip: Intel x2
+- Financial District: Intel x3
+- Industrial Belt: Intel x3
 
-- 8% treatment-time reduction per level above Lv.1;
-- additional parallel treatment capacity.
+Fogged targets are not selectable, focusable, or eligible for automatic Alliance raid invites.
 
-Treatment slots:
+### Schema-14 migration
 
-- Lv.1–2: 1 slot;
-- Lv.3–4: 2 slots;
-- Lv.5: 3 slots.
+Existing players are protected from losing access when upgrading to the fog system.
 
-The no-permanent-death rule remains unchanged. More Clinic levels only reduce downtime and allow more wounded groups to recover simultaneously.
+When a pre-schema-15 save is migrated, districts up to the player's saved Account Level are marked discovered automatically.
 
-Current Clinic upgrade defaults:
+Ownership is not granted by migration; turf still has to be captured through gameplay.
 
-- base upgrade cost: $7,000 x current level;
-- base upgrade duration: 18 seconds x current level;
-- max level: 5.
+## Turf ownership
 
-### Crew Barracks
+Winning a district's main raid for the first time captures that district.
 
-Barracks upgrades now provide:
+Captured turf is persistent and begins generating passive Cash.
 
-- 5% Enforcer recruitment-time reduction per level above Lv.1;
-- increased recruitment queue capacity.
+Ownership is not lost on patrol failure. This keeps territory progression meaningful without creating rage-quit losses.
 
-Recruitment queue capacity:
+## Passive district income
 
-- Lv.1–2: 1 job;
-- Lv.3–4: 2 jobs;
-- Lv.5: 3 jobs.
+Owned districts generate Cash continuously.
 
-Driver and Spy training-time bonuses still come from Garage and Intel Office progression, so each building retains a distinct purpose.
+Current base rates:
 
-The recruitment queue now persists both the active job and waiting jobs and processes them sequentially, including offline progression.
+- Downtown Core — $600/hour
+- Harbor District — $850/hour
+- Midtown — $1,100/hour
+- Northside — $1,450/hour
+- High Roller Strip — $1,800/hour
+- Financial District — $2,300/hour
+- Industrial Belt — $2,900/hour
 
-## Central balance
+Income is capped at eight hours of production.
 
-Core-building tuning now lives in GameBalance alongside the existing recruitment, facility, progression, and Gold speed-up values.
+Offline time contributes to the bank up to the same cap.
 
-Current defaults:
+The Territory panel shows:
 
-- Safehouse construction reduction: 4% per level;
-- Safehouse raid-Cash bonus: 2% per level;
-- Clinic healing reduction: 8% per level;
-- Clinic minimum healing multiplier: 0.60;
-- Barracks Enforcer training reduction: 5% per level;
-- Barracks minimum training multiplier: 0.70.
+- current Cash/hour;
+- banked Cash;
+- district ownership/discovery state;
+- collect action.
 
-## Alliance progression
+Collecting income contributes to Alliance tasks.
 
-The mock Alliance now has persistent:
+## Safehouse Command Scan
 
-- Alliance Level;
-- Alliance XP;
-- level-up thresholds;
-- frontline command bonus;
-- unlockable raid slots.
+Safehouse now has an active command function in addition to its passive construction/reward bonuses.
 
-Winning Alliance Raids grants Alliance XP based on target tier.
+Command Scan reveals the next Account-Level-eligible fogged district without spending Intel.
 
-Current Alliance XP rewards:
+Base cooldown:
 
-- Downtown: 20
-- Harbor: 28
-- Midtown: 34
-- Northside: 42
-- Casino: 52
-- Financial: 64
-- Industrial: 78
+10 minutes.
 
-Each Alliance Level above Lv.1 increases NPC frontline power by 2%.
+Each Safehouse level above Lv.1 shortens the cooldown by one minute, with a minimum of three minutes.
 
-Raid-slot unlocks:
+This gives Safehouse progression a visible strategic map function instead of only background percentages.
 
-- Alliance Lv.1: Frontline + Driver + Spy + Driver
-- Alliance Lv.2: unlock an additional Spy slot
-- Alliance Lv.4: unlock an additional Driver slot
+## PvE patrol encounters
 
-This deepens the original synergy design: alliance progression creates more room for support players rather than simply replacing them with higher raw power.
+Owned territory periodically generates a patrol threat.
 
-Alliance Level, XP, slot state, and online member state are persistent.
+Prototype patrol interval:
 
-## District mission chain
+90 seconds while the game is active.
 
-The mission system now extends beyond the opening tutorial.
+Each patrol has district-scaled Enforcer power requirements.
 
-New missions include:
+The player can resolve it from Territory Command.
 
-- Wheels Up — build the Garage
-- Midtown Pressure — defeat Midtown Exchange
-- Eyes Everywhere — build the Intel Office
-- Take Northside — defeat Northside Turf HQ
-- Break the House — defeat Casino Vault
-- Own the Skyline — defeat Financial Tower
-- Control the Supply — defeat Industrial Depot
+If player Enforcer power meets the threat:
 
-They award additional Cash and Account XP while guiding the player through the district ladder.
+- the patrol is cleared;
+- Cash is awarded;
+- higher-tier patrols can drop Intel;
+- Alliance task progress is awarded.
 
-Existing saves with an already-built Garage or Intel Office automatically receive the corresponding mission progress when MissionTracker initializes.
+If the patrol is stronger:
 
-## HUD updates
+- ownership is retained;
+- no troops die permanently;
+- at most one Enforcer is sent to the Clinic.
 
-Core-building selection now shows the building's current functional bonuses.
+This creates lightweight map maintenance without undermining the project's no-permanent-death pillar.
 
-The Clinic panel shows current treatment-slot capacity.
+## Alliance tasks
 
-The Barracks panel shows:
+Territory Command now contains shared Alliance objectives.
 
-- recruitment queue capacity;
-- active job;
-- waiting-job count;
-- queue usage.
+Current prototype tasks:
 
-The Alliance Hub now shows Alliance Level, Alliance XP, frontline command bonus, and current slot count above the social feed.
+### Hit the Streets
+Win 3 raids.
 
-## Persistence
+Reward:
+- 70 Alliance XP
+- $4,000 Cash
 
-Save schema is now version 14.
+### Keep It Moving
+Collect turf income twice.
 
-The existing save structure already owns:
+Reward:
+- 55 Alliance XP
+- $3,000 Cash
 
-- Safehouse level;
-- Clinic level;
-- Barracks level;
-- Alliance state;
-- recruitment state.
+### Clean the Block
+Clear 2 patrols.
 
-Recruitment save data now supports an active job plus a waiting queue.
+Reward:
+- 85 Alliance XP
+- $5,000 Cash
 
-The loader remains compatible with the older single-job recruitment save format.
+Alliance task rewards feed the same persistent Alliance Level/XP system introduced previously.
 
-## Architecture addition
+## Territory UI
+
+A new **Territory** shortcut opens Territory Command.
+
+The panel includes:
+
+- passive-income rate and bank;
+- district fog/discovery/ownership state;
+- next eligible Intel reveal;
+- Safehouse Command Scan timer;
+- active patrol threat;
+- Alliance task progress.
+
+The UI participates in the existing safe-area and large-text systems.
+
+## Save system
+
+Save schema is now **version 15**.
+
+New persistent state:
+
+- discovered districts;
+- owned districts;
+- passive-income bank;
+- production timing;
+- patrol timing;
+- active patrol;
+- Safehouse Command Scan cooldown;
+- Alliance task progress.
+
+Offline time advances passive income and Command Scan cooldown.
+
+The crash-safe backup path is also restored in the active save flow: before the primary save is overwritten, the last valid primary document is copied to the backup slot.
+
+## Architecture additions
 
 ```text
-scripts/buildings/
-└── CoreBuildingEffects.gd
-
 Main
-├── CoreBuildingEffects
-├── FacilityEffects
-├── ConstructionQueue
-├── RecruitmentQueue
-├── HospitalQueue
-└── AllianceManager
+├── WorldControlManager
+└── WorldControlUI
+
+scripts/world/
+└── WorldControlManager.gd
+
+scripts/ui/
+└── WorldControlUI.gd
+
+scenes/ui/
+└── WorldControlUI.tscn
 ```
 
-CoreBuildingEffects reads the saved building levels and exposes their effects to construction, recruitment, healing, raid rewards, and HUD presentation.
+WorldControlManager owns world-economy/discovery state.
 
-## Future final-test path
+CityMap remains responsible for visual map presentation and target positioning.
 
-When full testing begins:
+RaidBattle remains responsible for raid resolution.
 
-1. Upgrade Safehouse and compare construction durations.
-2. Win raids before/after Safehouse upgrades and compare reward pools.
-3. Upgrade Clinic to Lv.3 and confirm two wounded entries recover simultaneously.
-4. Upgrade Clinic to Lv.5 and confirm three treatment slots.
-5. Upgrade Barracks to Lv.3 and queue two recruitment jobs.
-6. Upgrade Barracks to Lv.5 and queue three jobs.
-7. Close/reopen during a queued recruitment chain and verify offline processing.
-8. Complete Garage/Intel and district missions.
-9. Win raids until Alliance Lv.2 and verify the extra Spy slot.
-10. Reach Alliance Lv.4 and verify the extra Driver slot.
-11. Restart and confirm all building, queue, mission, and Alliance progression persists.
-12. Run the smoke-test scene before the manual playthrough.
+AllianceManager remains responsible for persistent Alliance progression.
+
+## Recommended eventual test path
+
+When final testing starts:
+
+1. Start a new game and enter World view.
+2. Confirm only Downtown is visible.
+3. Defeat Downtown and verify it becomes OWNED.
+4. Wait or simulate time and collect Downtown passive Cash.
+5. Reach Lv.2 and use Safehouse Command Scan to reveal Harbor.
+6. Defeat Harbor and confirm total Cash/hour increases.
+7. Use Intel to reveal Midtown.
+8. Confirm a fogged target cannot be selected through Alliance shortcuts.
+9. Allow a patrol to spawn.
+10. Clear it with sufficient Enforcer power.
+11. Try a stronger patrol with insufficient power and confirm only Clinic recovery occurs.
+12. Complete all three Alliance tasks.
+13. Restart and confirm discovery, ownership, income, patrol, Command Scan, and task state persist.
+14. Test an older schema-14 save and confirm level-eligible districts remain discovered.
+15. Run the smoke-test scene.
 
 ## Next development direction
 
-The next strong milestone is broader endgame/content completion:
+The strongest next milestone is now content breadth and final-system depth:
 
-- Safehouse command features beyond passive bonuses;
-- more alliance members and alliance tasks;
-- resource production/collection;
-- district ownership/turf control;
-- PvE patrol encounters;
-- map fog/intel discovery;
-- more building slots;
-- localization-ready content data;
-- balance simulation and final QA.
+- resource-production buildings and collection visuals;
+- additional build lots;
+- district ownership visual overlays;
+- NPC factions and rival turf pressure;
+- richer patrol encounter types;
+- alliance task refresh cycles;
+- localization-ready text resources;
+- economy simulation/balance spreadsheet;
+- real art/audio integration;
+- final runtime/device QA.
