@@ -33,6 +33,14 @@ const CHAPTER_4_TASKS := [
 	"win_casino"
 ]
 
+const CHAPTER_5_TASKS := [
+	"reach_level_6",
+	"discover_financial",
+	"chapter_5_choice",
+	"capture_faction_objective",
+	"win_financial"
+]
+
 const STORY_BEATS := {
 	"recruit_crew": {"speaker":"Vex","portrait":"vex","line":"A city does not fear one name. Build the crew first. Then we give it a reason to remember ours."},
 	"win_downtown": {"speaker":"Mia","portrait":"mia","line":"Downtown moves money before it moves muscle. Hit the bank clean, fast, and leave them guessing."},
@@ -57,7 +65,13 @@ const STORY_BEATS := {
 	"chapter_4_choice": {"speaker":"Vex","portrait":"vex","line":"Celeste built a kingdom out of favors. We can buy our way inside or learn which secrets make the doors open for free."},
 	"build_data_hub": {"speaker":"Kira","portrait":"kira","line":"Give me a Data Hub and the Velvet Circle stops being mysterious. Every guest list, payment trail, and private room becomes a map."},
 	"win_casino": {"speaker":"Mia","portrait":"mia","line":"The house only wins while everyone agrees to play by its rules. Tonight we rewrite them."},
-	"chapter_4_complete": {"speaker":"Vex","portrait":"vex","line":"The Velvet Circle controlled the room. Now the room waits for us to speak."}
+	"chapter_4_complete": {"speaker":"Vex","portrait":"vex","line":"The Velvet Circle controlled the room. Now the room waits for us to speak."},
+	"reach_level_6": {"speaker":"Noah","portrait":"noah","line":"The Financial District is not defended by muscle. It is defended by contracts, favors, and people who never touch the dirt. We need enough weight to make those protections nervous."},
+	"discover_financial": {"speaker":"Celeste Marrow","portrait":"celeste","line":"The casino was a room. The Financial District is the house. You are still playing my game."},
+	"chapter_5_choice": {"speaker":"Vex","portrait":"vex","line":"We can hit their balance sheets in public or cut their confidence in private. Pick the pressure that makes the whole district move."},
+	"capture_faction_objective": {"speaker":"Noah","portrait":"noah","line":"Before we touch the Tower, prove our Faction can hold something together. Shared ground means shared leverage."},
+	"win_financial": {"speaker":"Kira","portrait":"kira","line":"The Tower is isolated. Accounts are frozen, exits are mapped, and their security teams are watching the wrong floors."},
+	"chapter_5_complete": {"speaker":"Mia","portrait":"mia","line":"We did not just take a building. We took the place where everyone kept score."}
 }
 
 signal changed
@@ -76,6 +90,7 @@ var chapter_milestones_claimed := {"2": false, "4": false}
 var chapter_2_choice := ""
 var chapter_3_choice := ""
 var chapter_4_choice := ""
+var chapter_5_choice := ""
 
 var missions: Dictionary = {
 	"recruit_crew":{"title":"Grow the Crew","description":"Recruit 5 troops.","goal":5,"progress":0,"completed":false,"reward_xp":60,"reward_cash":1500},
@@ -105,7 +120,13 @@ var missions: Dictionary = {
 	"build_data_hub":{"title":"Own the Guest List","description":"Build the Data Hub.","goal":1,"progress":0,"completed":false,"reward_xp":130,"reward_cash":5000},
 	"win_casino":{"title":"Break the House","description":"Capture Casino Vault from Celeste Marrow.","goal":1,"progress":0,"completed":false,"reward_xp":220,"reward_cash":9000},
 	"chapter_4_complete":{"title":"The Velvet Circle","description":"Complete the five Chapter 4 operations.","goal":5,"progress":0,"completed":false,"reward_xp":450,"reward_cash":16000,"reward_gold":20},
-	"win_financial":{"title":"Own the Skyline","description":"Defeat Financial Tower.","goal":1,"progress":0,"completed":false,"reward_xp":220,"reward_cash":9000},
+
+	"reach_level_6":{"title":"Carry City Weight","description":"Reach account level 6.","goal":6,"progress":1,"completed":false,"reward_xp":120,"reward_cash":5000},
+	"discover_financial":{"title":"See the Money Move","description":"Reveal Financial District.","goal":1,"progress":0,"completed":false,"reward_xp":130,"reward_cash":5500},
+	"chapter_5_choice":{"title":"Choose the Pressure","description":"Choose Hostile Takeover or Market Leak.","goal":1,"progress":0,"completed":false,"reward_xp":110,"reward_cash":0},
+	"capture_faction_objective":{"title":"Prove Shared Control","description":"Capture a Faction territory objective.","goal":1,"progress":0,"completed":false,"reward_xp":160,"reward_cash":6500,"reward_gold":5},
+	"win_financial":{"title":"Own the Skyline","description":"Capture Financial Tower.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000},
+	"chapter_5_complete":{"title":"The Ledger Burns","description":"Complete the five Chapter 5 operations.","goal":5,"progress":0,"completed":false,"reward_xp":550,"reward_cash":22000,"reward_gold":25},
 	"win_industrial":{"title":"Control the Supply","description":"Defeat Industrial Depot.","goal":1,"progress":0,"completed":false,"reward_xp":280,"reward_cash":12000}
 }
 
@@ -138,6 +159,7 @@ func setup(
 	if faction != null:
 		faction.faction_created.connect(_on_faction_joined)
 		faction.faction_joined.connect(_on_faction_joined)
+		faction.territory_captured.connect(_on_faction_territory_captured)
 
 	_refresh_level_mission()
 	_refresh_existing_buildings()
@@ -176,6 +198,10 @@ func _refresh_existing_world_state() -> void:
 		_set_progress("discover_casino", 1)
 	if world_control.is_owned("casino_vault"):
 		_set_progress("win_casino", 1)
+	if world_control.is_discovered("financial_tower"):
+		_set_progress("discover_financial", 1)
+	if world_control.is_owned("financial_tower"):
+		_set_progress("win_financial", 1)
 
 
 func _on_district_discovered(district_id: String) -> void:
@@ -188,6 +214,8 @@ func _on_district_discovered(district_id: String) -> void:
 			_set_progress("discover_northside", 1)
 		"casino_vault":
 			_set_progress("discover_casino", 1)
+		"financial_tower":
+			_set_progress("discover_financial", 1)
 
 
 func _on_district_captured(district_id: String) -> void:
@@ -200,6 +228,8 @@ func _on_district_captured(district_id: String) -> void:
 			_set_progress("win_northside", 1)
 		"casino_vault":
 			_set_progress("win_casino", 1)
+		"financial_tower":
+			_set_progress("win_financial", 1)
 
 
 func choose_chapter_2_approach(choice_id: String) -> bool:
@@ -271,6 +301,29 @@ func get_chapter_4_choice() -> String:
 	return chapter_4_choice
 
 
+func choose_chapter_5_approach(choice_id: String) -> bool:
+	if bool(missions["chapter_5_choice"]["completed"]):
+		return false
+	if not bool(missions["discover_financial"]["completed"]):
+		return false
+	if choice_id != "takeover" and choice_id != "market_leak":
+		return false
+
+	chapter_5_choice = choice_id
+	if choice_id == "takeover":
+		_apply_bonus_reward({"cash":8000,"loot":{"Parts":4}})
+	else:
+		_apply_bonus_reward({"gold":6,"loot":{"Intel":5}})
+
+	_set_progress("chapter_5_choice", 1)
+	strategic_choice_made.emit(choice_id)
+	return true
+
+
+func get_chapter_5_choice() -> String:
+	return chapter_5_choice
+
+
 func _refresh_faction_state() -> void:
 	if faction != null and faction.has_faction():
 		_set_progress("join_faction", 1)
@@ -278,6 +331,10 @@ func _refresh_faction_state() -> void:
 
 func _on_faction_joined(_faction_name: String) -> void:
 	_set_progress("join_faction", 1)
+
+
+func _on_faction_territory_captured(_territory_id: String) -> void:
+	_set_progress("capture_faction_objective", 1)
 
 
 func _on_recruitment_completed(_troop_type: StringName, amount: int) -> void:
@@ -328,6 +385,7 @@ func _refresh_level_mission() -> void:
 	_set_progress("reach_level_2", mini(progression.account_level, 2))
 	_set_progress("reach_level_4", mini(progression.account_level, 4))
 	_set_progress("reach_level_5", mini(progression.account_level, 5))
+	_set_progress("reach_level_6", mini(progression.account_level, 6))
 
 
 func _add_progress(mission_id: String, amount: int) -> void:
@@ -365,7 +423,7 @@ func _check_complete(mission_id: String) -> void:
 		economy.add_gold(int(mission.get("reward_gold", 0)))
 
 	mission_completed.emit(mission_id)
-	if mission_id != "chapter_1_complete" and mission_id != "chapter_2_complete" and mission_id != "chapter_3_complete" and mission_id != "chapter_4_complete":
+	if mission_id != "chapter_1_complete" and mission_id != "chapter_2_complete" and mission_id != "chapter_3_complete" and mission_id != "chapter_4_complete" and mission_id != "chapter_5_complete":
 		_refresh_chapter_progress()
 	changed.emit()
 
@@ -383,6 +441,9 @@ func _refresh_chapter_progress() -> void:
 
 	var chapter_4_count := _count_completed(CHAPTER_4_TASKS)
 	_set_progress("chapter_4_complete", chapter_4_count)
+
+	var chapter_5_count := _count_completed(CHAPTER_5_TASKS)
+	_set_progress("chapter_5_complete", chapter_5_count)
 
 
 func _count_completed(task_ids: Array) -> int:
@@ -420,6 +481,8 @@ func _apply_bonus_reward(reward: Dictionary) -> void:
 
 
 func get_story_chapter_status() -> Dictionary:
+	if bool(missions["chapter_4_complete"]["completed"]):
+		return _build_chapter_status(5, "The Ledger Burns", CHAPTER_5_TASKS, "chapter_5_complete", "$22,000 + 25 Gold + 550 XP")
 	if bool(missions["chapter_3_complete"]["completed"]):
 		return _build_chapter_status(4, "The Velvet Circle", CHAPTER_4_TASKS, "chapter_4_complete", "$16,000 + 20 Gold + 450 XP")
 	if bool(missions["chapter_2_complete"]["completed"]):
@@ -461,15 +524,17 @@ func _build_chapter_status(chapter: int, title: String, task_ids: Array, complet
 		"story_line": String(beat["line"]),
 		"milestone_2_claimed": bool(chapter_milestones_claimed["2"]),
 		"milestone_4_claimed": bool(chapter_milestones_claimed["4"]),
-		"choice_required": (chapter == 2 and next_id == "chapter_2_choice") or (chapter == 3 and next_id == "chapter_3_choice") or (chapter == 4 and next_id == "chapter_4_choice"),
-		"choice": chapter_4_choice if chapter == 4 else (chapter_3_choice if chapter == 3 else chapter_2_choice),
+		"choice_required": (chapter == 2 and next_id == "chapter_2_choice") or (chapter == 3 and next_id == "chapter_3_choice") or (chapter == 4 and next_id == "chapter_4_choice") or (chapter == 5 and next_id == "chapter_5_choice"),
+		"choice": chapter_5_choice if chapter == 5 else (chapter_4_choice if chapter == 4 else (chapter_3_choice if chapter == 3 else chapter_2_choice)),
 		"completion_reward": completion_reward
 	}
 
 
 func get_mission_lines() -> PackedStringArray:
 	var active_tasks: Array = CHAPTER_1_TASKS
-	if bool(missions["chapter_3_complete"]["completed"]):
+	if bool(missions["chapter_4_complete"]["completed"]):
+		active_tasks = CHAPTER_5_TASKS
+	elif bool(missions["chapter_3_complete"]["completed"]):
 		active_tasks = CHAPTER_4_TASKS
 	elif bool(missions["chapter_2_complete"]["completed"]):
 		active_tasks = CHAPTER_3_TASKS
@@ -489,7 +554,8 @@ func get_save_data() -> Dictionary:
 			"milestones_claimed": chapter_milestones_claimed.duplicate(true),
 			"chapter_2_choice": chapter_2_choice,
 			"chapter_3_choice": chapter_3_choice,
-			"chapter_4_choice": chapter_4_choice
+			"chapter_4_choice": chapter_4_choice,
+			"chapter_5_choice": chapter_5_choice
 		}
 	}
 	for mission_id in missions.keys():
@@ -519,5 +585,6 @@ func load_save_data(data: Dictionary) -> void:
 		chapter_2_choice = String(meta.get("chapter_2_choice", chapter_2_choice))
 		chapter_3_choice = String(meta.get("chapter_3_choice", chapter_3_choice))
 		chapter_4_choice = String(meta.get("chapter_4_choice", chapter_4_choice))
+		chapter_5_choice = String(meta.get("chapter_5_choice", chapter_5_choice))
 
 	changed.emit()
