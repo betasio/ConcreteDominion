@@ -31,6 +31,7 @@ func _ready() -> void:
 
 	_check_city_art(presentation, city)
 	_check_character_art(presentation)
+	_check_campaign_art(presentation)
 	_check_ui_and_street_art(presentation)
 	_finish()
 
@@ -88,6 +89,17 @@ func _check_character_art(presentation: PresentationCatalog) -> void:
 	for key in ["vex", "mia", "noah", "kira", "enforcer", "driver", "spy"]:
 		if presentation.get_character_portrait(key) == null:
 			_fail("Missing required character/unit portrait: %s" % key)
+
+
+func _check_campaign_art(presentation: PresentationCatalog) -> void:
+	if not presentation.is_campaign_atlas_ready():
+		_fail("Campaign art atlas failed to load.")
+		return
+	if presentation.get_campaign_atlas_size() != Vector2i(256, 64):
+		_fail("Campaign art atlas size changed unexpectedly: %s" % presentation.get_campaign_atlas_size())
+	for key in ["darius", "northside", "celeste", "casino"]:
+		if presentation.get_campaign_art(key) == null:
+			_fail("Missing required campaign art: %s" % key)
 
 
 func _check_ui_and_street_art(presentation: PresentationCatalog) -> void:
