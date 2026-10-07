@@ -61,7 +61,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 30:
+	if save == null or SaveManager.SAVE_VERSION < 31:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -201,6 +201,10 @@ func _ready() -> void:
 			_fail("Faction matchmaking rating is invalid.")
 		if faction_manager.get_territory_cash_multiplier() < 1.0:
 			_fail("Faction territory income objective multiplier is invalid.")
+		if FactionManager.SEASON_WEEKS != EndgameManager.SEASON_WEEKS:
+			_fail("Faction and Dominion season cadence are not synchronized.")
+		if faction_manager.season_period < 0:
+			_fail("Faction seasonal competition period is invalid.")
 		if missions.faction != faction_manager:
 			_fail("Chapter Faction integration is not wired.")
 		if not faction_manager.territory_captured.is_connected(missions._on_faction_territory_captured):
