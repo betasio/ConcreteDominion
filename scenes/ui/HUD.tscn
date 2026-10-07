@@ -67,10 +67,10 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -390.0
-offset_top = -130.0
+offset_left = -410.0
+offset_top = -180.0
 offset_right = -24.0
-offset_bottom = 130.0
+offset_bottom = 180.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -83,7 +83,7 @@ theme_override_constants/margin_bottom = 18
 
 [node name="VBox" type="VBoxContainer" parent="Root/SelectionPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="Root/SelectionPanel/Margin/VBox"]
 layout_mode = 2
@@ -95,6 +95,19 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "Building details"
 autowrap_mode = 2
+
+[node name="Level" type="Label" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+text = "Level 1"
+
+[node name="Upgrade" type="Button" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+text = "Upgrade"
+
+[node name="Build" type="Button" parent="Root/SelectionPanel/Margin/VBox"]
+visible = false
+layout_mode = 2
+text = "Build"
 
 [node name="OpenHospital" type="Button" parent="Root/SelectionPanel/Margin/VBox"]
 layout_mode = 2
@@ -161,6 +174,39 @@ text = "Instant Heal"
 layout_mode = 2
 text = "Close"
 
+[node name="ConstructionBar" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -88.0
+offset_right = -440.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Margin" type="MarginContainer" parent="Root/ConstructionBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 10
+
+[node name="HBox" type="HBoxContainer" parent="Root/ConstructionBar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Status" type="Label" parent="Root/ConstructionBar/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Building..."
+
+[node name="FinishNow" type="Button" parent="Root/ConstructionBar/Margin/HBox"]
+layout_mode = 2
+text = "Finish Now"
+
 [node name="Help" type="Label" parent="Root"]
 layout_mode = 1
 anchors_preset = 3
@@ -174,6 +220,6 @@ offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Click a building to inspect it\nWASD / Arrows + Mouse Wheel • Mobile: Drag + Pinch"
+text = "Click buildings or empty lots\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2

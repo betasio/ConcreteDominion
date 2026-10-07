@@ -1,6 +1,7 @@
 extends Node2D
 
 signal building_selected(building: Building)
+signal lot_selected(lot: BuildLot)
 
 @export var grid_width: int = 18
 @export var grid_height: int = 18
@@ -10,8 +11,10 @@ signal building_selected(building: Building)
 @onready var camera: Camera2D = $StrategyCamera
 @onready var safehouse: Building = $Buildings/Safehouse
 @onready var hospital: Building = $Buildings/Hospital
+@onready var lot_a: BuildLot = $Buildings/BuildLotA
+@onready var lot_b: BuildLot = $Buildings/BuildLotB
 
-var selected_building: Building
+var selected_target: Node
 
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
@@ -22,9 +25,13 @@ var _line_color := Color(0.38, 0.42, 0.39, 0.55)
 func _ready() -> void:
 	safehouse.position = iso_to_screen(Vector2i(8, 8))
 	hospital.position = iso_to_screen(Vector2i(11, 8))
+	lot_a.position = iso_to_screen(Vector2i(8, 11))
+	lot_b.position = iso_to_screen(Vector2i(11, 11))
 
 	safehouse.selected.connect(_select_building)
 	hospital.selected.connect(_select_building)
+	lot_a.selected.connect(_select_lot)
+	lot_b.selected.connect(_select_lot)
 	queue_redraw()
 
 
@@ -39,10 +46,7 @@ func _draw() -> void:
 
 func iso_to_screen(cell: Vector2i) -> Vector2:
 	var origin := Vector2(0.0, -grid_height * tile_height * 0.25)
-	return origin + Vector2(
-		(cell.x - cell.y) * tile_width * 0.5,
-		(cell.x + cell.y) * tile_height * 0.5
-	)
+	return origin + Vector2((cell.x - cell.y) * tile_width * 0.5, (cell.x + cell.y) * tile_height * 0.5)
 
 
 func focus_building(building_type: StringName) -> void:
@@ -53,18 +57,27 @@ func focus_building(building_type: StringName) -> void:
 		target = safehouse
 	else:
 		return
-
 	_select_building(target)
 	camera.position = target.position + Vector2(0, -40)
 
 
-func _select_building(building: Building) -> void:
-	if selected_building != null:
-		selected_building.set_selected(false)
+func _clear_selection() -> void:
+	if selected_target != null and selected_target.has_method("set_selected"):
+		selected_target.call("set_selected", false)
 
-	selected_building = building
-	selected_building.set_selected(true)
+
+func _select_building(building: Building) -> void:
+	_clear_selection()
+	selected_target = building
+	building.set_selected(true)
 	building_selected.emit(building)
+
+
+func _select_lot(lot: BuildLot) -> void:
+	_clear_selection()
+	selected_target = lot
+	lot.set_selected(true)
+	lot_selected.emit(lot)
 
 
 func _draw_diamond(center: Vector2, fill: Color) -> void:

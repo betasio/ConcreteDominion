@@ -6,20 +6,21 @@ signal treatment_completed(entry: Dictionary)
 
 @export var seconds_per_troop: float = 3.0
 @export var gold_per_minute: int = 2
-@export var premium_currency: int = 250
 
 var wounded_queue: Array[Dictionary] = []
+var economy: PlayerEconomy
 var _last_displayed_second := -1
+
+
+func setup(player_economy: PlayerEconomy) -> void:
+	economy = player_economy
 
 
 func _process(delta: float) -> void:
 	if wounded_queue.is_empty():
 		return
 
-	wounded_queue[0]["seconds_remaining"] = maxf(
-		0.0,
-		float(wounded_queue[0]["seconds_remaining"]) - delta
-	)
+	wounded_queue[0]["seconds_remaining"] = maxf(0.0, float(wounded_queue[0]["seconds_remaining"]) - delta)
 
 	var displayed_second := ceili(float(wounded_queue[0]["seconds_remaining"]))
 	if displayed_second != _last_displayed_second:
@@ -36,7 +37,6 @@ func _process(delta: float) -> void:
 func add_wounded(troop_type: StringName, amount: int) -> void:
 	if amount <= 0:
 		return
-
 	wounded_queue.append({
 		"troop_type": troop_type,
 		"amount": amount,
@@ -49,7 +49,6 @@ func get_instant_heal_cost() -> int:
 	var total_seconds := 0.0
 	for entry in wounded_queue:
 		total_seconds += float(entry["seconds_remaining"])
-
 	return ceili(total_seconds / 60.0) * gold_per_minute
 
 
@@ -58,10 +57,8 @@ func instant_heal() -> bool:
 		return true
 
 	var cost := get_instant_heal_cost()
-	if premium_currency < cost:
+	if economy == null or not economy.spend_gold(cost):
 		return false
-
-	premium_currency -= cost
 
 	while not wounded_queue.is_empty():
 		var completed := wounded_queue.pop_front()

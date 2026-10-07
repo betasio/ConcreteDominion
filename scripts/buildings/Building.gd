@@ -2,13 +2,19 @@ class_name Building
 extends Area2D
 
 signal selected(building: Building)
+signal changed
 
 @export var building_type: StringName = &"building"
 @export var display_name: String = "Building"
 @export_multiline var description: String = ""
 @export var accent_color: Color = Color(0.78, 0.62, 0.25)
+@export var level: int = 1
+@export var base_upgrade_cash_cost: int = 5000
+@export var base_upgrade_duration: float = 15.0
 
 var is_selected := false
+var is_constructing := false
+var pending_level := 0
 
 
 func _ready() -> void:
@@ -18,6 +24,29 @@ func _ready() -> void:
 
 func set_selected(value: bool) -> void:
 	is_selected = value
+	queue_redraw()
+
+
+func get_upgrade_cash_cost() -> int:
+	return base_upgrade_cash_cost * level
+
+
+func get_upgrade_duration() -> float:
+	return base_upgrade_duration * float(level)
+
+
+func begin_construction(target_level: int) -> void:
+	is_constructing = true
+	pending_level = target_level
+	changed.emit()
+	queue_redraw()
+
+
+func complete_construction(target_level: int) -> void:
+	level = maxi(level, target_level)
+	pending_level = 0
+	is_constructing = false
+	changed.emit()
 	queue_redraw()
 
 
@@ -48,18 +77,20 @@ func _draw() -> void:
 	else:
 		draw_rect(Rect2(-18, -84, 36, 46), accent_color.darkened(0.25), true)
 
+	if is_constructing:
+		draw_line(Vector2(-76, -120), Vector2(-76, 12), Color(0.90, 0.68, 0.20), 5.0)
+		draw_line(Vector2(76, -120), Vector2(76, 12), Color(0.90, 0.68, 0.20), 5.0)
+		draw_line(Vector2(-82, -95), Vector2(82, -95), Color(0.90, 0.68, 0.20), 5.0)
+
 	if is_selected:
 		draw_arc(Vector2(0, -35), 112.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(-72, 62),
-		display_name.to_upper(),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		144,
-		18,
-		Color(0.95, 0.91, 0.78)
-	)
+	var level_text := "Lv.%d" % level
+	if is_constructing:
+		level_text += " → %d" % pending_level
+
+	draw_string(ThemeDB.fallback_font, Vector2(-72, 62), display_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 144, 18, Color(0.95, 0.91, 0.78))
+	draw_string(ThemeDB.fallback_font, Vector2(-42, 84), level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
