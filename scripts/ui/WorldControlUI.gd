@@ -5,6 +5,7 @@ var control: WorldControlManager
 var city_map: Node
 var resources: ResourceProductionManager
 var text_catalog: LocalizedText
+var presentation_catalog: PresentationCatalog
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var income_label: Label = $Root/Panel/Margin/VBox/Income
@@ -21,6 +22,7 @@ var text_catalog: LocalizedText
 @onready var patrol_button: Button = $Root/Panel/Margin/VBox/ResolvePatrol
 @onready var victory_panel: PanelContainer = $Root/VictoryPanel
 @onready var victory_title: Label = $Root/VictoryPanel/Margin/VBox/Title
+@onready var campaign_art: TextureRect = $Root/VictoryPanel/Margin/VBox/CampaignArt
 @onready var victory_boss: Label = $Root/VictoryPanel/Margin/VBox/Boss
 @onready var victory_summary: Label = $Root/VictoryPanel/Margin/VBox/Summary
 @onready var victory_close: Button = $Root/VictoryPanel/Margin/VBox/Close
@@ -31,6 +33,7 @@ func setup(manager: WorldControlManager, world: Node, resource_manager: Resource
 	city_map = world
 	resources = resource_manager
 	text_catalog = localized_text
+	presentation_catalog = get_parent().get_node_or_null("PresentationCatalog") as PresentationCatalog
 	$Root/Shortcut.text = text_catalog.text("UI_TERRITORY")
 	$Root/Panel/Margin/VBox/Title.text = text_catalog.text("UI_TERRITORY_TITLE")
 	$Root/Panel/Margin/VBox/DiscoverIntel.text = text_catalog.text("UI_REVEAL_INTEL")
@@ -85,6 +88,7 @@ func _collect_resources() -> void:
 
 
 func _show_boss_intro(district_id: String) -> void:
+	_apply_campaign_art(district_id, true)
 	var dossier := control.get_faction_dossier(district_id)
 	if dossier.is_empty():
 		return
@@ -108,6 +112,7 @@ func _show_boss_intro(district_id: String) -> void:
 
 
 func _show_district_victory(district_id: String) -> void:
+	_apply_campaign_art(district_id, false)
 	var summary := control.get_capture_victory_summary(district_id)
 	if summary.is_empty():
 		return
@@ -125,6 +130,17 @@ func _show_district_victory(district_id: String) -> void:
 	victory_close.text = "Claim Turf"
 	victory_panel.visible = true
 	victory_close.grab_focus.call_deferred()
+
+
+func _apply_campaign_art(district_id: String, boss_intro: bool) -> void:
+	campaign_art.texture = null
+	if presentation_catalog == null:
+		return
+	match district_id:
+		"northside_hq":
+			campaign_art.texture = presentation_catalog.get_campaign_art("darius" if boss_intro else "northside")
+		"casino_vault":
+			campaign_art.texture = presentation_catalog.get_campaign_art("celeste" if boss_intro else "casino")
 
 
 func _close_victory_panel() -> void:
