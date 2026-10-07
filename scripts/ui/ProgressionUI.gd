@@ -12,6 +12,10 @@ var presentation_catalog: PresentationCatalog
 @onready var level_label: Label = $Root/Panel/Margin/VBox/Level
 @onready var xp_label: Label = $Root/Panel/Margin/VBox/XP
 @onready var chapter_label: Label = $Root/Panel/Margin/VBox/Chapter
+@onready var story_portrait: TextureRect = $Root/Panel/Margin/VBox/StoryBeat/Portrait
+@onready var story_speaker: Label = $Root/Panel/Margin/VBox/StoryBeat/Copy/Speaker
+@onready var story_line: Label = $Root/Panel/Margin/VBox/StoryBeat/Copy/Line
+@onready var milestones_label: Label = $Root/Panel/Margin/VBox/Milestones
 @onready var unlocks_label: Label = $Root/Panel/Margin/VBox/Unlocks
 @onready var missions_label: Label = $Root/Panel/Margin/VBox/Missions
 @onready var enforcer_button: Button = $Root/Panel/Margin/VBox/EnforcerUpgrade
@@ -68,6 +72,7 @@ func _refresh() -> void:
 	]
 
 	var chapter := missions.get_story_chapter_status()
+	_refresh_story_beat(chapter)
 	if bool(chapter["complete"]):
 		chapter_label.text = "CHAPTER %d • %s\nCOMPLETE — %d/%d operations. The city war is open.\nCompletion reward: %s" % [
 			int(chapter["chapter"]), String(chapter["title"]), int(chapter["progress"]), int(chapter["goal"]), String(chapter["completion_reward"])
@@ -77,6 +82,11 @@ func _refresh() -> void:
 			int(chapter["chapter"]), String(chapter["title"]), int(chapter["progress"]), int(chapter["goal"]), String(chapter["next_title"]), String(chapter["next_description"]), String(chapter["completion_reward"])
 		]
 
+	milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Gold + 35 XP + Parts x1\n%s  4/5 — $3,500 + 5 Gold + 60 XP + Intel x1" % [
+		"✓" if bool(chapter["milestone_2_claimed"]) else "○",
+		"✓" if bool(chapter["milestone_4_claimed"]) else "○"
+	]
+
 	unlocks_label.text = text_catalog.text("UI_UNLOCKS_TITLE") + "\nLv.2 — Harbor District + Garage\nLv.3 — Midtown + Intel Office\nLv.4 — Northside + Scrapyard\nLv.5 — High Roller Strip + Data Hub\nLv.6 — Financial District\nLv.7 — Industrial Belt"
 
 	missions_label.text = text_catalog.text("UI_MISSIONS") + "\n" + "\n".join(missions.get_mission_lines())
@@ -84,6 +94,13 @@ func _refresh() -> void:
 	_refresh_upgrade_button(enforcer_button, &"Enforcer")
 	_refresh_upgrade_button(driver_button, &"Driver")
 	_refresh_upgrade_button(spy_button, &"Spy")
+
+
+func _refresh_story_beat(chapter: Dictionary) -> void:
+	story_speaker.text = String(chapter.get("speaker", "Vex")).to_upper()
+	story_line.text = "“%s”" % String(chapter.get("story_line", ""))
+	if presentation_catalog != null:
+		story_portrait.texture = presentation_catalog.get_character_portrait(String(chapter.get("portrait", "vex")))
 
 
 func _apply_portrait_art() -> void:
