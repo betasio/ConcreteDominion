@@ -138,7 +138,9 @@ func _test_malformed_save_clamps() -> void:
 func _test_dominion_save_clamps() -> void:
 	var endgame := EndgameManager.new()
 	add_child(endgame)
+	var current_week := floori(float(floori(Time.get_unix_time_from_system() / 86400.0)) / 7.0)
 	endgame.load_save_data({
+		"weekly_period": current_week,
 		"family_operation_wins": 999,
 		"boss_rematch_wins": 99,
 		"faction_war_wins": 99,
