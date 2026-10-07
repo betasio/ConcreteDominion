@@ -101,6 +101,21 @@ size_flags_vertical = 3
 text = "Build the crew first."
 autowrap_mode = 2
 
+[node name="Approach" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Force" type="Button" parent="Root/Panel/Margin/VBox/Approach"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FORCE • $2,500 + Parts x2"
+
+[node name="Intel" type="Button" parent="Root/Panel/Margin/VBox/Approach"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "INTEL • 3 Gold + Intel x2"
+
 [node name="Milestones" type="Label" parent="Root/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
