@@ -6,15 +6,17 @@ extends Node
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
 @onready var recruitment_queue: RecruitmentQueue = $RecruitmentQueue
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
+@onready var raid_battle: RaidBattle = $RaidBattle
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
 @onready var hud = $HUD
 
 
 func _ready() -> void:
-	hospital_queue.setup(economy)
+	hospital_queue.setup(economy, troop_roster)
 	construction_queue.setup(economy)
 	recruitment_queue.setup(economy, troop_roster)
+	raid_battle.setup(economy, troop_roster, hospital_queue, synergy_raid)
 
 	save_manager.setup(
 		economy,
@@ -22,6 +24,7 @@ func _ready() -> void:
 		hospital_queue,
 		construction_queue,
 		recruitment_queue,
+		raid_battle,
 		city_map
 	)
 	save_manager.load_game()
@@ -32,7 +35,8 @@ func _ready() -> void:
 		hospital_queue,
 		construction_queue,
 		recruitment_queue,
-		synergy_raid
+		synergy_raid,
+		raid_battle
 	)
 
 	city_map.building_selected.connect(_on_building_selected)

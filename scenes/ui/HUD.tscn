@@ -180,7 +180,7 @@ text = "UNDERGROUND CLINIC"
 
 [node name="Hint" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
 layout_mode = 2
-text = "Prototype: simulate a battle to send wounded crew here."
+text = "Wounded crew are temporarily removed from your active roster until healed."
 
 [node name="Queue" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 78)
@@ -194,7 +194,7 @@ text = "Instant heal cost: 0 Gold"
 
 [node name="SimulateBattle" type="Button" parent="Root/HospitalPanel/Margin/VBox"]
 layout_mode = 2
-text = "Simulate Battle Wounds (+16 troops)"
+text = "Simulate Wounds"
 
 [node name="InstantHeal" type="Button" parent="Root/HospitalPanel/Margin/VBox"]
 layout_mode = 2
@@ -274,10 +274,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -380.0
-offset_top = -285.0
-offset_right = 380.0
-offset_bottom = 285.0
+offset_left = -410.0
+offset_top = -350.0
+offset_right = 410.0
+offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -290,22 +290,28 @@ theme_override_constants/margin_bottom = 20
 
 [node name="VBox" type="VBoxContainer" parent="Root/RaidPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 9
 
 [node name="Title" type="Label" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "SYNERGY RAID LOBBY"
+text = "SYNERGY RAID"
 
 [node name="Explanation" type="Label" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "AllianceBoss supplies the frontline power. Your lower-power specialists multiply the raid through essential support roles."
+text = "The alliance boss supplies frontline power. Your Drivers and Spies multiply that power through essential support roles."
+autowrap_mode = 2
+
+[node name="Target" type="Label" parent="Root/RaidPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "TARGET: Downtown Bank"
 autowrap_mode = 2
 
 [node name="Roster" type="Label" parent="Root/RaidPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
-text = "Frontline: AllianceBoss (6,000 power)"
+text = "Frontline: AllianceBoss"
 autowrap_mode = 2
 
 [node name="AddDriver" type="Button" parent="Root/RaidPanel/Margin/VBox"]
@@ -318,17 +324,25 @@ text = "Add Spy Support (+12%)"
 
 [node name="Calculate" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Calculate Raid"
+text = "Preview Raid Damage"
+
+[node name="Launch" type="Button" parent="Root/RaidPanel/Margin/VBox"]
+layout_mode = 2
+text = "Launch Raid"
+
+[node name="Status" type="Label" parent="Root/RaidPanel/Margin/VBox"]
+layout_mode = 2
+text = "Ready to launch."
 
 [node name="Result" type="Label" parent="Root/RaidPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 105)
+custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
-text = "Add support allies, then calculate the raid."
+text = "Add support allies, preview the damage, then launch."
 autowrap_mode = 2
 
 [node name="Reset" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
-text = "Reset Lobby"
+text = "Reset Support"
 
 [node name="Close" type="Button" parent="Root/RaidPanel/Margin/VBox"]
 layout_mode = 2
@@ -374,12 +388,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -430.0
+offset_left = -440.0
 offset_top = -86.0
 offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Recruit crew, then test Alliance Raid support\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
+text = "Recruit support → Launch raid → Heal wounds\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2

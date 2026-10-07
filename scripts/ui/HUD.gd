@@ -8,6 +8,7 @@ var hospital_queue: HospitalQueue
 var construction_queue: ConstructionQueue
 var recruitment_queue: RecruitmentQueue
 var synergy_raid: SynergyRaid
+var raid_battle: RaidBattle
 
 var selected_building: Building
 var selected_lot: BuildLot
@@ -43,10 +44,14 @@ var raid_spies := 0
 @onready var finish_recruitment_button: Button = $Root/BarracksPanel/Margin/VBox/FinishRecruitment
 
 @onready var raid_panel: PanelContainer = $Root/RaidPanel
+@onready var raid_target_label: Label = $Root/RaidPanel/Margin/VBox/Target
 @onready var raid_roster_label: Label = $Root/RaidPanel/Margin/VBox/Roster
+@onready var raid_status_label: Label = $Root/RaidPanel/Margin/VBox/Status
 @onready var raid_result_label: Label = $Root/RaidPanel/Margin/VBox/Result
 @onready var add_driver_button: Button = $Root/RaidPanel/Margin/VBox/AddDriver
 @onready var add_spy_button: Button = $Root/RaidPanel/Margin/VBox/AddSpy
+@onready var preview_raid_button: Button = $Root/RaidPanel/Margin/VBox/Calculate
+@onready var launch_raid_button: Button = $Root/RaidPanel/Margin/VBox/Launch
 
 
 func setup(
@@ -55,7 +60,8 @@ func setup(
 	clinic: HospitalQueue,
 	construction: ConstructionQueue,
 	recruitment: RecruitmentQueue,
-	raid: SynergyRaid
+	raid: SynergyRaid,
+	battle: RaidBattle
 ) -> void:
 	economy = player_economy
 	troop_roster = roster
@@ -63,6 +69,7 @@ func setup(
 	construction_queue = construction
 	recruitment_queue = recruitment
 	synergy_raid = raid
+	raid_battle = battle
 
 	economy.changed.connect(_refresh_all)
 	troop_roster.changed.connect(_refresh_all)
@@ -71,6 +78,8 @@ func setup(
 	construction_queue.construction_completed.connect(_on_construction_completed)
 	recruitment_queue.queue_changed.connect(_refresh_recruitment)
 	recruitment_queue.recruitment_completed.connect(_on_recruitment_completed)
+	raid_battle.changed.connect(_refresh_raid)
+	raid_battle.battle_resolved.connect(_on_raid_resolved)
 
 	$Root/HospitalShortcut.pressed.connect(_on_hospital_shortcut)
 	$Root/BarracksShortcut.pressed.connect(_on_barracks_shortcut)
@@ -95,7 +104,8 @@ func setup(
 
 	add_driver_button.pressed.connect(_add_driver_support)
 	add_spy_button.pressed.connect(_add_spy_support)
-	$Root/RaidPanel/Margin/VBox/Calculate.pressed.connect(_calculate_raid)
+	preview_raid_button.pressed.connect(_calculate_raid)
+	launch_raid_button.pressed.connect(_launch_raid)
 	$Root/RaidPanel/Margin/VBox/Reset.pressed.connect(_prepare_raid)
 	$Root/RaidPanel/Margin/VBox/Close.pressed.connect(_close_raid)
 
@@ -222,8 +232,12 @@ func _close_hospital() -> void:
 
 
 func _simulate_battle() -> void:
-	hospital_queue.add_wounded(&"Enforcer", 12)
-	hospital_queue.add_wounded(&"Driver", 4)
+	var enforcer_wounds := mini(4, troop_roster.get_count(&"Enforcer"))
+	var driver_wounds := mini(1, troop_roster.get_count(&"Driver"))
+	if enforcer_wounds > 0:
+		hospital_queue.send_to_hospital(&"Enforcer", enforcer_wounds)
+	if driver_wounds > 0:
+		hospital_queue.send_to_hospital(&"Driver", driver_wounds)
 	_refresh_hospital()
 
 
@@ -323,7 +337,12 @@ func _refresh_recruitment() -> void:
 
 func _open_raid() -> void:
 	raid_panel.visible = true
-	_prepare_raid()
+	if raid_battle.is_active():
+		raid_drivers = int(raid_battle.active_battle.get("drivers", 0))
+		raid_spies = int(raid_battle.active_battle.get("spies", 0))
+	else:
+		_prepare_raid()
+	_refresh_raid()
 
 
 func _close_raid() -> void:
@@ -331,16 +350,18 @@ func _close_raid() -> void:
 
 
 func _prepare_raid() -> void:
+	if raid_battle != null and raid_battle.is_active():
+		return
 	raid_drivers = 0
 	raid_spies = 0
 	synergy_raid.clear()
 	synergy_raid.join_raid("AllianceBoss", 45, 6000.0, &"frontline")
-	raid_result_label.text = "Add support allies, then calculate the raid."
+	raid_result_label.text = "Add support allies, preview the damage, then launch."
 	_refresh_raid()
 
 
 func _add_driver_support() -> void:
-	if raid_drivers >= troop_roster.get_count(&"Driver"):
+	if raid_battle.is_active() or raid_drivers >= troop_roster.get_count(&"Driver"):
 		return
 	raid_drivers += 1
 	synergy_raid.join_raid("Driver_%d" % raid_drivers, 12, 0.0, &"driver")
@@ -348,7 +369,7 @@ func _add_driver_support() -> void:
 
 
 func _add_spy_support() -> void:
-	if raid_spies >= troop_roster.get_count(&"Spy"):
+	if raid_battle.is_active() or raid_spies >= troop_roster.get_count(&"Spy"):
 		return
 	raid_spies += 1
 	synergy_raid.join_raid("Spy_%d" % raid_spies, 14, 0.0, &"spy")
@@ -356,26 +377,68 @@ func _add_spy_support() -> void:
 
 
 func _refresh_raid() -> void:
-	if synergy_raid == null or troop_roster == null:
+	if synergy_raid == null or troop_roster == null or raid_battle == null:
 		return
 
-	raid_roster_label.text = "Frontline: AllianceBoss (6,000 power)\nYour support: %d Driver(s), %d Spy(s)\nAvailable roster: %d Drivers, %d Spies" % [
+	raid_target_label.text = "TARGET: Downtown Bank\nHP: 9,000   Difficulty: Medium   Reward: $7,500"
+	raid_roster_label.text = "Frontline: AllianceBoss (6,000 power)\nYour support: %d Driver(s), %d Spy(s)\nAvailable: %d Drivers, %d Spies" % [
 		raid_drivers,
 		raid_spies,
 		troop_roster.get_count(&"Driver"),
 		troop_roster.get_count(&"Spy")
 	]
-	add_driver_button.disabled = raid_drivers >= troop_roster.get_count(&"Driver")
-	add_spy_button.disabled = raid_spies >= troop_roster.get_count(&"Spy")
+
+	var active := raid_battle.is_active()
+	add_driver_button.disabled = active or raid_drivers >= troop_roster.get_count(&"Driver")
+	add_spy_button.disabled = active or raid_spies >= troop_roster.get_count(&"Spy")
+	preview_raid_button.disabled = active
+	launch_raid_button.disabled = active
+	$Root/RaidPanel/Margin/VBox/Reset.disabled = active
+
+	if active:
+		raid_status_label.text = "Raid convoy launching... %s" % _format_time(float(raid_battle.active_battle["seconds_remaining"]))
+		launch_raid_button.text = "Raid In Progress"
+	else:
+		raid_status_label.text = "Ready to launch."
+		launch_raid_button.text = "Launch Raid"
+
+	if not active and not raid_battle.last_result.is_empty():
+		_show_raid_result(raid_battle.last_result)
 
 
 func _calculate_raid() -> void:
 	var result := synergy_raid.calculate_raid_damage()
-	raid_result_label.text = "Raid damage: %s\nDriver speed bonus: +%d%%\nSpy defense break: +%d%%\nTotal support multiplier: +%d%%" % [
+	raid_result_label.text = "Preview damage: %s / 9,000 HP\nDriver speed bonus: +%d%%\nSpy defense break: +%d%%\nTotal support: +%d%%" % [
 		_format_number(roundi(float(result["damage"]))),
 		roundi(float(result["speed_bonus"]) * 100.0),
 		roundi(float(result["defense_break_bonus"]) * 100.0),
 		roundi(float(result["support_bonus"]) * 100.0)
+	]
+
+
+func _launch_raid() -> void:
+	if raid_battle.start_battle(raid_drivers, raid_spies):
+		raid_result_label.text = "The crew is moving on the Downtown Bank..."
+		_refresh_raid()
+
+
+func _on_raid_resolved(result: Dictionary) -> void:
+	_show_raid_result(result)
+	_refresh_all()
+
+
+func _show_raid_result(result: Dictionary) -> void:
+	var victory := bool(result.get("victory", false))
+	var outcome := "VICTORY" if victory else "DEFEAT"
+	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nCash reward: $%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)\nWounded crew were sent to the Clinic." % [
+		outcome,
+		String(result.get("target_name", "Target")),
+		_format_number(roundi(float(result.get("damage", 0.0)))),
+		_format_number(roundi(float(result.get("target_hp", 0.0)))),
+		_format_number(int(result.get("reward_cash", 0))),
+		int(result.get("wounded_enforcers", 0)),
+		int(result.get("wounded_drivers", 0)),
+		int(result.get("wounded_spies", 0))
 	]
 
 

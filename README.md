@@ -2,54 +2,77 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Current playable loops
+## End-to-end playable loop
 
-### Persistent progression
-The prototype now saves to Godot's per-user `user://` storage automatically.
+The project now has a complete prototype progression/combat loop:
 
-Saved state includes:
+1. Earn/spend shared Cash and Gold.
+2. Upgrade buildings or construct the Garage/Intel Office.
+3. Recruit Enforcers, Drivers, and Spies.
+4. Open **Alliance Raid** and configure support.
+5. Preview expected raid damage.
+6. Launch against the **Downtown Bank**.
+7. Wait through the raid launch countdown.
+8. Resolve victory or defeat automatically.
+9. Receive Cash on victory.
+10. Wounded crew are removed from the active roster and sent to the Clinic.
+11. Heal them over time or spend Gold for instant recovery.
+12. Progress and active timers persist across restarts.
+
+## Downtown Bank raid
+
+Current prototype target:
+
+- Target: Downtown Bank
+- HP: 9,000
+- Difficulty: Medium
+- Reward: $7,500 Cash
+- Frontline ally: AllianceBoss, 6,000 power
+- Driver support: +10% each
+- Spy support: +12% each
+
+This intentionally makes support meaningful. A powerful frontline account alone does not clear the target; alliance support must multiply its contribution.
+
+### Battle wounds
+
+There is still **no permanent troop death**.
+
+After raid resolution:
+- some Enforcers may be wounded;
+- a defeat can also wound participating Drivers and Spies;
+- wounded units immediately leave the active troop roster;
+- the Underground Clinic restores them after treatment.
+
+## Persistence
+
+The local save tracks:
+
 - Cash and Gold
-- Enforcer, Driver, and Spy counts
-- Safehouse, Clinic, and Barracks levels
-- Garage and Intel Office construction state
-- Active building upgrade/construction timer
-- Active troop recruitment timer
-- Hospital healing queue
+- troop roster
+- building levels and built lots
+- construction timer
+- recruitment timer
+- Clinic queue
+- active raid countdown
+- most recent raid result
 
-The save file records a real-world timestamp. When the game reopens, elapsed offline time is applied to construction, recruitment, and healing. Jobs that should have completed while the game was closed complete during loading.
+Offline time advances construction, recruitment, healing, and an active raid countdown.
 
-Autosaves are debounced so timer updates do not write to disk every frame.
+The save is stored under Godot's `user://` application-data folder.
 
-### City progression
-- Upgrade the Safehouse, Clinic, and Crew Barracks.
-- Build the Garage and Intel Office on empty lots.
-- Spend Cash to construct and Gold to finish timers early.
+## Suggested test
 
-### Crew recruitment
-- Recruit Enforcers, Drivers, and Spies.
-- Recruitment uses a timed queue.
-- Spend Gold to finish training immediately.
-- Recruited units persist across restarts.
-
-### Underground Clinic
-- Wounded crew recover instead of being permanently lost.
-- Healing timers persist and continue while offline.
-
-### Synergy Raid prototype
-- A high-level alliance member provides frontline power.
-- Drivers and Spies provide multiplicative support bonuses.
-- Support availability is limited by the specialists you own.
-
-## Persistence test
-
-1. Run the game.
-2. Spend some Cash, recruit troops, start a building upgrade, or add wounded troops.
-3. Close the game before the timers finish.
-4. Reopen it.
-5. Your currency, roster, buildings, and queues should restore.
-6. Leave it closed longer than a timer and reopen it; that job should be completed.
-
-The local save lives under Godot's `user://` path, which maps to the platform's normal application-data location.
+1. Pull the latest `main` and run the game.
+2. Open **Alliance Raid**.
+3. Preview with no support.
+4. Add Drivers and Spies and preview again.
+5. Recruit more specialists if you need more support.
+6. Launch the raid.
+7. Watch the countdown resolve into victory/defeat.
+8. Check Cash after a victory.
+9. Open **Crew** and notice wounded units are absent.
+10. Open **Clinic** and heal them.
+11. Close/reopen the game during a raid or healing timer to test persistence.
 
 ## Architecture
 
@@ -60,29 +83,24 @@ Main
 ├── HospitalQueue
 ├── ConstructionQueue
 ├── RecruitmentQueue
-├── SynergyRaid
+├── SynergyRaid        # contribution math
+├── RaidBattle         # target/countdown/outcome/rewards/wounds
 ├── SaveManager
 ├── CityMap
-│   ├── Safehouse
-│   ├── Hospital
-│   ├── Barracks
-│   ├── BuildLotA
-│   └── BuildLotB
 └── HUD
 ```
 
-Each gameplay system exposes explicit save/load data instead of serializing Godot Nodes. This keeps save files versionable and prepares the project for eventually replacing local persistence with server-authoritative player state.
+`SynergyRaid` only calculates alliance contribution math. `RaidBattle` owns encounter state and resolution. That separation lets us add multiple target types later without duplicating alliance-support logic.
 
-## Important production note
+## Production security note
 
-The current save is deliberately local for prototyping. It is not secure against editing or clock manipulation. Before multiplayer, competitive raids, premium purchases, or a real economy, currency, timers, troop inventories, healing, and raid results must be validated by the server.
+This remains a client-side prototype. Local saves and the system clock can be manipulated. Before a real F2P economy or multiplayer launch, currency, inventories, timers, raid rosters, battle resolution, and rewards must become server-authoritative.
 
 ## Next milestone
 
-The next strong gameplay step is a real raid target:
-- target HP and difficulty;
-- raid countdown and resolution;
-- Cash/reward payout;
-- troop wounds generated from the result;
-- Clinic integration;
-- victory/defeat feedback.
+Strong next additions are:
+- multiple world-map raid targets with different HP/rewards;
+- target cooldowns and respawns;
+- alliance lobby/player list rather than simulated members;
+- combat animations and result presentation;
+- data-driven balance resources for troops/buildings/targets.

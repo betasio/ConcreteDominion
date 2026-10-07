@@ -9,11 +9,13 @@ signal treatment_completed(entry: Dictionary)
 
 var wounded_queue: Array[Dictionary] = []
 var economy: PlayerEconomy
+var roster: TroopRoster
 var _last_displayed_second := -1
 
 
-func setup(player_economy: PlayerEconomy) -> void:
+func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null) -> void:
 	economy = player_economy
+	roster = troop_roster
 
 
 func _process(delta: float) -> void:
@@ -28,21 +30,27 @@ func _process(delta: float) -> void:
 		queue_changed.emit()
 
 	if float(wounded_queue[0]["seconds_remaining"]) <= 0.0:
-		var completed := wounded_queue.pop_front()
-		_last_displayed_second = -1
-		treatment_completed.emit(completed)
-		queue_changed.emit()
+		_finish_front_entry()
 
 
 func add_wounded(troop_type: StringName, amount: int) -> void:
+	send_to_hospital(troop_type, amount)
+
+
+func send_to_hospital(troop_type: StringName, amount: int) -> bool:
 	if amount <= 0:
-		return
+		return false
+
+	if roster != null and not roster.remove_troops(troop_type, amount):
+		return false
+
 	wounded_queue.append({
 		"troop_type": troop_type,
 		"amount": amount,
 		"seconds_remaining": maxf(1.0, amount * seconds_per_troop)
 	})
 	queue_changed.emit()
+	return true
 
 
 func get_instant_heal_cost() -> int:
@@ -61,13 +69,29 @@ func instant_heal() -> bool:
 		return false
 
 	while not wounded_queue.is_empty():
-		var completed := wounded_queue.pop_front()
-		completed["seconds_remaining"] = 0.0
-		treatment_completed.emit(completed)
+		_finish_front_entry()
 
 	_last_displayed_second = -1
 	queue_changed.emit()
 	return true
+
+
+func _finish_front_entry() -> void:
+	if wounded_queue.is_empty():
+		return
+
+	var completed := wounded_queue.pop_front()
+	completed["seconds_remaining"] = 0.0
+
+	if roster != null:
+		roster.add_troops(
+			StringName(completed["troop_type"]),
+			int(completed["amount"])
+		)
+
+	_last_displayed_second = -1
+	treatment_completed.emit(completed)
+	queue_changed.emit()
 
 
 func get_save_data() -> Dictionary:
@@ -98,9 +122,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 		var current_time := float(wounded_queue[0]["seconds_remaining"])
 		if remaining_offline >= current_time:
 			remaining_offline -= current_time
-			var completed := wounded_queue.pop_front()
-			completed["seconds_remaining"] = 0.0
-			treatment_completed.emit(completed)
+			_finish_front_entry()
 		else:
 			wounded_queue[0]["seconds_remaining"] = current_time - remaining_offline
 			remaining_offline = 0.0

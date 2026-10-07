@@ -5,13 +5,14 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 var economy: PlayerEconomy
 var roster: TroopRoster
 var hospital: HospitalQueue
 var construction: ConstructionQueue
 var recruitment: RecruitmentQueue
+var raid_battle: RaidBattle
 var city_map: Node
 
 var _autosave_timer := 0.0
@@ -27,6 +28,7 @@ func setup(
 	hospital_queue: HospitalQueue,
 	construction_queue: ConstructionQueue,
 	recruitment_queue: RecruitmentQueue,
+	battle: RaidBattle,
 	world: Node
 ) -> void:
 	economy = player_economy
@@ -34,6 +36,7 @@ func setup(
 	hospital = hospital_queue
 	construction = construction_queue
 	recruitment = recruitment_queue
+	raid_battle = battle
 	city_map = world
 
 	economy.changed.connect(mark_dirty)
@@ -41,6 +44,7 @@ func setup(
 	hospital.queue_changed.connect(mark_dirty)
 	construction.queue_changed.connect(mark_dirty)
 	recruitment.queue_changed.connect(mark_dirty)
+	raid_battle.changed.connect(mark_dirty)
 
 	for building in city_map.get_persistent_buildings():
 		building.changed.connect(mark_dirty)
@@ -74,6 +78,7 @@ func save_game() -> bool:
 		"hospital": hospital.get_save_data(),
 		"construction": construction.get_save_data(),
 		"recruitment": recruitment.get_save_data(),
+		"raid_battle": raid_battle.get_save_data(),
 		"world": city_map.get_save_data()
 	}
 
@@ -122,6 +127,7 @@ func load_game() -> bool:
 	hospital.load_save_data(data.get("hospital", {}), elapsed)
 	construction.load_save_data(data.get("construction", {}), elapsed, city_map)
 	recruitment.load_save_data(data.get("recruitment", {}), elapsed)
+	raid_battle.load_save_data(data.get("raid_battle", {}), elapsed)
 
 	_is_loading = false
 	_dirty = false
