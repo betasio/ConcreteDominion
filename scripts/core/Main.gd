@@ -196,7 +196,7 @@ func _ready() -> void:
 
 	progression_ui.setup(progression, mission_tracker, loot_inventory, localized_text)
 	retention_ui.setup(retention, localized_text)
-	profile_ui.setup(player_profile, mailbox, progression, localized_text)
+	profile_ui.setup(player_profile, mailbox, progression, localized_text, endgame)
 	faction_ui.setup(faction_manager, economy, mission_tracker)
 	endgame_ui.setup(endgame, faction_manager)
 	event_ui.setup(event_manager, localized_text)
