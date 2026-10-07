@@ -1,0 +1,42 @@
+name: Godot QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    name: Headless validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Verify engine
+        run: godot --version
+
+      - name: Import project
+        run: godot --headless --path . --import --quit
+
+      - name: Validate game data
+        run: godot --headless --path . res://scenes/tests/DataValidation.tscn
+
+      - name: Run deterministic balance audit
+        run: godot --headless --path . res://scenes/tests/BalanceAudit.tscn
+
+      - name: Run smoke test
+        run: godot --headless --path . res://scenes/tests/SmokeTest.tscn

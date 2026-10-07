@@ -266,3 +266,82 @@ The strongest next phase is **balance simulation + final QA infrastructure**:
 - migrate remaining UI text to localization keys;
 - replace procedural placeholder audio/art;
 - then perform the first full Godot runtime/device playthrough.
+
+
+## Automated balance + QA infrastructure
+
+The repository now includes deterministic headless QA for the current prototype balance.
+
+### Test scenes
+
+```bash
+godot --headless --path . res://scenes/tests/DataValidation.tscn
+godot --headless --path . res://scenes/tests/BalanceAudit.tscn
+godot --headless --path . res://scenes/tests/SmokeTest.tscn
+```
+
+### DataValidation
+
+Hard-fails on issues such as:
+
+- missing or duplicate raid IDs;
+- raid tiers with non-increasing level gates or effective HP;
+- invalid Cash/XP/cooldown values;
+- unknown/non-positive loot entries;
+- invalid building/facility cost data;
+- missing required QA/game resources;
+- unexpected save-schema regression.
+
+### BalanceAudit
+
+Simulates the major deterministic pacing assumptions without needing a manual playthrough.
+
+Current baseline:
+
+- Account Lv.1 -> Lv.7: 1,725 XP;
+- one first-clear of all seven raid tiers: 1,910 raw raid XP;
+- max core-building Cash sink: about $215,000;
+- build + max facility Cash sink: about $447,000;
+- combined city-development sink: about $662,000;
+- full-city passive turf income: $11,000/hour;
+- combined city sink equals about 60 hours of full-city passive production.
+
+Reference raid viability:
+
+| Target | Reference profile | Damage / effective HP |
+| --- | --- | ---: |
+| Downtown Bank | Balanced coordinated | 1.46x |
+| Harbor Bank | Balanced coordinated | 1.21x |
+| Midtown Exchange | Balanced coordinated | 1.23x |
+| Northside Turf HQ | Balanced coordinated | 1.28x |
+| Casino Vault | Balanced coordinated | 1.10x |
+| Financial Tower | Tactical F2P (Blitz + Intel Burst) | 1.16x |
+| Industrial Depot | Tactical F2P (Blitz + Intel Burst) | 1.03x |
+
+The final Industrial tier is intentionally the tightest reference clear. Falling below 1.00 is treated as a hard regression.
+
+Early local specialist contribution also has a CI floor:
+
+- Driver contribution must add at least 10% damage;
+- Spy contribution must add at least 10% damage.
+
+This protects the game's core design goal that lower-power F2P specialists remain materially useful in Alliance Raids.
+
+### Tuning warnings
+
+Warnings do not fail CI.
+
+The current expected warning is that recruitment/build/healing timers remain heavily prototype-compressed while the account starts with 250 Gold. The current economy therefore validates progression structure, but it does **not** yet represent final live-service monetization timing.
+
+### GitHub Actions
+
+`.github/workflows/godot-qa.yml` runs on pushes and pull requests to `main` using Godot 4.7.2 stable.
+
+The pipeline runs:
+
+1. Godot project import;
+2. DataValidation;
+3. deterministic BalanceAudit;
+4. full Main-scene SmokeTest.
+
+A hard failure in any stage blocks the QA job.

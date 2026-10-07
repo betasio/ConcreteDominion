@@ -12,6 +12,8 @@ func _ready() -> void:
 	_check_resource("res://scenes/ui/SettingsDiagnosticsUI.tscn")
 	_check_resource("res://scenes/ui/CombatStrategyUI.tscn")
 	_check_resource("res://scenes/ui/WorldControlUI.tscn")
+	_check_resource("res://scenes/tests/DataValidation.tscn")
+	_check_resource("res://scenes/tests/BalanceAudit.tscn")
 
 	var main_scene := load("res://scenes/core/Main.tscn") as PackedScene
 	if main_scene == null:

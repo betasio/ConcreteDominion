@@ -9,11 +9,13 @@ signal construction_completed(target: Node)
 var active_job: Dictionary = {}
 var economy: PlayerEconomy
 var balance: GameBalance
+var core_effects: CoreBuildingEffects
 var _last_displayed_second := -1
 
-func setup(player_economy: PlayerEconomy, game_balance: GameBalance = null) -> void:
+func setup(player_economy: PlayerEconomy, game_balance: GameBalance = null, building_effects: CoreBuildingEffects = null) -> void:
 	economy = player_economy
 	balance = game_balance
+	core_effects = building_effects
 	if balance != null:
 		gold_per_minute = balance.get_speedup_rate("construction_gold_per_minute", gold_per_minute)
 
@@ -39,7 +41,7 @@ func start_upgrade(building: Building) -> bool:
 		return false
 	var next_level := building.level + 1
 	var cash_cost := building.get_upgrade_cash_cost()
-	var duration := building.get_upgrade_duration()
+	var duration := building.get_upgrade_duration() * (core_effects.get_construction_time_multiplier() if core_effects != null else 1.0)
 	if economy == null or not economy.spend_cash(cash_cost):
 		return false
 	building.begin_construction(next_level)
@@ -59,7 +61,7 @@ func start_facility_upgrade(lot: BuildLot) -> bool:
 		return false
 	var next_level := lot.level + 1
 	var cash_cost := lot.get_upgrade_cash_cost()
-	var duration := lot.get_upgrade_duration()
+	var duration := lot.get_upgrade_duration() * (core_effects.get_construction_time_multiplier() if core_effects != null else 1.0)
 	if economy == null or not economy.spend_cash(cash_cost):
 		return false
 	lot.begin_construction(next_level)
@@ -85,7 +87,7 @@ func start_lot_build(lot: BuildLot) -> bool:
 		"target": lot,
 		"label": lot.building_name,
 		"target_level": 1,
-		"seconds_remaining": lot.build_duration,
+		"seconds_remaining": lot.build_duration * (core_effects.get_construction_time_multiplier() if core_effects != null else 1.0),
 		"cash_cost": lot.build_cash_cost
 	}
 	_last_displayed_second = -1
