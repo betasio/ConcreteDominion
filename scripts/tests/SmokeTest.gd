@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 22:
+	if save == null or SaveManager.SAVE_VERSION < 23:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -160,8 +160,23 @@ func _ready() -> void:
 		_fail("Player Faction manager is missing.")
 	elif faction_manager.get_xp_for_next_level() <= 0:
 		_fail("Player Faction progression is invalid.")
-	if game.get_node_or_null("FactionUI/Root/Panel/Margin/VBox/CreateBox/Create") == null:
+	else:
+		if FactionManager.DAILY_REQUIRED != 3 or faction_manager.get_daily_lines().size() != 4:
+			_fail("Faction daily operations are invalid.")
+		if faction_manager.get_war_rules_lines().size() < 4:
+			_fail("Faction War ruleset is incomplete.")
+		if faction_manager.get_construction_time_multiplier() > 1.0 or faction_manager.get_territory_income_multiplier() < 1.0:
+			_fail("Faction research multipliers are invalid.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CreateBox/Create") == null:
 		_fail("Player Faction creation UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily") == null:
+		_fail("Faction daily mission UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/Gift") == null:
+		_fail("Faction gift chest UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/RallyButtons/StartRally") == null:
+		_fail("Faction rally UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar") == null:
+		_fail("Faction War UI is missing.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
@@ -196,6 +211,10 @@ func _ready() -> void:
 	var construction := game.get_node_or_null("ConstructionQueue") as ConstructionQueue
 	if construction == null:
 		_fail("ConstructionQueue script is not active.")
+	elif construction.faction != faction_manager:
+		_fail("Faction construction research is not wired.")
+	if world_control != null and world_control.faction != faction_manager:
+		_fail("Faction territory research is not wired.")
 
 	var ui_styler := game.get_node_or_null("UIArtStyler") as UIArtStyler
 	if ui_styler == null:
