@@ -13,6 +13,7 @@ extends Node
 @onready var alliance_manager: AllianceManager = $AllianceManager
 @onready var alliance_social: AllianceSocial = $AllianceSocial
 @onready var faction_manager: FactionManager = $FactionManager
+@onready var endgame: EndgameManager = $EndgameManager
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
@@ -36,6 +37,7 @@ extends Node
 @onready var retention_ui: RetentionUI = $RetentionUI
 @onready var profile_ui: ProfileUI = $ProfileUI
 @onready var faction_ui: FactionUI = $FactionUI
+@onready var endgame_ui: EndgameUI = $EndgameUI
 @onready var event_ui: EventUI = $EventUI
 @onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 @onready var safe_area_manager: SafeAreaManager = $SafeAreaManager
@@ -133,6 +135,15 @@ func _ready() -> void:
 		raid_battle
 	)
 
+	endgame.setup(
+		mission_tracker,
+		world_control,
+		faction_manager,
+		economy,
+		loot_inventory,
+		progression
+	)
+
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
 	raid_battle.battle_resolved.connect(alliance_manager.award_raid_result)
@@ -150,6 +161,7 @@ func _ready() -> void:
 		alliance_manager,
 		alliance_social,
 		faction_manager,
+		endgame,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
@@ -186,6 +198,7 @@ func _ready() -> void:
 	retention_ui.setup(retention, localized_text)
 	profile_ui.setup(player_profile, mailbox, progression, localized_text)
 	faction_ui.setup(faction_manager, economy, mission_tracker)
+	endgame_ui.setup(endgame, faction_manager)
 	event_ui.setup(event_manager, localized_text)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map, localized_text)
 	store_ui.setup(store_manager, localized_text)
@@ -203,6 +216,7 @@ func _ready() -> void:
 		retention_ui.get_node("Root") as Control,
 		profile_ui.get_node("Root") as Control,
 		faction_ui.get_node("Root") as Control,
+		endgame_ui.get_node("Root") as Control,
 		event_ui.get_node("Root") as Control,
 		combat_strategy_ui.get_node("Root") as Control,
 		settings_ui.get_node("Root") as Control,
@@ -222,6 +236,8 @@ func _ready() -> void:
 	achievements.achievement_unlocked.connect(func(_achievement_id): audio_manager.play_reward())
 	achievements.dominion_completed.connect(audio_manager.play_reward)
 	mission_tracker.mission_completed.connect(func(_mission_id): audio_manager.play_reward())
+	endgame.dominion_cache_claimed.connect(audio_manager.play_reward)
+	endgame.dominion_mastery_claimed.connect(audio_manager.play_reward)
 
 	hud.setup(
 		economy,
