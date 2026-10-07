@@ -41,7 +41,7 @@ func get_frontline_power_multiplier() -> float:
 
 
 func get_progression_summary() -> String:
-	return "Alliance Lv.%d — XP %d/%d — NPC frontline +%d%% — Slots %d" % [
+	return "Crew Support Lv.%d — XP %d/%d — NPC frontline +%d%% — Slots %d" % [
 		alliance_level,
 		alliance_xp,
 		get_xp_for_next_level(),
