@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 13
+const SAVE_VERSION := 14
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory

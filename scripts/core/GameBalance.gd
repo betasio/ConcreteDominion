@@ -15,6 +15,16 @@ var speedups: Dictionary = {
 	"hospital_gold_per_minute": 2
 }
 
+var core_buildings: Dictionary = {
+	"safehouse_construction_reduction_per_level": 0.04,
+	"safehouse_min_construction_multiplier": 0.75,
+	"safehouse_raid_cash_bonus_per_level": 0.02,
+	"clinic_healing_reduction_per_level": 0.08,
+	"clinic_min_healing_multiplier": 0.60,
+	"barracks_enforcer_training_reduction_per_level": 0.05,
+	"barracks_min_training_multiplier": 0.70
+}
+
 var facilities: Dictionary = {
 	"garage_driver_support_per_level": 0.02,
 	"garage_driver_training_reduction_per_level": 0.05,
@@ -51,6 +61,10 @@ func get_facility_value(key: String, fallback: float) -> float:
 	return float(facilities.get(key, fallback))
 
 
+func get_core_building_value(key: String, fallback: float) -> float:
+	return float(core_buildings.get(key, fallback))
+
+
 func get_debug_summary() -> PackedStringArray:
 	return PackedStringArray([
 		"Recruit: Enforcer $%d / %.1fs" % [
@@ -64,6 +78,11 @@ func get_debug_summary() -> PackedStringArray:
 		"Recruit: Spy $%d / %.1fs" % [
 			int(recruitment[&"Spy"]["cash_each"]),
 			float(recruitment[&"Spy"]["seconds_each"])
+		],
+		"Core: Safehouse -%.0f%% build/Lv • Clinic -%.0f%% heal/Lv • Barracks -%.0f%% Enforcer/Lv" % [
+			get_core_building_value("safehouse_construction_reduction_per_level", 0.04) * 100.0,
+			get_core_building_value("clinic_healing_reduction_per_level", 0.08) * 100.0,
+			get_core_building_value("barracks_enforcer_training_reduction_per_level", 0.05) * 100.0
 		],
 		"Facilities: Garage +%.1f%% Driver/Lv • Intel +%.1f%% Spy/Lv" % [
 			get_facility_value("garage_driver_support_per_level", 0.02) * 100.0,

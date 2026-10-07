@@ -9,8 +9,10 @@ points = PackedVector2Array(-96, -125, 96, -125, 110, 40, -110, 40)
 script = ExtResource("1")
 building_type = &"safehouse"
 display_name = "Safehouse"
-description = "Your crew headquarters. Future upgrades will unlock construction speed, crew capacity and alliance command features."
+description = "Your crew headquarters. Upgrades reduce construction time and improve Alliance Raid Cash rewards."
 accent_color = Color(0.78, 0.59, 0.20, 1)
+base_upgrade_cash_cost = 8000
+base_upgrade_duration = 20.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("Shape")

@@ -35,7 +35,7 @@ func is_target_active(target: Node) -> bool:
 	return not active_job.is_empty() and active_job.get("target") == target
 
 func start_upgrade(building: Building) -> bool:
-	if is_busy() or building.is_constructing:
+	if is_busy() or not building.can_upgrade():
 		return false
 	var next_level := building.level + 1
 	var cash_cost := building.get_upgrade_cash_cost()

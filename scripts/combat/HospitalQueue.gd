@@ -10,14 +10,16 @@ signal treatment_completed(entry: Dictionary)
 var wounded_queue: Array[Dictionary] = []
 var economy: PlayerEconomy
 var balance: GameBalance
+var core_effects: CoreBuildingEffects
 var roster: TroopRoster
 var _last_displayed_second := -1
 
 
-func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null, game_balance: GameBalance = null) -> void:
+func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null, game_balance: GameBalance = null, building_effects: CoreBuildingEffects = null) -> void:
 	economy = player_economy
 	roster = troop_roster
 	balance = game_balance
+	core_effects = building_effects
 	if balance != null:
 		gold_per_minute = balance.get_speedup_rate("hospital_gold_per_minute", gold_per_minute)
 
@@ -26,15 +28,13 @@ func _process(delta: float) -> void:
 	if wounded_queue.is_empty():
 		return
 
-	wounded_queue[0]["seconds_remaining"] = maxf(0.0, float(wounded_queue[0]["seconds_remaining"]) - delta)
+	var slots := core_effects.get_clinic_slots() if core_effects != null else 1
+	for i in range(mini(slots, wounded_queue.size()) - 1, -1, -1):
+		wounded_queue[i]["seconds_remaining"] = maxf(0.0, float(wounded_queue[i]["seconds_remaining"]) - delta)
+		if float(wounded_queue[i]["seconds_remaining"]) <= 0.0:
+			_finish_entry(i)
 
-	var displayed_second := ceili(float(wounded_queue[0]["seconds_remaining"]))
-	if displayed_second != _last_displayed_second:
-		_last_displayed_second = displayed_second
-		queue_changed.emit()
-
-	if float(wounded_queue[0]["seconds_remaining"]) <= 0.0:
-		_finish_front_entry()
+	queue_changed.emit()
 
 
 func add_wounded(troop_type: StringName, amount: int) -> void:
@@ -59,7 +59,7 @@ func send_to_hospital(
 		"amount": amount,
 		"severity": severity_label,
 		"severity_multiplier": severity,
-		"seconds_remaining": maxf(1.0, amount * seconds_per_troop * severity)
+		"seconds_remaining": maxf(1.0, amount * seconds_per_troop * severity * (core_effects.get_clinic_time_multiplier() if core_effects != null else 1.0))
 	})
 	queue_changed.emit()
 	return true
@@ -89,10 +89,15 @@ func instant_heal() -> bool:
 
 
 func _finish_front_entry() -> void:
-	if wounded_queue.is_empty():
+	_finish_entry(0)
+
+
+func _finish_entry(index: int) -> void:
+	if wounded_queue.is_empty() or index < 0 or index >= wounded_queue.size():
 		return
 
-	var completed := wounded_queue.pop_front()
+	var completed := wounded_queue[index]
+	wounded_queue.remove_at(index)
 	completed["seconds_remaining"] = 0.0
 
 	if roster != null:
@@ -133,15 +138,26 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			})
 
 	var remaining_offline := maxf(0.0, offline_seconds)
+	var slots := core_effects.get_clinic_slots() if core_effects != null else 1
 
 	while remaining_offline > 0.0 and not wounded_queue.is_empty():
-		var current_time := float(wounded_queue[0]["seconds_remaining"])
-		if remaining_offline >= current_time:
-			remaining_offline -= current_time
-			_finish_front_entry()
-		else:
-			wounded_queue[0]["seconds_remaining"] = current_time - remaining_offline
+		var active_count := mini(slots, wounded_queue.size())
+		var step := INF
+		for i in range(active_count):
+			step = minf(step, float(wounded_queue[i]["seconds_remaining"]))
+		if step <= 0.0:
+			step = 0.001
+		if step > remaining_offline:
+			for i in range(active_count):
+				wounded_queue[i]["seconds_remaining"] = maxf(0.0, float(wounded_queue[i]["seconds_remaining"]) - remaining_offline)
 			remaining_offline = 0.0
+		else:
+			for i in range(active_count):
+				wounded_queue[i]["seconds_remaining"] = maxf(0.0, float(wounded_queue[i]["seconds_remaining"]) - step)
+			remaining_offline -= step
+			for i in range(active_count - 1, -1, -1):
+				if float(wounded_queue[i]["seconds_remaining"]) <= 0.0:
+					_finish_entry(i)
 
 	_last_displayed_second = -1
 	queue_changed.emit()

@@ -16,6 +16,7 @@ extends Node
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
 @onready var facility_effects: FacilityEffects = $FacilityEffects
+@onready var core_building_effects: CoreBuildingEffects = $CoreBuildingEffects
 @onready var recruitment_queue: RecruitmentQueue = $RecruitmentQueue
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
 @onready var combat_loadout: CombatLoadout = $CombatLoadout
@@ -40,12 +41,13 @@ extends Node
 func _ready() -> void:
 	progression.setup(loot_inventory, balance)
 	facility_effects.setup(city_map.lot_a, city_map.lot_b, balance)
+	core_building_effects.setup(city_map.safehouse, city_map.hospital, city_map.barracks, balance)
 	synergy_raid.setup(progression, facility_effects)
 	city_map.setup_progression(progression)
 	alliance_social.setup(alliance_manager)
-	hospital_queue.setup(economy, troop_roster, balance)
-	construction_queue.setup(economy, balance)
-	recruitment_queue.setup(economy, troop_roster, balance, facility_effects)
+	hospital_queue.setup(economy, troop_roster, balance, core_building_effects)
+	construction_queue.setup(economy, balance, core_building_effects)
+	recruitment_queue.setup(economy, troop_roster, balance, facility_effects, core_building_effects)
 	combat_loadout.setup(loot_inventory, progression)
 
 	raid_battle.setup(
@@ -57,6 +59,7 @@ func _ready() -> void:
 		alliance_manager,
 		progression,
 		combat_loadout,
+		core_building_effects,
 		city_map
 	)
 
@@ -90,6 +93,7 @@ func _ready() -> void:
 
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
+	raid_battle.battle_resolved.connect(alliance_manager.award_raid_result)
 
 	save_manager.setup(
 		economy,

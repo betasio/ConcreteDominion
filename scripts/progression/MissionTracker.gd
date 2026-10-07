@@ -34,6 +34,69 @@ var missions: Dictionary = {
 		"completed": false,
 		"reward_xp": 40,
 		"reward_cash": 2000
+	},
+	"build_garage": {
+		"title": "Wheels Up",
+		"description": "Build the Garage.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 70,
+		"reward_cash": 2500
+	},
+	"win_midtown": {
+		"title": "Midtown Pressure",
+		"description": "Defeat Midtown Exchange.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 110,
+		"reward_cash": 4000
+	},
+	"build_intel": {
+		"title": "Eyes Everywhere",
+		"description": "Build the Intel Office.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 90,
+		"reward_cash": 3000
+	},
+	"win_northside": {
+		"title": "Take Northside",
+		"description": "Defeat Northside Turf HQ.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 140,
+		"reward_cash": 5500
+	},
+	"win_casino": {
+		"title": "Break the House",
+		"description": "Defeat Casino Vault.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 180,
+		"reward_cash": 7000
+	},
+	"win_financial": {
+		"title": "Own the Skyline",
+		"description": "Defeat Financial Tower.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 220,
+		"reward_cash": 9000
+	},
+	"win_industrial": {
+		"title": "Control the Supply",
+		"description": "Defeat Industrial Depot.",
+		"goal": 1,
+		"progress": 0,
+		"completed": false,
+		"reward_xp": 280,
+		"reward_cash": 12000
 	}
 }
 
@@ -54,19 +117,50 @@ func setup(
 	progression.leveled_up.connect(_on_level_up)
 
 	_refresh_level_mission()
+	_refresh_existing_buildings()
+
+
+func _refresh_existing_buildings() -> void:
+	var world = get_node_or_null("/root/Main/CityMap")
+	if world == null:
+		return
+	if world.lot_a.is_built:
+		_set_progress("build_garage", 1)
+	if world.lot_b.is_built:
+		_set_progress("build_intel", 1)
 
 
 func _on_recruitment_completed(_troop_type: StringName, amount: int) -> void:
 	_add_progress("recruit_crew", amount)
 
 
-func _on_construction_completed(_target: Node) -> void:
+func _on_construction_completed(target: Node) -> void:
+	if target is BuildLot:
+		var lot := target as BuildLot
+		if lot.is_built and lot.building_name == "Garage":
+			_set_progress("build_garage", 1)
+		elif lot.is_built and lot.building_name == "Intel Office":
+			_set_progress("build_intel", 1)
 	changed.emit()
 
 
 func _on_battle_resolved(result: Dictionary) -> void:
-	if bool(result.get("victory", false)) and String(result.get("target_id", "")) == "downtown_bank":
-		_set_progress("win_downtown", 1)
+	if not bool(result.get("victory", false)):
+		return
+
+	match String(result.get("target_id", "")):
+		"downtown_bank":
+			_set_progress("win_downtown", 1)
+		"midtown_exchange":
+			_set_progress("win_midtown", 1)
+		"northside_hq":
+			_set_progress("win_northside", 1)
+		"casino_vault":
+			_set_progress("win_casino", 1)
+		"financial_tower":
+			_set_progress("win_financial", 1)
+		"industrial_depot":
+			_set_progress("win_industrial", 1)
 
 
 func _on_level_up(_new_level: int) -> void:
@@ -82,11 +176,9 @@ func _refresh_level_mission() -> void:
 func _add_progress(mission_id: String, amount: int) -> void:
 	if not missions.has(mission_id):
 		return
-
 	var mission: Dictionary = missions[mission_id]
 	if bool(mission["completed"]):
 		return
-
 	mission["progress"] = mini(int(mission["goal"]), int(mission["progress"]) + maxi(0, amount))
 	_check_complete(mission_id)
 
@@ -94,11 +186,9 @@ func _add_progress(mission_id: String, amount: int) -> void:
 func _set_progress(mission_id: String, value: int) -> void:
 	if not missions.has(mission_id):
 		return
-
 	var mission: Dictionary = missions[mission_id]
 	if bool(mission["completed"]):
 		return
-
 	mission["progress"] = mini(int(mission["goal"]), maxi(0, value))
 	_check_complete(mission_id)
 
@@ -114,7 +204,6 @@ func _check_complete(mission_id: String) -> void:
 
 	if progression != null:
 		progression.add_xp(int(mission["reward_xp"]))
-
 	if economy != null:
 		economy.add_cash(int(mission["reward_cash"]))
 
@@ -124,7 +213,6 @@ func _check_complete(mission_id: String) -> void:
 
 func get_mission_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
-
 	for mission_id in missions.keys():
 		var mission: Dictionary = missions[mission_id]
 		var state := "DONE" if bool(mission["completed"]) else "%d/%d" % [
@@ -132,7 +220,6 @@ func get_mission_lines() -> PackedStringArray:
 			int(mission["goal"])
 		]
 		lines.append("%s — %s" % [String(mission["title"]), state])
-
 	return lines
 
 
@@ -151,10 +238,8 @@ func load_save_data(data: Dictionary) -> void:
 	for mission_id in missions.keys():
 		if not data.has(mission_id):
 			continue
-
 		var saved = data[mission_id]
 		if saved is Dictionary:
 			missions[mission_id]["progress"] = int(saved.get("progress", missions[mission_id]["progress"]))
 			missions[mission_id]["completed"] = bool(saved.get("completed", missions[mission_id]["completed"]))
-
 	changed.emit()

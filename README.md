@@ -1,244 +1,204 @@
 # Concrete Dominion
 
-A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
+A cross-platform 2.5D isometric RTS prototype built with Godot 4 and GDScript.
 
-## Functional facilities + economy content milestone
+## Core city progression milestone
 
-This milestone turns the Garage and Intel Office from visual build-lot completions into real progression systems, expands the district ladder, and adds a non-transactional store prototype.
+The three starting buildings now have real long-term gameplay effects instead of only level numbers.
 
-## Functional Garage
+### Safehouse
 
-The Garage unlocks at Account Lv.2.
+Safehouse upgrades now provide:
 
-After construction it becomes an upgradeable facility up to Lv.5.
+- 4% construction-time reduction per level above Lv.1;
+- 2% Alliance Raid Cash reward bonus per level above Lv.1.
 
-Each Garage level currently provides:
+Construction-speed reduction is centrally capped through GameBalance.
 
-- +2% Driver support effectiveness in Alliance Raids;
-- -5% Driver recruitment time.
+Current Safehouse upgrade defaults:
 
-The training reduction is capped through the shared balance configuration so future tuning cannot reduce training time indefinitely.
+- base upgrade cost: $8,000 x current level;
+- base upgrade duration: 20 seconds x current level before Safehouse reduction;
+- max level: 5.
 
-Garage upgrades use the existing Construction Queue, Cash costs, timers, and Gold Finish Now system.
+### Underground Clinic
 
-## Functional Intel Office
+Clinic upgrades now provide:
 
-The Intel Office unlocks at Account Lv.3.
+- 8% treatment-time reduction per level above Lv.1;
+- additional parallel treatment capacity.
 
-After construction it also upgrades to Lv.5.
+Treatment slots:
 
-Each Intel Office level currently provides:
+- Lv.1–2: 1 slot;
+- Lv.3–4: 2 slots;
+- Lv.5: 3 slots.
 
-- +2.5% Spy support effectiveness in Alliance Raids;
-- -5% Spy recruitment time.
+The no-permanent-death rule remains unchanged. More Clinic levels only reduce downtime and allow more wounded groups to recover simultaneously.
 
-Like the Garage, all upgrades use the normal construction queue rather than a separate upgrade system.
+Current Clinic upgrade defaults:
 
-## Facility UI
+- base upgrade cost: $7,000 x current level;
+- base upgrade duration: 18 seconds x current level;
+- max level: 5.
 
-Selecting a completed Garage or Intel Office now shows:
+### Crew Barracks
 
-- current facility level;
-- active raid-support bonus;
-- training-time reduction;
-- next upgrade Cash cost;
-- MAX LEVEL state;
-- construction progress while upgrading.
+Barracks upgrades now provide:
 
-This means completed build lots are now meaningful long-term city assets instead of one-time construction objectives.
+- 5% Enforcer recruitment-time reduction per level above Lv.1;
+- increased recruitment queue capacity.
 
-## Central facility balance
+Recruitment queue capacity:
 
-Facility tuning lives in `GameBalance.gd`.
+- Lv.1–2: 1 job;
+- Lv.3–4: 2 jobs;
+- Lv.5: 3 jobs.
+
+Driver and Spy training-time bonuses still come from Garage and Intel Office progression, so each building retains a distinct purpose.
+
+The recruitment queue now persists both the active job and waiting jobs and processes them sequentially, including offline progression.
+
+## Central balance
+
+Core-building tuning now lives in GameBalance alongside the existing recruitment, facility, progression, and Gold speed-up values.
 
 Current defaults:
 
-- Garage Driver support: +2% per level
-- Garage Driver training reduction: 5% per level
-- Intel Office Spy support: +2.5% per level
-- Intel Office Spy training reduction: 5% per level
-- minimum specialist training-time multiplier: 0.70
+- Safehouse construction reduction: 4% per level;
+- Safehouse raid-Cash bonus: 2% per level;
+- Clinic healing reduction: 8% per level;
+- Clinic minimum healing multiplier: 0.60;
+- Barracks Enforcer training reduction: 5% per level;
+- Barracks minimum training multiplier: 0.70.
 
-The diagnostics panel now includes facility tuning alongside recruitment and Gold speed-up values.
+## Alliance progression
 
-## Expanded district ladder
+The mock Alliance now has persistent:
 
-Two additional data-driven raid targets fill progression gaps.
+- Alliance Level;
+- Alliance XP;
+- level-up thresholds;
+- frontline command bonus;
+- unlockable raid slots.
 
-### Midtown Exchange — Account Lv.3
+Winning Alliance Raids grants Alliance XP based on target tier.
 
-- District: Midtown
-- Hard difficulty
-- Layered Surveillance
-- 8% defensive HP modifier
-- Spy weakness
-- +10% counter bonus
-- $12,500 Cash
-- 180 XP
-- Parts x3
-- Intel x2
+Current Alliance XP rewards:
 
-### Industrial Depot — Account Lv.7
+- Downtown: 20
+- Harbor: 28
+- Midtown: 34
+- Northside: 42
+- Casino: 52
+- Financial: 64
+- Industrial: 78
 
-- District: Industrial Belt
-- Mythic difficulty
-- Heavy Barriers
-- 18% defensive HP modifier
-- Driver weakness
-- +16% counter bonus
-- $38,000 Cash
-- 520 XP
-- Parts x7
-- Intel x4
-- Contraband x2
+Each Alliance Level above Lv.1 increases NPC frontline power by 2%.
 
-The complete progression ladder is now:
+Raid-slot unlocks:
 
-1. Lv.1 — Downtown Core
-2. Lv.2 — Harbor District + Garage
-3. Lv.3 — Midtown + Intel Office
-4. Lv.4 — Northside
-5. Lv.5 — High Roller Strip
-6. Lv.6 — Financial District
-7. Lv.7 — Industrial Belt
+- Alliance Lv.1: Frontline + Driver + Spy + Driver
+- Alliance Lv.2: unlock an additional Spy slot
+- Alliance Lv.4: unlock an additional Driver slot
 
-Both new targets have their own world-map positions, convoy routes, cooldowns, event rewards, target weaknesses, save state, and progression gates.
+This deepens the original synergy design: alliance progression creates more room for support players rather than simply replacing them with higher raw power.
 
-## Blackout Week expansion
+Alliance Level, XP, slot state, and online member state are persistent.
 
-The event system now recognizes the new raid targets.
+## District mission chain
 
-Event Marks:
+The mission system now extends beyond the opening tutorial.
 
-- Downtown Bank — 2
-- Harbor Bank — 4
-- Midtown Exchange — 5
-- Northside Turf HQ — 6
-- Casino Vault — 9
-- Financial Tower — 12
-- Industrial Depot — 15
+New missions include:
 
-This gives higher progression tiers stronger event efficiency without creating exclusive event-only combat stats.
+- Wheels Up — build the Garage
+- Midtown Pressure — defeat Midtown Exchange
+- Eyes Everywhere — build the Intel Office
+- Take Northside — defeat Northside Turf HQ
+- Break the House — defeat Casino Vault
+- Own the Skyline — defeat Financial Tower
+- Control the Supply — defeat Industrial Depot
 
-## Prototype store
+They award additional Cash and Account XP while guiding the player through the district ladder.
 
-A new **Store** screen is included for monetization UX planning.
+Existing saves with an already-built Garage or Intel Office automatically receive the corresponding mission progress when MissionTracker initializes.
 
-Current example offers:
+## HUD updates
 
-- Gold Starter
-- Builder Pack
-- Crew Support Pack
-- Recovery Pack
+Core-building selection now shows the building's current functional bonuses.
 
-The catalog intentionally focuses on:
+The Clinic panel shows current treatment-slot capacity.
 
-- Gold;
-- construction progression;
-- queue speed-ups;
-- ordinary progression materials.
+The Barracks panel shows:
 
-It does **not** sell exclusive troops, exclusive raid roles, or unique combat power.
+- recruitment queue capacity;
+- active job;
+- waiting-job count;
+- queue usage.
 
-### Important
-
-Real-money purchases are deliberately disabled.
-
-Every offer displays:
-
-**Purchases Disabled — Prototype Catalog**
-
-There is currently:
-
-- no billing SDK;
-- no payment request;
-- no receipt validation;
-- no platform-store transaction;
-- no real-money grant logic.
-
-The price labels are example UX placeholders only.
-
-This lets the economy/store experience be designed before introducing platform billing or server-authoritative entitlement validation.
+The Alliance Hub now shows Alliance Level, Alliance XP, frontline command bonus, and current slot count above the social feed.
 
 ## Persistence
 
-Save schema is now **version 13**.
+Save schema is now version 14.
 
-City save data now includes:
+The existing save structure already owns:
 
-- Garage built state;
-- Garage level;
-- Intel Office built state;
-- Intel Office level.
+- Safehouse level;
+- Clinic level;
+- Barracks level;
+- Alliance state;
+- recruitment state.
 
-Older saves with already-built facilities automatically migrate those facilities to Lv.1.
+Recruitment save data now supports an active job plus a waiting queue.
 
-The Store has no purchase state because billing is not connected.
+The loader remains compatible with the older single-job recruitment save format.
 
-## Architecture additions
+## Architecture addition
 
 ```text
-Main
-├── FacilityEffects
-├── StoreManager
-└── StoreUI
-
 scripts/buildings/
-├── BuildLot.gd
-└── FacilityEffects.gd
+└── CoreBuildingEffects.gd
 
-scripts/store/
-└── StoreManager.gd
-
-scripts/ui/
-└── StoreUI.gd
-
-scenes/ui/
-└── StoreUI.tscn
-
-data/raids/
-├── midtown_exchange.tres
-└── industrial_depot.tres
+Main
+├── CoreBuildingEffects
+├── FacilityEffects
+├── ConstructionQueue
+├── RecruitmentQueue
+├── HospitalQueue
+└── AllianceManager
 ```
 
-## Design intent
-
-The facility system reinforces the original alliance philosophy:
-
-- specialist players become more valuable through city investment;
-- Garage progression improves Driver support rather than replacing frontline strength;
-- Intel Office progression improves Spy support rather than creating a solo-win mechanic;
-- whales still benefit from strong frontline progression;
-- coordinated specialist roles remain strategically important.
-
-The store follows the same philosophy: pay for progression/time convenience, not exclusive battlefield participation.
+CoreBuildingEffects reads the saved building levels and exposes their effects to construction, recruitment, healing, raid rewards, and HUD presentation.
 
 ## Future final-test path
 
-When the full game is ready for testing:
+When full testing begins:
 
-1. Reach Lv.2 and build the Garage.
-2. Recruit Drivers before and after Garage upgrades and compare training time.
-3. Preview a raid and confirm Driver support increases per Garage level.
-4. Reach Lv.3 and build the Intel Office.
-5. Repeat the same test with Spies.
-6. Upgrade each facility through multiple levels.
-7. Restart and confirm facility levels persist.
-8. Raid Midtown Exchange.
-9. Progress to Lv.7 and verify Industrial Depot unlocks.
-10. Open Store and confirm every real-money action remains disabled.
-11. Run the smoke test and confirm FacilityEffects, StoreManager, and StoreUI exist.
+1. Upgrade Safehouse and compare construction durations.
+2. Win raids before/after Safehouse upgrades and compare reward pools.
+3. Upgrade Clinic to Lv.3 and confirm two wounded entries recover simultaneously.
+4. Upgrade Clinic to Lv.5 and confirm three treatment slots.
+5. Upgrade Barracks to Lv.3 and queue two recruitment jobs.
+6. Upgrade Barracks to Lv.5 and queue three jobs.
+7. Close/reopen during a queued recruitment chain and verify offline processing.
+8. Complete Garage/Intel and district missions.
+9. Win raids until Alliance Lv.2 and verify the extra Spy slot.
+10. Reach Alliance Lv.4 and verify the extra Driver slot.
+11. Restart and confirm all building, queue, mission, and Alliance progression persists.
+12. Run the smoke-test scene before the manual playthrough.
 
-## Next strong milestone
+## Next development direction
 
-The strongest remaining development direction is **content completion and economy depth**:
+The next strong milestone is broader endgame/content completion:
 
-- functional Safehouse bonuses;
-- functional Clinic and Barracks level effects;
-- multiple construction/recruitment queue unlocks;
-- district-specific missions;
-- additional alliance progression;
-- economy simulation/balance checks;
-- real art/audio replacement hooks;
-- localization-ready text data;
-- broader final QA and device testing.
+- Safehouse command features beyond passive bonuses;
+- more alliance members and alliance tasks;
+- resource production/collection;
+- district ownership/turf control;
+- PvE patrol encounters;
+- map fog/intel discovery;
+- more building slots;
+- localization-ready content data;
+- balance simulation and final QA.

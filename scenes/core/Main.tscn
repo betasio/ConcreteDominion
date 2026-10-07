@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3]
+[gd_scene load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -36,6 +36,7 @@
 [ext_resource type="Script" path="res://scripts/buildings/FacilityEffects.gd" id="34_facilities"]
 [ext_resource type="Script" path="res://scripts/store/StoreManager.gd" id="35_store"]
 [ext_resource type="PackedScene" path="res://scenes/ui/StoreUI.tscn" id="36_store_ui"]
+[ext_resource type="Script" path="res://scripts/buildings/CoreBuildingEffects.gd" id="37_core_effects"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -84,6 +85,9 @@ script = ExtResource("4_hospital")
 
 [node name="FacilityEffects" type="Node" parent="."]
 script = ExtResource("34_facilities")
+
+[node name="CoreBuildingEffects" type="Node" parent="."]
+script = ExtResource("37_core_effects")
 
 [node name="ConstructionQueue" type="Node" parent="."]
 script = ExtResource("6_construction")

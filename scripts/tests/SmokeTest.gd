@@ -32,6 +32,7 @@ func _ready() -> void:
 		"AudioManager",
 		"UIFocusManager",
 		"FacilityEffects",
+		"CoreBuildingEffects",
 		"StoreManager",
 		"StoreUI"
 	]:
@@ -47,6 +48,16 @@ func _ready() -> void:
 		_fail("GameBalance recruitment table missing Driver.")
 	if balance == null or balance.get_facility_value("garage_driver_support_per_level", 0.0) <= 0.0:
 		_fail("GameBalance facility tuning is missing.")
+	if balance == null or balance.get_core_building_value("clinic_healing_reduction_per_level", 0.0) <= 0.0:
+		_fail("GameBalance core-building tuning is missing.")
+
+	var recruitment := game.get_node_or_null("RecruitmentQueue") as RecruitmentQueue
+	if recruitment == null or recruitment.get_queue_capacity() < 1:
+		_fail("Recruitment queue capacity is invalid.")
+
+	var alliance := game.get_node_or_null("AllianceManager") as AllianceManager
+	if alliance == null or alliance.get_xp_for_next_level() <= 0:
+		_fail("Alliance progression is invalid.")
 
 	_finish()
 

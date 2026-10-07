@@ -2,6 +2,7 @@ class_name AllianceManager
 extends Node
 
 signal changed
+signal alliance_leveled_up(new_level: int)
 
 const ROLE_FRONTLINE := &"frontline"
 const ROLE_DRIVER := &"driver"
@@ -9,6 +10,9 @@ const ROLE_SPY := &"spy"
 
 var members: Array[Dictionary] = []
 var raid_slots: Array[Dictionary] = []
+
+var alliance_level := 1
+var alliance_xp := 0
 
 
 func _ready() -> void:
@@ -28,15 +32,92 @@ func _create_mock_alliance() -> void:
 	]
 
 
+func get_xp_for_next_level() -> int:
+	return 120 + (alliance_level - 1) * 100
+
+
+func get_frontline_power_multiplier() -> float:
+	return 1.0 + float(alliance_level - 1) * 0.02
+
+
+func get_progression_summary() -> String:
+	return "Alliance Lv.%d — XP %d/%d — NPC frontline +%d%% — Slots %d" % [
+		alliance_level,
+		alliance_xp,
+		get_xp_for_next_level(),
+		roundi((get_frontline_power_multiplier() - 1.0) * 100.0),
+		raid_slots.size()
+	]
+
+
+func award_raid_result(result: Dictionary) -> void:
+	if not bool(result.get("victory", false)):
+		return
+
+	var earned := 20
+	match String(result.get("target_id", "")):
+		"harbor_bank":
+			earned = 28
+		"midtown_exchange":
+			earned = 34
+		"northside_hq":
+			earned = 42
+		"casino_vault":
+			earned = 52
+		"financial_tower":
+			earned = 64
+		"industrial_depot":
+			earned = 78
+
+	alliance_xp += earned
+	while alliance_xp >= get_xp_for_next_level():
+		alliance_xp -= get_xp_for_next_level()
+		alliance_level += 1
+		_rebuild_slots_preserving_assignments()
+		alliance_leveled_up.emit(alliance_level)
+
+	changed.emit()
+
+
 func reset_raid_slots() -> void:
-	raid_slots = [
+	raid_slots = _desired_slots()
+	auto_fill_online_allies()
+	changed.emit()
+
+
+func _desired_slots() -> Array[Dictionary]:
+	var slots: Array[Dictionary] = [
 		{"slot":0,"role":ROLE_FRONTLINE,"member_id":"boss_01"},
 		{"slot":1,"role":ROLE_DRIVER,"member_id":""},
 		{"slot":2,"role":ROLE_SPY,"member_id":""},
 		{"slot":3,"role":ROLE_DRIVER,"member_id":""}
 	]
+	if alliance_level >= 2:
+		slots.append({"slot":slots.size(),"role":ROLE_SPY,"member_id":""})
+	if alliance_level >= 4:
+		slots.append({"slot":slots.size(),"role":ROLE_DRIVER,"member_id":""})
+	return slots
+
+
+func _rebuild_slots_preserving_assignments() -> void:
+	var assigned: Dictionary = {}
+	for slot in raid_slots:
+		var member_id := String(slot.get("member_id", ""))
+		if member_id != "":
+			assigned[member_id] = StringName(slot.get("role", ROLE_DRIVER))
+
+	raid_slots = _desired_slots()
+
+	for member_id in assigned.keys():
+		if member_id == "boss_01":
+			continue
+		var role := StringName(assigned[member_id])
+		for slot in raid_slots:
+			if StringName(slot["role"]) == role and String(slot["member_id"]) == "":
+				slot["member_id"] = member_id
+				break
+
 	auto_fill_online_allies()
-	changed.emit()
 
 
 func auto_fill_online_allies() -> void:
@@ -164,6 +245,9 @@ func build_participant_snapshot(local_driver_count: int, local_spy_count: int) -
 		var base_power := float(member["power"])
 		var unit_count := 0
 
+		if not bool(member["is_local"]) and role == ROLE_FRONTLINE:
+			base_power *= get_frontline_power_multiplier()
+
 		if bool(member["is_local"]):
 			if role == ROLE_DRIVER:
 				unit_count = local_driver_count
@@ -188,10 +272,18 @@ func get_save_data() -> Dictionary:
 	for member in members:
 		if not bool(member["is_local"]):
 			online_states[String(member["id"])] = bool(member["online"])
-	return {"online_states":online_states,"raid_slots":raid_slots.duplicate(true)}
+	return {
+		"online_states": online_states,
+		"raid_slots": raid_slots.duplicate(true),
+		"alliance_level": alliance_level,
+		"alliance_xp": alliance_xp
+	}
 
 
 func load_save_data(data: Dictionary) -> void:
+	alliance_level = maxi(1, int(data.get("alliance_level", alliance_level)))
+	alliance_xp = maxi(0, int(data.get("alliance_xp", alliance_xp)))
+
 	var states = data.get("online_states", {})
 	if states is Dictionary:
 		for member in members:
@@ -205,6 +297,7 @@ func load_save_data(data: Dictionary) -> void:
 		for slot in saved_slots:
 			if slot is Dictionary:
 				raid_slots.append(slot.duplicate(true))
+		_rebuild_slots_preserving_assignments()
 	else:
 		reset_raid_slots()
 

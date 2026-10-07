@@ -16,6 +16,7 @@ var loot_inventory: LootInventory
 var alliance: AllianceManager
 var progression: PlayerProgression
 var loadout: CombatLoadout
+var core_effects: CoreBuildingEffects
 var city_map: Node
 
 var active_battle: Dictionary = {}
@@ -33,6 +34,7 @@ func setup(
 	alliance_manager: AllianceManager,
 	player_progression: PlayerProgression,
 	combat_loadout: CombatLoadout,
+	building_effects: CoreBuildingEffects,
 	world: Node
 ) -> void:
 	economy = player_economy
@@ -43,6 +45,7 @@ func setup(
 	alliance = alliance_manager
 	progression = player_progression
 	loadout = combat_loadout
+	core_effects = building_effects
 	city_map = world
 
 
@@ -185,7 +188,8 @@ func _resolve_active_battle() -> void:
 	var target_hp := float(active_battle["target_hp"])
 	var victory := damage >= target_hp
 	var reward_multiplier := float(active_battle.get("reward_multiplier", 1.0))
-	var reward_pool := roundi(float(active_battle["reward_cash"]) * reward_multiplier) if victory else 0
+	var safehouse_multiplier := core_effects.get_raid_cash_multiplier() if core_effects != null else 1.0
+	var reward_pool := roundi(float(active_battle["reward_cash"]) * reward_multiplier * safehouse_multiplier) if victory else 0
 	var contributions: Dictionary = active_battle.get("contributions", {})
 	var awarded_loot: Dictionary = {}
 

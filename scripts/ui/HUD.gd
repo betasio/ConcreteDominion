@@ -236,13 +236,22 @@ func _refresh_selection() -> void:
 		return
 
 	if selected_building != null:
+		var core_effects: CoreBuildingEffects = get_node("/root/Main/CoreBuildingEffects")
 		level_label.text = "Level %d%s" % [
 			selected_building.level,
 			" (upgrading)" if selected_building.is_constructing else ""
 		]
+		selection_description.text = "%s\n\n%s" % [
+			selected_building.description,
+			core_effects.get_building_effect_summary(selected_building)
+		]
 		var cash_cost := selected_building.get_upgrade_cash_cost()
-		upgrade_button.text = "Upgrade to Lv.%d — $%s" % [selected_building.level + 1, _format_number(cash_cost)]
-		upgrade_button.disabled = construction_queue.is_busy() or selected_building.is_constructing or economy.cash < cash_cost
+		if selected_building.level >= selected_building.max_level:
+			upgrade_button.text = "MAX LEVEL"
+			upgrade_button.disabled = true
+		else:
+			upgrade_button.text = "Upgrade to Lv.%d — $%s" % [selected_building.level + 1, _format_number(cash_cost)]
+			upgrade_button.disabled = construction_queue.is_busy() or selected_building.is_constructing or economy.cash < cash_cost
 
 	if selected_lot != null:
 		var progression: PlayerProgression = get_node("/root/Main/PlayerProgression")
@@ -368,7 +377,8 @@ func _refresh_hospital() -> void:
 		return
 
 	if hospital_queue.wounded_queue.is_empty():
-		queue_label.text = "Clinic queue is empty. Your crew is ready."
+		var slots := get_node("/root/Main/CoreBuildingEffects").get_clinic_slots()
+		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d" % slots
 		cost_label.text = "Instant heal cost: 0 Gold"
 		instant_button.disabled = true
 		return
@@ -384,7 +394,8 @@ func _refresh_hospital() -> void:
 			_format_time(float(entry["seconds_remaining"]))
 		])
 
-	queue_label.text = "\n".join(lines)
+	var clinic_slots := get_node("/root/Main/CoreBuildingEffects").get_clinic_slots()
+	queue_label.text = "Treatment slots: %d\n%s" % [clinic_slots, "\n".join(lines)]
 	var cost := hospital_queue.get_instant_heal_cost()
 	cost_label.text = "Instant heal cost: %d Gold" % cost
 	instant_button.disabled = economy.gold < cost
@@ -428,25 +439,28 @@ func _refresh_recruitment() -> void:
 		troop_roster.get_count(&"Spy")
 	]
 
-	var busy := recruitment_queue.is_busy()
+	var queue_full := recruitment_queue.get_queue_size() >= recruitment_queue.get_queue_capacity()
 	recruit_enforcer_button.text = "Recruit 5 Enforcers — $%s" % _format_number(recruitment_queue.get_cash_cost(&"Enforcer", 5))
 	recruit_driver_button.text = "Recruit 3 Drivers — $%s" % _format_number(recruitment_queue.get_cash_cost(&"Driver", 3))
 	recruit_spy_button.text = "Recruit 3 Spies — $%s" % _format_number(recruitment_queue.get_cash_cost(&"Spy", 3))
 
-	recruit_enforcer_button.disabled = busy or economy.cash < recruitment_queue.get_cash_cost(&"Enforcer", 5)
-	recruit_driver_button.disabled = busy or economy.cash < recruitment_queue.get_cash_cost(&"Driver", 3)
-	recruit_spy_button.disabled = busy or economy.cash < recruitment_queue.get_cash_cost(&"Spy", 3)
+	recruit_enforcer_button.disabled = queue_full or economy.cash < recruitment_queue.get_cash_cost(&"Enforcer", 5)
+	recruit_driver_button.disabled = queue_full or economy.cash < recruitment_queue.get_cash_cost(&"Driver", 3)
+	recruit_spy_button.disabled = queue_full or economy.cash < recruitment_queue.get_cash_cost(&"Spy", 3)
 
 	if recruitment_queue.active_job.is_empty():
-		recruitment_status.text = "Recruitment queue is ready."
+		recruitment_status.text = "Recruitment queue is ready. Slots: %d" % recruitment_queue.get_queue_capacity()
 		finish_recruitment_button.visible = false
 	else:
 		var job := recruitment_queue.active_job
 		var finish_cost := recruitment_queue.get_finish_now_cost()
-		recruitment_status.text = "Training %s x%d — %s remaining" % [
+		recruitment_status.text = "Training %s x%d — %s remaining\nQueue: %d/%d (%d waiting)" % [
 			String(job["troop_type"]),
 			int(job["amount"]),
-			_format_time(float(job["seconds_remaining"]))
+			_format_time(float(job["seconds_remaining"])),
+			recruitment_queue.get_queue_size(),
+			recruitment_queue.get_queue_capacity(),
+			recruitment_queue.queued_jobs.size()
 		]
 		finish_recruitment_button.visible = true
 		finish_recruitment_button.text = "Finish Training (%d Gold)" % finish_cost
@@ -883,7 +897,7 @@ func _refresh_alliance_social() -> void:
 	if alliance_social == null:
 		return
 
-	alliance_feed_label.text = alliance_social.get_feed_text()
+	alliance_feed_label.text = "%s\n\n%s" % [alliance_manager.get_progression_summary(), alliance_social.get_feed_text()]
 
 	if alliance_social.active_invite.is_empty():
 		invite_status_label.text = "No active raid invite."
