@@ -3,6 +3,7 @@ extends CanvasLayer
 
 var faction: FactionManager
 var economy: PlayerEconomy
+var missions: MissionTracker
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var summary_label: Label = $Root/Panel/Margin/Scroll/VBox/Summary
@@ -41,12 +42,18 @@ var economy: PlayerEconomy
 @onready var leave_button: Button = $Root/Panel/Margin/Scroll/VBox/Leave
 
 
-func setup(faction_manager: FactionManager, player_economy: PlayerEconomy) -> void:
+func setup(
+	faction_manager: FactionManager,
+	player_economy: PlayerEconomy,
+	mission_tracker: MissionTracker
+) -> void:
 	faction = faction_manager
 	economy = player_economy
+	missions = mission_tracker
 
 	faction.changed.connect(_refresh)
 	economy.changed.connect(_refresh)
+	missions.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Close.pressed.connect(_toggle)
 	create_button.pressed.connect(_create)
@@ -187,7 +194,8 @@ func _refresh() -> void:
 		return
 
 	$Root/Shortcut.text = "Faction" if not faction.has_faction() else "[%s] %s" % [faction.faction_tag, faction.faction_name]
-	summary_label.text = faction.get_summary()
+	var faction_unlocked := bool(missions.missions["chapter_2_complete"]["completed"])
+	summary_label.text = faction.get_summary() if faction_unlocked else "Faction unlocks after Chapter 2. Build your Family and defeat Harbor + Midtown first."
 
 	var has := faction.has_faction()
 	for node in [
@@ -216,8 +224,8 @@ func _refresh() -> void:
 	]:
 		node.visible = has
 
-	$Root/Panel/Margin/Scroll/VBox/CreateBox.visible = not has
-	join_button.visible = not has
+	$Root/Panel/Margin/Scroll/VBox/CreateBox.visible = not has and faction_unlocked
+	join_button.visible = not has and faction_unlocked
 
 	if not has:
 		return
