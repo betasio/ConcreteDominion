@@ -9,6 +9,7 @@ var text_catalog: LocalizedText
 @onready var panel: PanelContainer = $Root/Panel
 @onready var income_label: Label = $Root/Panel/Margin/VBox/Income
 @onready var districts_label: Label = $Root/Panel/Margin/VBox/Districts
+@onready var rivalries_label: Label = $Root/Panel/Margin/VBox/Rivalries
 @onready var discovery_label: Label = $Root/Panel/Margin/VBox/Discovery
 @onready var patrol_label: Label = $Root/Panel/Margin/VBox/Patrol
 @onready var tasks_label: Label = $Root/Panel/Margin/VBox/Tasks
@@ -18,6 +19,11 @@ var text_catalog: LocalizedText
 @onready var intel_button: Button = $Root/Panel/Margin/VBox/DiscoverIntel
 @onready var command_button: Button = $Root/Panel/Margin/VBox/CommandScan
 @onready var patrol_button: Button = $Root/Panel/Margin/VBox/ResolvePatrol
+@onready var victory_panel: PanelContainer = $Root/VictoryPanel
+@onready var victory_title: Label = $Root/VictoryPanel/Margin/VBox/Title
+@onready var victory_boss: Label = $Root/VictoryPanel/Margin/VBox/Boss
+@onready var victory_summary: Label = $Root/VictoryPanel/Margin/VBox/Summary
+@onready var victory_close: Button = $Root/VictoryPanel/Margin/VBox/Close
 
 
 func setup(manager: WorldControlManager, world: Node, resource_manager: ResourceProductionManager, localized_text: LocalizedText) -> void:
@@ -32,6 +38,8 @@ func setup(manager: WorldControlManager, world: Node, resource_manager: Resource
 	$Root/Panel/Margin/VBox/ResolvePatrol.text = text_catalog.text("UI_CLEAR_PATROL")
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	control.changed.connect(_refresh)
+	control.district_discovered.connect(_show_boss_intro)
+	control.district_captured.connect(_show_district_victory)
 	resources.changed.connect(_refresh)
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle)
@@ -40,6 +48,7 @@ func setup(manager: WorldControlManager, world: Node, resource_manager: Resource
 	command_button.pressed.connect(_command_scan)
 	patrol_button.pressed.connect(_resolve_patrol)
 	collect_resources_button.pressed.connect(_collect_resources)
+	victory_close.pressed.connect(_close_victory_panel)
 	_refresh()
 
 
@@ -75,6 +84,55 @@ func _collect_resources() -> void:
 	_refresh()
 
 
+func _show_boss_intro(district_id: String) -> void:
+	var dossier := control.get_faction_dossier(district_id)
+	if dossier.is_empty():
+		return
+	victory_title.text = "RIVAL REVEALED • %s" % String(dossier["district"]).to_upper()
+	victory_boss.text = "%s — %s\n%s" % [
+		String(dossier["boss"]),
+		String(dossier["boss_title"]),
+		String(dossier["faction"]).to_upper()
+	]
+	victory_summary.text = "“%s”\n\n%s\nPreferred encounter: %s\nCurrent feud: %s %d/10 • reward bonus +%d%%" % [
+		String(dossier["boss_quote"]),
+		String(dossier["perk"]),
+		String(dossier["preferred_encounter"]).replace("_", " ").capitalize(),
+		String(dossier["rivalry"]),
+		int(dossier["rivalry_score"]),
+		int(dossier["feud_bonus_percent"])
+	]
+	victory_close.text = "Enter District"
+	victory_panel.visible = true
+	victory_close.grab_focus.call_deferred()
+
+
+func _show_district_victory(district_id: String) -> void:
+	var summary := control.get_capture_victory_summary(district_id)
+	if summary.is_empty():
+		return
+	victory_title.text = "DISTRICT TAKEN • %s" % String(summary["district"]).to_upper()
+	victory_boss.text = "%s DEFEATED\n%s" % [
+		String(summary["boss"]),
+		String(summary["faction"]).to_upper()
+	]
+	victory_summary.text = "%s\n\nRival status: %s %d/10\nFuture feud encounters now pay +%d%% from rivalry, before faction modifiers." % [
+		String(summary["victory_line"]),
+		String(summary["rivalry"]),
+		int(summary["rivalry_score"]),
+		int(summary["feud_bonus_percent"])
+	]
+	victory_close.text = "Claim Turf"
+	victory_panel.visible = true
+	victory_close.grab_focus.call_deferred()
+
+
+func _close_victory_panel() -> void:
+	victory_panel.visible = false
+	panel.visible = true
+	_refresh()
+
+
 func _resolve_patrol() -> void:
 	var result := control.resolve_patrol()
 	if not result.is_empty():
@@ -101,6 +159,7 @@ func _refresh() -> void:
 	collect_button.disabled = control.production_bank < 1.0
 
 	districts_label.text = text_catalog.text("UI_DISTRICTS") + "\n" + "\n".join(control.get_district_lines())
+	rivalries_label.text = "RIVAL DOSSIERS\n" + "\n".join(control.get_rivalry_lines())
 	discovery_label.text = text_catalog.text("UI_NEXT_DISCOVERY") + "\n%s" % control.get_next_discovery_summary()
 	intel_button.disabled = not control.has_discoverable_target()
 
