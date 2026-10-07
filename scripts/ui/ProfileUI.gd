@@ -5,6 +5,7 @@ var profile: PlayerProfile
 var mailbox: MailboxManager
 var progression: PlayerProgression
 var text_catalog: LocalizedText
+var endgame: EndgameManager
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -20,17 +21,20 @@ func setup(
 	player_profile: PlayerProfile,
 	mailbox_manager: MailboxManager,
 	player_progression: PlayerProgression,
-	localized_text: LocalizedText
+	localized_text: LocalizedText,
+	endgame_manager: EndgameManager
 ) -> void:
 	profile = player_profile
 	mailbox = mailbox_manager
 	progression = player_progression
 	text_catalog = localized_text
+	endgame = endgame_manager
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 
 	profile.changed.connect(_refresh)
 	mailbox.changed.connect(_refresh)
 	progression.changed.connect(_refresh)
+	endgame.changed.connect(_refresh)
 
 	shortcut.pressed.connect(_toggle_panel)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle_panel)
@@ -75,7 +79,11 @@ func _refresh() -> void:
 		_format_number(profile.get_power_rating())
 	]
 
-	badges_label.text = text_catalog.text("UI_BADGES") + "\n" + " • ".join(profile.get_badges())
+	var badge_lines := profile.get_badges()
+	var prestige_badge := endgame.get_equipped_prestige_badge()
+	if not prestige_badge.is_empty():
+		badge_lines.append("Dominion Prestige: %s" % prestige_badge)
+	badges_label.text = text_catalog.text("UI_BADGES") + "\n" + " • ".join(badge_lines)
 
 	var lines := PackedStringArray()
 	for message in mailbox.messages:
