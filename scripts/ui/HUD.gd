@@ -14,6 +14,7 @@ var synergy_raid: SynergyRaid
 var alliance_manager: AllianceManager
 var alliance_social: AllianceSocial
 var raid_battle: RaidBattle
+var settings_manager: SettingsManager
 
 var selected_building: Building
 var selected_lot: BuildLot
@@ -86,7 +87,8 @@ func setup(
 	construction: ConstructionQueue,
 	recruitment: RecruitmentQueue,
 	raid: SynergyRaid,
-	battle: RaidBattle
+	battle: RaidBattle,
+	settings: SettingsManager = null
 ) -> void:
 	economy = player_economy
 	loot_inventory = loot
@@ -98,6 +100,7 @@ func setup(
 	recruitment_queue = recruitment
 	synergy_raid = raid
 	raid_battle = battle
+	settings_manager = settings
 
 	economy.changed.connect(_refresh_all)
 	loot_inventory.changed.connect(_refresh_all)
@@ -951,12 +954,16 @@ func _show_result_overlay(result: Dictionary) -> void:
 	]
 
 	result_overlay.visible = true
-	result_overlay.modulate.a = 0.0
-	result_overlay.scale = Vector2(0.90, 0.90)
 
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(result_overlay, "modulate:a", 1.0, 0.22)
-	tween.tween_property(result_overlay, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if settings_manager != null and settings_manager.reduced_motion:
+		result_overlay.modulate.a = 1.0
+		result_overlay.scale = Vector2.ONE
+	else:
+		result_overlay.modulate.a = 0.0
+		result_overlay.scale = Vector2(0.90, 0.90)
+		var tween := create_tween().set_parallel(true)
+		tween.tween_property(result_overlay, "modulate:a", 1.0, 0.22)
+		tween.tween_property(result_overlay, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _close_result_overlay() -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -26,9 +26,19 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/EventUI.tscn" id="24_event_ui"]
 [ext_resource type="Script" path="res://scripts/combat/CombatLoadout.gd" id="25_loadout"]
 [ext_resource type="PackedScene" path="res://scenes/ui/CombatStrategyUI.tscn" id="26_tactics_ui"]
+[ext_resource type="Script" path="res://scripts/core/GameBalance.gd" id="27_balance"]
+[ext_resource type="Script" path="res://scripts/core/SettingsManager.gd" id="28_settings"]
+[ext_resource type="Script" path="res://scripts/ui/SafeAreaManager.gd" id="29_safe"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsDiagnosticsUI.tscn" id="30_settings_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
+
+[node name="GameBalance" type="Node" parent="."]
+script = ExtResource("27_balance")
+
+[node name="SettingsManager" type="Node" parent="."]
+script = ExtResource("28_settings")
 
 [node name="PlayerEconomy" type="Node" parent="."]
 script = ExtResource("5_economy")
@@ -84,6 +94,9 @@ script = ExtResource("11_battle")
 [node name="SaveManager" type="Node" parent="."]
 script = ExtResource("10_save")
 
+[node name="SafeAreaManager" type="Node" parent="."]
+script = ExtResource("29_safe")
+
 [node name="CityMap" parent="." instance=ExtResource("2_city")]
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
@@ -97,3 +110,5 @@ script = ExtResource("10_save")
 [node name="EventUI" parent="." instance=ExtResource("24_event_ui")]
 
 [node name="CombatStrategyUI" parent="." instance=ExtResource("26_tactics_ui")]
+
+[node name="SettingsDiagnosticsUI" parent="." instance=ExtResource("30_settings_ui")]

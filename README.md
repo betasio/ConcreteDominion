@@ -2,275 +2,198 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Strategic raid loadout milestone
+## Production-readiness foundation
 
-Raids now have a real pre-battle strategy layer instead of only choosing alliance support slots.
+This milestone moves several prototype-wide concerns out of individual gameplay scripts and into dedicated infrastructure.
 
-### Tactics panel
+## Central balance configuration
 
-A new **TACTICS** shortcut opens the pre-raid loadout panel.
+A new `GameBalance` node owns shared tuning values for:
 
-Players can configure:
+- troop recruitment Cash cost;
+- troop recruitment time;
+- recruitment Gold speed-up rate;
+- construction Gold speed-up rate;
+- Clinic Gold speed-up rate;
+- account XP curve;
+- Driver support progression;
+- Spy support progression;
+- Enforcer power progression.
 
-- risk plan;
-- specialist equipment;
-- equipment/perk upgrades;
-- one-raid consumables;
-- target counter-role planning.
+Recruitment, construction, Clinic healing, and player progression now read these values from the same source.
 
-The selected setup is persistent.
+This makes future economy passes substantially safer because core tuning no longer requires searching multiple unrelated scripts.
 
-## Risk plans
+## Player settings
 
-Three raid plans are available.
+Settings are stored separately in:
 
-### Balanced
-- normal damage;
-- normal rewards;
-- normal injury severity.
+`user://settings.cfg`
 
-### Blitz
-- +12% final damage;
-- +10% Cash and XP rewards;
-- +35% injury severity.
+They do not belong to the gameplay save and can therefore survive save resets independently.
 
-### Cautious
-- -6% final damage;
-- -5% Cash and XP rewards;
-- -35% injury severity.
+Current settings:
 
-This creates a real risk/reward choice without introducing permanent troop loss.
+- Master Volume
+- Haptics on/off
+- Haptics strength
+- Reduced Motion
+- Larger UI Text
+- PC Edge Pan
 
-## Specialist equipment and perks
+Master volume is applied through Godot's Master audio bus.
 
-The player can equip one specialist kit.
+Haptics use `Input.vibrate_handheld()` only when touchscreen hardware is available.
 
-### Turbo Kit — Driver
-Improves raid effectiveness when Driver support is present.
+Raid resolution provides short victory/defeat haptic feedback when enabled.
 
-### Signal Jammer — Spy
-Improves raid effectiveness when Spy support is present.
+Reduced Motion disables the raid result tween and raid impact burst.
 
-### Ballistic Rig — Enforcer
-Improves raid effectiveness when frontline power is present.
+## Mobile safe areas
 
-Each equipment role has its own persistent perk level.
+The project now uses:
 
-Upgrades consume existing raid loot:
+`DisplayServer.get_display_safe_area()`
 
-- Parts;
-- Intel.
+on touchscreen devices.
 
-Each perk level adds another 3% matched-role damage multiplier.
+A `SafeAreaManager` converts the physical safe-area rectangle into the game's stretched viewport space and applies the resulting insets to the major UI roots.
 
-## Consumable boosts
+This protects interface controls from:
 
-Two optional consumables can be selected.
+- phone notches;
+- camera cutouts;
+- rounded display corners;
+- system UI safe regions.
 
-### Intel Burst
-- costs Intel x1 at raid launch;
-- +10% final raid damage.
+Desktop windows receive zero safe-area padding.
 
-### Armor Plates
-- costs Parts x1 at raid launch;
-- reduces injury severity by 35%.
+The project stretch aspect is now `expand` so extra PC/mobile aspect-ratio space can be used responsively.
 
-Choosing **None** has no cost.
+## Diagnostics panel
 
-Consumables are charged only when a valid raid actually launches.
+The Settings screen includes live diagnostics:
 
-## Target weaknesses
+- FPS;
+- operating system;
+- active Godot renderer;
+- viewport size;
+- touchscreen detection;
+- current gameplay save schema;
+- central recruitment costs/times;
+- Gold-per-minute speed-up values.
 
-Every world target now has a recommended counter-role.
+This provides a basic in-game inspection surface for later balancing and device testing.
 
-| Target | Weakness | Bonus |
-| --- | --- | ---: |
-| Downtown Bank | Driver | +8% |
-| Harbor Bank | Spy | +12% |
-| Northside Turf HQ | Driver | +12% |
-| Casino Vault | Spy | +15% |
-| Financial Tower | Enforcer/frontline | +15% |
+## Save migrations
 
-The raid lobby displays the target weakness before launch.
+Gameplay save schema is now **version 12**.
 
-If the alliance composition contains the matching role, the bonus is included in final raid damage.
+Older saves are explicitly migrated before loading.
 
-## Full tactical preview
+Current migration guards cover the historical additions for:
 
-**Preview Alliance Damage** now uses the same calculation that will be frozen at launch.
+- progression/missions;
+- retention;
+- profile/mailbox;
+- live events;
+- combat loadouts.
 
-The preview shows:
+Missing systems are initialized with empty/default data rather than breaking older saves.
 
-- projected battle grade;
-- final damage versus effective target HP;
-- alliance support multiplier;
-- whether the target counter was matched;
-- selected risk plan;
-- equipment match;
-- selected consumable;
-- reward multiplier;
-- injury-risk multiplier;
-- named member contribution values.
+The migration result is marked with schema metadata and then loaded through the normal subsystem loaders.
 
-This makes the battle calculation understandable before committing.
+## Mobile lifecycle saving
 
-## Frozen battle snapshots
+Desktop close requests still trigger a save.
 
-When a raid launches, the following values are frozen into the active battle:
+The game now also saves on:
 
-- participant roster;
-- calculated final damage;
-- contribution scores;
-- support bonus;
-- target counter status;
-- equipment status;
-- risk plan;
-- consumable;
-- reward multiplier;
-- injury multiplier;
-- projected grade.
+`NOTIFICATION_APPLICATION_PAUSED`
 
-Changing the Tactics panel while the convoy is traveling therefore cannot alter an already-launched battle.
+This is important for Android/iOS because a suspended application can be terminated by the operating system without receiving a normal desktop-style close event.
 
-This also keeps offline save/load deterministic.
+## Accessibility
 
-## Performance grades
+The current accessibility foundation contains:
 
-Raid results now receive a grade based on final damage compared with target HP:
+- reduced motion;
+- larger UI text;
+- adjustable haptic strength;
+- complete haptic disable;
+- master-volume control.
 
-- **S** — 135%+ of target HP
-- **A** — 115%+
-- **B** — successful clear
-- **C** — near miss
-- **D** — significant miss
-
-The animated result overlay and raid lobby both display the grade.
-
-## Injury severity
-
-Troops still **never die permanently**.
-
-Instead, difficult battles can produce different injury severity:
-
-- Minor
-- Standard
-- Serious
-- Critical
-
-Severity changes Clinic healing duration.
-
-Risk plan, Armor Plates, victory/defeat, and target difficulty all contribute to the severity multiplier.
-
-For example:
-
-- Cautious + Armor Plates can significantly reduce recovery time;
-- Blitz against Boss/Mythic targets can lead to Serious or Critical recovery;
-- losing increases injury severity.
-
-The Clinic queue now displays severity next to each wounded entry.
-
-## Reward risk
-
-Risk plans also affect successful raid Cash and XP:
-
-- Blitz: x1.10
-- Balanced: x1.00
-- Cautious: x0.95
-
-Loot drops remain target-defined and are not multiplied.
-
-This avoids turning the aggressive option into an unlimited material multiplier.
-
-## Persistence
-
-Save version 11 now also stores:
-
-- selected raid plan;
-- equipped specialist role;
-- selected consumable;
-- equipment/perk levels.
-
-Active raids already preserve the frozen tactical snapshot.
-
-Clinic save data now includes:
-
-- injury severity label;
-- severity multiplier;
-- remaining healing time.
+The larger-text option applies a shared font-size override to the major UI roots so the feature affects the whole interface rather than one panel.
 
 ## Architecture additions
 
 ```text
 Main
-├── CombatLoadout
-├── RaidBattle
-├── HospitalQueue
-└── CombatStrategyUI
+├── GameBalance
+├── SettingsManager
+├── SafeAreaManager
+├── SaveManager
+└── SettingsDiagnosticsUI
 
-scripts/combat/
-├── CombatLoadout.gd
-├── RaidBattle.gd
-└── HospitalQueue.gd
+scripts/core/
+├── GameBalance.gd
+├── SettingsManager.gd
+└── SaveManager.gd
 
 scripts/ui/
-└── CombatStrategyUI.gd
+├── SafeAreaManager.gd
+└── SettingsDiagnosticsUI.gd
 
 scenes/ui/
-└── CombatStrategyUI.tscn
+└── SettingsDiagnosticsUI.tscn
 ```
 
-`CombatLoadout` owns persistent player choices and perk levels.
+## Current shared balance defaults
 
-`RaidBattle` owns the authoritative local prototype calculation and freezes the launch snapshot.
+### Recruitment
 
-`RaidTargetData` owns each target's weakness role and counter bonus.
+| Unit | Cash each | Seconds each |
+| --- | ---: | ---: |
+| Enforcer | $250 | 1.4 |
+| Driver | $400 | 2.0 |
+| Spy | $500 | 2.4 |
 
-`HospitalQueue` translates injury severity into recovery duration.
+### Gold speed-ups
 
-## Suggested future test path
+| Queue | Gold/minute |
+| --- | ---: |
+| Recruitment | 2 |
+| Construction | 3 |
+| Clinic | 2 |
 
-When the game reaches the final testing phase:
+### Progression
 
-1. Select Downtown Bank.
-2. Open TACTICS.
-3. Compare Balanced, Blitz, and Cautious previews.
-4. Match Downtown's Driver weakness.
-5. Equip/upgrade Turbo Kit.
-6. Select Intel Burst and confirm final damage increases.
-7. Launch and verify the consumable is spent once.
-8. Compare the projected grade with the final grade.
-9. Try a higher-tier Boss/Mythic target with Blitz.
-10. Check Clinic injury severity and healing time.
-11. Repeat with Cautious + Armor Plates and compare recovery.
-12. Restart during an active convoy and confirm the frozen result remains unchanged.
+- Base XP required: 100
+- Extra XP per account level: 75
+- Driver support starts at +15%, +3% per specialist level
+- Spy support starts at +18%, +4% per specialist level
+- Enforcer power starts at 100 each, +15 per specialist level
 
-## Production note
+These are prototype defaults and are intentionally centralized for the later full balance pass.
 
-The combat/loadout system is still client-authoritative in this prototype.
+## Production notes
 
-Before live multiplayer, the server must validate:
+Haptic vibration is platform-dependent. Android exports must enable the appropriate vibration permission for handheld vibration to work.
 
-- loadout ownership;
-- consumable spending;
-- target weaknesses;
-- participant snapshots;
-- damage calculations;
-- reward multipliers;
-- grades;
-- injuries;
-- Clinic timers.
+Gameplay saves, rewards, timers, progression, currencies, battles, and event state remain client-authoritative in this prototype. A live multiplayer release still requires server validation.
 
 ## Next strong milestone
 
-The next major step should be **economy/balance hardening and production readiness**:
+The project is now ready for a broader **quality and release-preparation pass**:
 
-- central data tables for troop/building costs and timers;
-- account progression tuning;
-- Gold economy and speed-up pricing review;
-- analytics/event hooks;
-- settings/audio/haptics;
-- accessibility options;
-- mobile safe-area handling;
-- error/debug panel;
-- automated save migrations;
-- final Godot runtime validation and bug-fix pass.
+- real audio/SFX hooks;
+- UI navigation/focus for keyboard/controller;
+- loading/title screen;
+- pause/system menu;
+- export presets for Windows/Android;
+- crash-safe backup save;
+- data validation tools;
+- automated smoke-test scene;
+- runtime parser/error cleanup;
+- performance budget checks;
+- final economy/balance spreadsheet.

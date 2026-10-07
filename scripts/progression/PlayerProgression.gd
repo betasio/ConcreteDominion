@@ -15,14 +15,18 @@ var specialist_levels: Dictionary = {
 }
 
 var loot_inventory: LootInventory
+var balance: GameBalance
 
 
-func setup(loot: LootInventory) -> void:
+func setup(loot: LootInventory, game_balance: GameBalance = null) -> void:
 	loot_inventory = loot
+	balance = game_balance
 
 
 func get_xp_for_next_level() -> int:
-	return 100 + (account_level - 1) * 75
+	var base := 100.0 if balance == null else balance.get_progression_value("base_xp_to_level", 100.0)
+	var step := 75.0 if balance == null else balance.get_progression_value("xp_step_per_level", 75.0)
+	return roundi(base + float(account_level - 1) * step)
 
 
 func add_xp(amount: int) -> void:
@@ -44,15 +48,21 @@ func get_specialist_level(role: StringName) -> int:
 
 
 func get_driver_bonus() -> float:
-	return 0.15 + float(get_specialist_level(&"Driver") - 1) * 0.03
+	var base := 0.15 if balance == null else balance.get_progression_value("driver_base_bonus", 0.15)
+	var step := 0.03 if balance == null else balance.get_progression_value("driver_bonus_per_level", 0.03)
+	return base + float(get_specialist_level(&"Driver") - 1) * step
 
 
 func get_spy_bonus() -> float:
-	return 0.18 + float(get_specialist_level(&"Spy") - 1) * 0.04
+	var base := 0.18 if balance == null else balance.get_progression_value("spy_base_bonus", 0.18)
+	var step := 0.04 if balance == null else balance.get_progression_value("spy_bonus_per_level", 0.04)
+	return base + float(get_specialist_level(&"Spy") - 1) * step
 
 
 func get_enforcer_power_each() -> float:
-	return 100.0 + float(get_specialist_level(&"Enforcer") - 1) * 15.0
+	var base := 100.0 if balance == null else balance.get_progression_value("enforcer_base_power", 100.0)
+	var step := 15.0 if balance == null else balance.get_progression_value("enforcer_power_per_level", 15.0)
+	return base + float(get_specialist_level(&"Enforcer") - 1) * step
 
 
 func get_upgrade_cost(role: StringName) -> Dictionary:

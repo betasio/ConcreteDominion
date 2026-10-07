@@ -8,6 +8,7 @@ signal recruitment_completed(troop_type: StringName, amount: int)
 
 var economy: PlayerEconomy
 var roster: TroopRoster
+var balance: GameBalance
 var active_job: Dictionary = {}
 var _last_displayed_second := -1
 
@@ -18,9 +19,13 @@ var definitions := {
 }
 
 
-func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster) -> void:
+func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster, game_balance: GameBalance = null) -> void:
 	economy = player_economy
 	roster = troop_roster
+	balance = game_balance
+	if balance != null:
+		definitions = balance.recruitment.duplicate(true)
+		gold_per_minute = balance.get_speedup_rate("recruitment_gold_per_minute", gold_per_minute)
 
 
 func _process(delta: float) -> void:

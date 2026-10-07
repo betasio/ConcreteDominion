@@ -5,7 +5,7 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 11
+const SAVE_VERSION := 12
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -26,6 +26,7 @@ var raid_battle: RaidBattle
 var city_map: Node
 
 var _autosave_timer := 0.0
+var last_loaded_version: int = SAVE_VERSION
 var _dirty := false
 var _is_loading := false
 
@@ -165,7 +166,8 @@ func load_game() -> bool:
 		load_completed.emit(false)
 		return false
 
-	var data: Dictionary = parsed
+	var data: Dictionary = _migrate_save(parsed)
+	last_loaded_version = int(data.get("version", SAVE_VERSION))
 	var saved_at := float(data.get("saved_at_unix", Time.get_unix_time_from_system()))
 	var elapsed := maxf(0.0, Time.get_unix_time_from_system() - saved_at)
 
@@ -194,6 +196,39 @@ func load_game() -> bool:
 	return true
 
 
+func _migrate_save(raw: Dictionary) -> Dictionary:
+	var data := raw.duplicate(true)
+	var version := maxi(1, int(data.get("version", 1)))
+
+	if version < 7:
+		if not data.has("progression"):
+			data["progression"] = {}
+		if not data.has("missions"):
+			data["missions"] = {}
+
+	if version < 8 and not data.has("retention"):
+		data["retention"] = {}
+
+	if version < 9:
+		if not data.has("profile"):
+			data["profile"] = {}
+		if not data.has("mailbox"):
+			data["mailbox"] = {}
+
+	if version < 10 and not data.has("event"):
+		data["event"] = {}
+
+	if version < 11 and not data.has("combat_loadout"):
+		data["combat_loadout"] = {}
+
+	data["schema_meta"] = {
+		"migrated_from": version,
+		"schema": SAVE_VERSION
+	}
+	data["version"] = SAVE_VERSION
+	return data
+
+
 func delete_save() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
 		return true
@@ -201,5 +236,5 @@ func delete_save() -> bool:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		save_game()

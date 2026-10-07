@@ -8,10 +8,14 @@ signal construction_completed(target: Node)
 
 var active_job: Dictionary = {}
 var economy: PlayerEconomy
+var balance: GameBalance
 var _last_displayed_second := -1
 
-func setup(player_economy: PlayerEconomy) -> void:
+func setup(player_economy: PlayerEconomy, game_balance: GameBalance = null) -> void:
 	economy = player_economy
+	balance = game_balance
+	if balance != null:
+		gold_per_minute = balance.get_speedup_rate("construction_gold_per_minute", gold_per_minute)
 
 func _process(delta: float) -> void:
 	if active_job.is_empty():

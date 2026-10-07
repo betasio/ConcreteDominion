@@ -9,13 +9,17 @@ signal treatment_completed(entry: Dictionary)
 
 var wounded_queue: Array[Dictionary] = []
 var economy: PlayerEconomy
+var balance: GameBalance
 var roster: TroopRoster
 var _last_displayed_second := -1
 
 
-func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null) -> void:
+func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null, game_balance: GameBalance = null) -> void:
 	economy = player_economy
 	roster = troop_roster
+	balance = game_balance
+	if balance != null:
+		gold_per_minute = balance.get_speedup_rate("hospital_gold_per_minute", gold_per_minute)
 
 
 func _process(delta: float) -> void:
