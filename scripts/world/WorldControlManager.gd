@@ -478,6 +478,20 @@ func discover_next_with_intel() -> bool:
 	return target_id != "" and discover_with_intel(target_id)
 
 
+func can_launch_family_operation(target_id: String, encounter_type: String) -> bool:
+	if not active_patrol.is_empty() or not is_discovered(target_id) or family_rules == null:
+		return false
+	return encounter_type in family_rules.get_encounter_cycle(target_id)
+
+
+func launch_family_operation(target_id: String, encounter_type: String) -> bool:
+	if not can_launch_family_operation(target_id, encounter_type):
+		return false
+	_create_encounter(target_id, encounter_type, 1.0)
+	changed.emit()
+	return true
+
+
 func _on_raid_resolved(result: Dictionary) -> void:
 	if not bool(result.get("victory", false)):
 		return
