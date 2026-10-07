@@ -9,6 +9,8 @@ func _ready() -> void:
 	_test_reward_split_conservation()
 	_test_malformed_save_clamps()
 	_test_dominion_save_clamps()
+	_test_dominion_season_rollover()
+	_test_faction_season_rollover()
 	_finish()
 
 
@@ -171,6 +173,50 @@ func _test_dominion_save_clamps() -> void:
 	if endgame.claimed_season_tiers != ["SILVER"] or endgame.pending_season_tiers != ["GOLD"]:
 		_fail("Dominion seasonal tier save sanitization failed.")
 	endgame.queue_free()
+
+
+func _test_dominion_season_rollover() -> void:
+	var endgame := EndgameManager.new()
+	add_child(endgame)
+	var current_week := floori(float(floori(Time.get_unix_time_from_system() / 86400.0)) / 7.0)
+	var current_season := floori(float(current_week) / float(EndgameManager.SEASON_WEEKS))
+	endgame.load_save_data({
+		"weekly_period": current_week - 1,
+		"season_period": current_season - 1,
+		"season_points": 500,
+		"claimed_season_tiers": ["SILVER"],
+		"pending_season_tiers": []
+	})
+	if endgame.season_points != 0:
+		_fail("Dominion season rollover did not reset current-season influence.")
+	if endgame.pending_season_tiers != ["GOLD"]:
+		_fail("Dominion season rollover did not preserve an earned unclaimed tier.")
+	endgame.queue_free()
+
+
+func _test_faction_season_rollover() -> void:
+	var faction := FactionManager.new()
+	add_child(faction)
+	var current_week := floori(float(floori(Time.get_unix_time_from_system() / 86400.0)) / 7.0)
+	var current_season := floori(float(current_week) / float(FactionManager.SEASON_WEEKS))
+	faction.load_save_data({
+		"faction_id":"test",
+		"faction_name":"Test Faction",
+		"faction_tag":"TEST",
+		"season_period":current_season - 1,
+		"season_points":600,
+		"season_wins":8,
+		"faction_territory":{
+			"dockyard_exchange":{"owned":true},
+			"midtown_signal":{"owned":true},
+			"financial_courthouse":{"owned":true}
+		}
+	})
+	if faction.season_points != 0 or faction.season_wins != 0:
+		_fail("Faction seasonal competition did not reset on Dominion season rollover.")
+	if faction.get_owned_territory_count() != 0:
+		_fail("Faction seasonal territory objectives did not reset on season rollover.")
+	faction.queue_free()
 
 
 func _fail(message: String) -> void:
