@@ -157,6 +157,7 @@ func _ready() -> void:
 		economy,
 		loot_inventory,
 		city_map,
+		world_control,
 		recruitment_queue,
 		construction_queue,
 		raid_battle
