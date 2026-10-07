@@ -59,7 +59,7 @@ func _refresh() -> void:
 		progression.get_xp_for_next_level()
 	]
 
-	unlocks_label.text = "UNLOCKS\nLv.2 — Harbor Bank + Garage\nLv.3 — Intel Office\nLv.4 — Northside Turf HQ"
+	unlocks_label.text = "DISTRICT UNLOCKS\nLv.2 — Harbor District + Garage\nLv.3 — Intel Office\nLv.4 — Northside\nLv.5 — High Roller Strip\nLv.6 — Financial District"
 
 	missions_label.text = "MISSIONS\n" + "\n".join(missions.get_mission_lines())
 

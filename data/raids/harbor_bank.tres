@@ -6,8 +6,12 @@
 script = ExtResource("1")
 target_id = "harbor_bank"
 display_name = "Harbor Bank"
+district_name = "Harbor District"
 difficulty = "Hard"
-max_hp = 11500.0
+max_hp = 11000.0
+hp_multiplier = 1.05
+modifier_name = "Armored Doors"
+modifier_description = "Reinforced entrances increase effective target HP by 5%."
 reward_cash = 10500
 reward_xp = 140
 required_account_level = 2

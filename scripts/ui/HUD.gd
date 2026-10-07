@@ -558,10 +558,13 @@ func _refresh_raid() -> void:
 		return
 
 	var loot_preview := _format_loot(selected_raid_target.get_loot_preview())
-	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s + %d XP + %s\nUnlock: Account Lv.%d" % [
+	raid_target_label.text = "TARGET: %s\nDistrict: %s   HP: %s   Difficulty: %s\nModifier: %s — %s\nReward: $%s + %d XP + %s\nUnlock: Account Lv.%d" % [
 		selected_raid_target.get_display_name(),
+		selected_raid_target.get_district_name(),
 		_format_number(roundi(selected_raid_target.get_max_hp())),
 		selected_raid_target.get_difficulty(),
+		selected_raid_target.get_modifier_name(),
+		selected_raid_target.get_modifier_description(),
 		_format_number(selected_raid_target.get_reward_cash()),
 		selected_raid_target.get_reward_xp(),
 		loot_preview,

@@ -5,13 +5,14 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
 var progression: PlayerProgression
 var missions: MissionTracker
 var retention: RetentionManager
+var event_manager: EventManager
 var player_profile: PlayerProfile
 var mailbox: MailboxManager
 var alliance: AllianceManager
@@ -36,6 +37,7 @@ func setup(
 	player_progression: PlayerProgression,
 	mission_tracker: MissionTracker,
 	retention_manager: RetentionManager,
+	event: EventManager,
 	profile: PlayerProfile,
 	mailbox_manager: MailboxManager,
 	alliance_manager: AllianceManager,
@@ -52,6 +54,7 @@ func setup(
 	progression = player_progression
 	missions = mission_tracker
 	retention = retention_manager
+	event_manager = event
 	player_profile = profile
 	mailbox = mailbox_manager
 	alliance = alliance_manager
@@ -68,6 +71,7 @@ func setup(
 	progression.changed.connect(mark_dirty)
 	missions.changed.connect(mark_dirty)
 	retention.changed.connect(mark_dirty)
+	event_manager.changed.connect(mark_dirty)
 	player_profile.changed.connect(mark_dirty)
 	mailbox.changed.connect(mark_dirty)
 	alliance.changed.connect(mark_dirty)
@@ -112,6 +116,7 @@ func save_game() -> bool:
 		"progression": progression.get_save_data(),
 		"missions": missions.get_save_data(),
 		"retention": retention.get_save_data(),
+		"event": event_manager.get_save_data(),
 		"profile": player_profile.get_save_data(),
 		"mailbox": mailbox.get_save_data(),
 		"alliance": alliance.get_save_data(),
@@ -165,6 +170,7 @@ func load_game() -> bool:
 	progression.load_save_data(data.get("progression", {}))
 	missions.load_save_data(data.get("missions", {}))
 	retention.load_save_data(data.get("retention", {}))
+	event_manager.load_save_data(data.get("event", {}))
 	player_profile.load_save_data(data.get("profile", {}))
 	mailbox.load_save_data(data.get("mailbox", {}))
 	alliance.load_save_data(data.get("alliance", {}))

@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -22,6 +22,8 @@
 [ext_resource type="Script" path="res://scripts/profile/PlayerProfile.gd" id="20_profile"]
 [ext_resource type="Script" path="res://scripts/profile/MailboxManager.gd" id="21_mailbox"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ProfileUI.tscn" id="22_profile_ui"]
+[ext_resource type="Script" path="res://scripts/events/EventManager.gd" id="23_event"]
+[ext_resource type="PackedScene" path="res://scenes/ui/EventUI.tscn" id="24_event_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -40,6 +42,9 @@ script = ExtResource("16_missions")
 
 [node name="RetentionManager" type="Node" parent="."]
 script = ExtResource("18_retention")
+
+[node name="EventManager" type="Node" parent="."]
+script = ExtResource("23_event")
 
 [node name="PlayerProfile" type="Node" parent="."]
 script = ExtResource("20_profile")
@@ -83,3 +88,5 @@ script = ExtResource("10_save")
 [node name="RetentionUI" parent="." instance=ExtResource("19_retention_ui")]
 
 [node name="ProfileUI" parent="." instance=ExtResource("22_profile_ui")]
+
+[node name="EventUI" parent="." instance=ExtResource("24_event_ui")]

@@ -6,8 +6,12 @@
 script = ExtResource("1")
 target_id = "downtown_bank"
 display_name = "Downtown Bank"
+district_name = "Downtown Core"
 difficulty = "Medium"
 max_hp = 9000.0
+hp_multiplier = 1.0
+modifier_name = "Standard Security"
+modifier_description = "No special defensive modifier."
 reward_cash = 7500
 reward_xp = 80
 required_account_level = 1

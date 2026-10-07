@@ -6,8 +6,12 @@
 script = ExtResource("1")
 target_id = "financial_tower"
 display_name = "Financial Tower"
+district_name = "Financial District"
 difficulty = "Mythic"
-max_hp = 24000.0
+max_hp = 20000.0
+hp_multiplier = 1.20
+modifier_name = "Hardened Vault"
+modifier_description = "Military-grade defenses increase effective target HP by 20%."
 reward_cash = 32000
 reward_xp = 450
 required_account_level = 6

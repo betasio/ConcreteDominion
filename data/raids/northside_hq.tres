@@ -6,8 +6,12 @@
 script = ExtResource("1")
 target_id = "northside_hq"
 display_name = "Northside Turf HQ"
+district_name = "Northside"
 difficulty = "Elite"
-max_hp = 14500.0
+max_hp = 13200.0
+hp_multiplier = 1.10
+modifier_name = "Fortified Turf"
+modifier_description = "Layered barricades increase effective target HP by 10%."
 reward_cash = 15000
 reward_xp = 220
 required_account_level = 4

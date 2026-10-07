@@ -5,6 +5,7 @@ extends Node
 @onready var progression: PlayerProgression = $PlayerProgression
 @onready var mission_tracker: MissionTracker = $MissionTracker
 @onready var retention: RetentionManager = $RetentionManager
+@onready var event_manager: EventManager = $EventManager
 @onready var player_profile: PlayerProfile = $PlayerProfile
 @onready var mailbox: MailboxManager = $MailboxManager
 @onready var alliance_manager: AllianceManager = $AllianceManager
@@ -21,6 +22,7 @@ extends Node
 @onready var progression_ui: ProgressionUI = $ProgressionUI
 @onready var retention_ui: RetentionUI = $RetentionUI
 @onready var profile_ui: ProfileUI = $ProfileUI
+@onready var event_ui: EventUI = $EventUI
 
 
 func _ready() -> void:
@@ -51,6 +53,13 @@ func _ready() -> void:
 		raid_battle
 	)
 
+	event_manager.setup(
+		economy,
+		loot_inventory,
+		progression,
+		raid_battle
+	)
+
 	player_profile.setup(
 		progression,
 		troop_roster,
@@ -73,6 +82,7 @@ func _ready() -> void:
 		progression,
 		mission_tracker,
 		retention,
+		event_manager,
 		player_profile,
 		mailbox,
 		alliance_manager,
@@ -103,6 +113,7 @@ func _ready() -> void:
 	progression_ui.setup(progression, mission_tracker, loot_inventory)
 	retention_ui.setup(retention)
 	profile_ui.setup(player_profile, mailbox, progression)
+	event_ui.setup(event_manager)
 
 	hud.setup(
 		economy,

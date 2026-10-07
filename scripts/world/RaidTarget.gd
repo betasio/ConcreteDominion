@@ -84,7 +84,12 @@ func get_battle_data() -> Dictionary:
 	return {
 		"id": data.target_id,
 		"name": data.display_name,
-		"hp": data.max_hp,
+		"district": data.district_name,
+		"hp": get_max_hp(),
+		"base_hp": data.max_hp,
+		"hp_multiplier": data.hp_multiplier,
+		"modifier_name": data.modifier_name,
+		"modifier_description": data.modifier_description,
 		"reward_cash": data.reward_cash,
 		"reward_xp": data.reward_xp,
 		"required_account_level": data.required_account_level,
@@ -101,8 +106,26 @@ func get_display_name() -> String:
 	return data.display_name if data != null else "Raid Target"
 
 
+func get_district_name() -> String:
+	return data.district_name if data != null else "Unknown District"
+
+
 func get_max_hp() -> float:
+	if data == null:
+		return 0.0
+	return data.max_hp * maxf(1.0, data.hp_multiplier)
+
+
+func get_base_hp() -> float:
 	return data.max_hp if data != null else 0.0
+
+
+func get_modifier_name() -> String:
+	return data.modifier_name if data != null else "Standard Security"
+
+
+func get_modifier_description() -> String:
+	return data.modifier_description if data != null else ""
 
 
 func get_reward_cash() -> int:
@@ -167,7 +190,7 @@ func _draw() -> void:
 	draw_colored_polygon(building, body_color)
 	draw_polyline(PackedVector2Array([building[0], building[1], building[2], building[3], building[4], building[5], building[0]]), accent.darkened(0.2), 3.0)
 
-	if id.contains("bank"):
+	if id.contains("bank") or id.contains("vault") or id.contains("tower"):
 		draw_rect(Rect2(-34, -92, 68, 36), accent.darkened(0.25), true)
 		draw_string(ThemeDB.fallback_font, Vector2(-20, -66), "$", HORIZONTAL_ALIGNMENT_CENTER, 40, 24, Color.WHITE)
 	else:
@@ -202,10 +225,10 @@ func _draw() -> void:
 
 	draw_string(
 		ThemeDB.fallback_font,
-		Vector2(-78, 65),
+		Vector2(-82, 65),
 		get_display_name().to_upper(),
 		HORIZONTAL_ALIGNMENT_CENTER,
-		156,
+		164,
 		17,
 		Color(0.95, 0.91, 0.78)
 	)
@@ -220,9 +243,9 @@ func _draw_status_bar(accent: Color) -> void:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(-68, -172),
-			"LV.%d REQUIRED" % get_required_account_level(),
+			"LV.%d • %s" % [get_required_account_level(), get_district_name().to_upper()],
 			HORIZONTAL_ALIGNMENT_LEFT,
-			150,
+			165,
 			13,
 			Color(0.78, 0.78, 0.78)
 		)
@@ -233,7 +256,7 @@ func _draw_status_bar(accent: Color) -> void:
 			Vector2(-68, -172),
 			"%s HP  %s" % [_format_number(roundi(get_max_hp())), get_difficulty().to_upper()],
 			HORIZONTAL_ALIGNMENT_LEFT,
-			150,
+			165,
 			13,
 			Color(0.94, 0.94, 0.92)
 		)

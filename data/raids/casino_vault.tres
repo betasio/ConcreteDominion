@@ -6,8 +6,12 @@
 script = ExtResource("1")
 target_id = "casino_vault"
 display_name = "Casino Vault"
+district_name = "High Roller Strip"
 difficulty = "Boss"
-max_hp = 18500.0
+max_hp = 16100.0
+hp_multiplier = 1.15
+modifier_name = "Private Security"
+modifier_description = "Elite security teams increase effective target HP by 15%."
 reward_cash = 22000
 reward_xp = 320
 required_account_level = 5

@@ -2,222 +2,158 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Retention and content-loop milestone
+## District progression + live-event milestone
 
-The prototype now has a persistent rewards/objectives layer built on top of the existing progression, alliance, raid, and loot systems.
+The World map now behaves like a progression ladder instead of a flat list of raid targets.
 
-## Daily login rewards
+### District ladder
 
-The new **Rewards** panel contains a 7-day login reward cycle.
+Current districts unlock through Account Level:
 
-Current cycle:
+| Level | District | Target |
+| ---: | --- | --- |
+| 1 | Downtown Core | Downtown Bank |
+| 2 | Harbor District | Harbor Bank |
+| 4 | Northside | Northside Turf HQ |
+| 5 | High Roller Strip | Casino Vault |
+| 6 | Financial District | Financial Tower |
 
-1. $1,500 Cash
-2. Parts x2
-3. 5 Gold
-4. Intel x2
-5. $3,000 Cash + 40 XP
-6. Parts x3 + Intel x1
-7. 15 Gold + Contraband x1 + 100 XP
+The Progression panel now shows this full district ladder.
 
-Consecutive daily claims increase the login streak.
+## Defensive target modifiers
 
-Missing a day resets the streak back to day 1.
+Higher districts now change encounter rules through data-driven target modifiers.
 
-The prototype uses a UTC-style day index from the system clock. This is appropriate for a local prototype, but live rewards should use server timestamps.
+Each raid data resource owns:
 
-## Daily objectives
+- district name;
+- base HP;
+- HP multiplier;
+- modifier name;
+- modifier description;
+- difficulty;
+- unlock level;
+- rewards and cooldown.
 
-Daily progress resets automatically when the calendar day changes.
+Current modifiers:
 
-Current daily goals:
+- **Downtown Bank** — Standard Security — no HP modifier
+- **Harbor Bank** — Armored Doors — +5% effective HP
+- **Northside Turf HQ** — Fortified Turf — +10% effective HP
+- **Casino Vault** — Private Security — +15% effective HP
+- **Financial Tower** — Hardened Vault — +20% effective HP
 
-- Recruit 3 troops
-- Win 1 raid
+The raid lobby shows the district and modifier before launch, and target HP displays the effective HP after the modifier.
 
-Daily completion reward:
+This keeps future encounter design data-driven: new modifiers can be added to raid resources without rebuilding the world-selection flow.
 
+## Blackout Week event
+
+A new 7-day prototype event is available through the **EVENT** shortcut.
+
+Winning raids while the event is active awards **Event Marks**.
+
+Current Mark rewards:
+
+- Downtown Bank — 2 Marks
+- Harbor Bank — 4 Marks
+- Northside Turf HQ — 6 Marks
+- Casino Vault — 9 Marks
+- Financial Tower — 12 Marks
+
+Harder districts therefore advance the event track faster.
+
+## Event milestone track
+
+Blackout Week currently has four claimable milestones:
+
+### 5 Marks
 - $2,500 Cash
-- 3 Gold
-- 50 XP
-- Parts x1
+- 30 XP
 
-## Weekly objectives
+### 12 Marks
+- 5 Gold
+- Parts x2
 
-Weekly progress resets on a seven-day period boundary.
-
-Current weekly goals:
-
-- Recruit 15 troops
-- Win 5 raids
-
-Weekly completion reward:
-
-- $10,000 Cash
-- 15 Gold
-- 200 XP
-- Parts x3
+### 25 Marks
+- $7,500 Cash
+- 100 XP
 - Intel x2
+
+### 45 Marks
+- 15 Gold
+- 180 XP
 - Contraband x1
 
-## Reward crates
+The event panel shows:
 
-Raid loot can now be converted into deterministic reward crates.
+- event name;
+- remaining days/hours;
+- current Event Marks;
+- milestone reward buttons.
 
-### Street Cache
-
-Cost:
-
-- Parts x3
-- Intel x1
-
-Reward:
-
-- $3,500 Cash
-- 4 Gold
-- 60 XP
-
-### Syndicate Crate
-
-Cost:
-
-- Parts x5
-- Intel x3
-- Contraband x1
-
-Reward:
-
-- $9,000 Cash
-- 12 Gold
-- 150 XP
-
-These crates create an additional loot sink beyond specialist upgrades.
-
-## Achievements
-
-The first persistent achievements are now tracked:
-
-- **First Blood** — win a raid
-- **Crew Builder** — recruit 20 troops
-- **Specialist** — upgrade any specialist
-- **Known Name** — reach Account Lv.3
-
-Achievements award small one-time bonuses such as Gold, Cash, XP, or Intel.
-
-Achievement completion is saved permanently.
-
-## Tutorial callout
-
-A persistent tutorial banner now guides the early progression flow.
-
-It advances through practical actions:
-
-1. Recruit 5 troops
-2. Switch to World view and defeat Downtown Bank
-3. Reach Account Lv.2
-4. Upgrade Driver support
-5. Continue into higher-tier alliance progression
-
-This gives the prototype a lightweight first-time-user experience without locking the player into modal tutorial screens.
-
-## UI
-
-A new **Rewards** shortcut opens the retention panel.
-
-The panel shows:
-
-- current login streak
-- login reward claim button
-- daily objective progress
-- weekly objective progress
-- crate crafting
-- achievement status
-
-The tutorial hint remains visible separately so the player's next step is always readable.
+Milestones can only be claimed once.
 
 ## Persistence
 
-Save version 8 now also stores:
+Save version 10 now also stores:
 
-- last login claim day
-- login streak
-- daily objective period/progress
-- weekly objective period/progress
-- objective reward claim state
-- lifetime recruit count
-- lifetime raid wins
-- achievement unlocks
+- event start timestamp;
+- event end timestamp;
+- Event Marks;
+- claimed event milestones.
 
-All previous save data remains part of the same save document.
+All previous profile, mailbox, alliance, progression, rewards, world, battle, and economy state remains in the same save.
 
-## Architecture
+## Architecture additions
 
 ```text
 Main
-├── PlayerEconomy
-├── LootInventory
-├── PlayerProgression
-├── MissionTracker
-├── RetentionManager
-├── AllianceManager
-├── AllianceSocial
-├── TroopRoster
-├── HospitalQueue
-├── ConstructionQueue
-├── RecruitmentQueue
-├── SynergyRaid
-├── RaidBattle
-├── SaveManager
-├── CityMap
-├── HUD
-├── ProgressionUI
-└── RetentionUI
-```
+├── EventManager
+└── EventUI
 
-New files:
-
-```text
-scripts/retention/
-└── RetentionManager.gd
+scripts/events/
+└── EventManager.gd
 
 scripts/ui/
-└── RetentionUI.gd
+└── EventUI.gd
 
 scenes/ui/
-└── RetentionUI.tscn
+└── EventUI.tscn
 ```
 
-`RetentionManager` listens to recruitment, raid resolution, specialist progression, and account-level events. It does not own those systems.
+`EventManager` listens to raid results and awards event progress.
 
-That separation makes it possible to replace local timers/reward validation with backend-driven live-ops state later.
+`RaidTargetData` now contains district and modifier metadata.
 
-## Suggested test
+`RaidTarget` calculates effective HP from the target's base HP and defense multiplier.
 
-1. Open **Rewards** and claim today's login reward.
-2. Recruit 3+ troops and check daily/weekly progress.
-3. Win Downtown Bank and confirm raid-win objectives advance.
-4. Claim the daily reward after both daily goals are complete.
-5. Accumulate Parts/Intel and craft a Street Cache.
-6. Upgrade a specialist and check the Specialist achievement.
-7. Recruit 20 total troops and check Crew Builder.
-8. Restart and confirm streak/objectives/achievements persist.
+## Suggested future test path
 
-## Security / production note
+When the full game is ready to test:
 
-Daily rewards currently rely on the local system clock and all reward state is client-authoritative.
+1. Open World view and compare district names/modifiers.
+2. Preview Downtown and Harbor to compare effective HP.
+3. Win raids and watch EVENT Marks increase.
+4. Claim event milestones.
+5. Level through Northside, Casino Vault, and Financial Tower.
+6. Confirm stronger targets award Event Marks faster.
+7. Restart and confirm event timer/Marks/claims persist.
 
-Before live release, login claims, day/week boundaries, achievements, objective progress, crate crafting, XP, currencies, and loot should be server-authoritative to prevent clock manipulation or save editing.
+## Production note
+
+The event timer currently uses the local system clock and is client-authoritative.
+
+For a live game, event start/end times, Event Marks, milestone claims, raid modifiers, and district eligibility must be server-authoritative.
 
 ## Next strong milestone
 
-The next logical feature step is **player identity and deeper content**:
+The next major gameplay step should add **strategic combat loadouts and target counterplay**:
 
-- editable player name/profile;
-- portrait/avatar selection;
-- player power summary;
-- alliance profile page;
-- additional data-driven world targets;
-- district unlocks;
-- achievement/profile badges;
-- mail/inbox rewards;
-- event-style limited objectives.
+- crew loadout presets;
+- specialist equipment/perks;
+- target weaknesses and recommended roles;
+- optional consumable boosts;
+- pre-raid risk/reward choices;
+- post-raid performance grading;
+- deeper wounded/healing severity.
