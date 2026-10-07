@@ -28,10 +28,19 @@ func setup(
 	progression = player_progression
 	raid_battle.battle_resolved.connect(_on_battle_resolved)
 
-	if event_started_unix <= 0.0:
-		_start_event()
+	_ensure_current_event()
 
 	changed.emit()
+
+
+func _process(_delta: float) -> void:
+	_ensure_current_event()
+
+
+func _ensure_current_event() -> void:
+	var now := Time.get_unix_time_from_system()
+	if event_started_unix <= 0.0 or event_ends_unix <= 0.0 or now >= event_ends_unix:
+		_start_event()
 
 
 func _start_event() -> void:
@@ -143,7 +152,5 @@ func load_save_data(data: Dictionary) -> void:
 	for value in data.get("claimed_milestones", []):
 		claimed_milestones.append(int(value))
 
-	if event_started_unix <= 0.0 or event_ends_unix <= 0.0:
-		_start_event()
-
+	_ensure_current_event()
 	changed.emit()

@@ -143,7 +143,7 @@ func load_save_data(data: Dictionary, offline_seconds: float, world: Node) -> vo
 		queue_changed.emit()
 		return
 
-	var target := world.get_persistent_target(String(data.get("target_id", "")))
+	var target: Node = world.get_persistent_target(String(data.get("target_id", "")))
 	if target == null:
 		queue_changed.emit()
 		return

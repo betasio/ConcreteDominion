@@ -6,6 +6,7 @@ signal mission_completed(mission_id: String)
 
 var progression: PlayerProgression
 var economy: PlayerEconomy
+var city_map: Node
 
 var missions: Dictionary = {
 	"recruit_crew": {
@@ -104,12 +105,14 @@ var missions: Dictionary = {
 func setup(
 	player_progression: PlayerProgression,
 	player_economy: PlayerEconomy,
+	world: Node,
 	recruitment: RecruitmentQueue,
 	construction: ConstructionQueue,
 	raid_battle: RaidBattle
 ) -> void:
 	progression = player_progression
 	economy = player_economy
+	city_map = world
 
 	recruitment.recruitment_completed.connect(_on_recruitment_completed)
 	construction.construction_completed.connect(_on_construction_completed)
@@ -121,12 +124,11 @@ func setup(
 
 
 func _refresh_existing_buildings() -> void:
-	var world = get_node_or_null("/root/Main/CityMap")
-	if world == null:
+	if city_map == null:
 		return
-	if world.lot_a.is_built:
+	if city_map.lot_a.is_built:
 		_set_progress("build_garage", 1)
-	if world.lot_b.is_built:
+	if city_map.lot_b.is_built:
 		_set_progress("build_intel", 1)
 
 

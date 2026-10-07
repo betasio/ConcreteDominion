@@ -154,6 +154,7 @@ func _ready() -> void:
 	mission_tracker.setup(
 		progression,
 		economy,
+		city_map,
 		recruitment_queue,
 		construction_queue,
 		raid_battle

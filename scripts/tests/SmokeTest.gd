@@ -14,6 +14,7 @@ func _ready() -> void:
 	_check_resource("res://scenes/ui/WorldControlUI.tscn")
 	_check_resource("res://scenes/tests/DataValidation.tscn")
 	_check_resource("res://scenes/tests/BalanceAudit.tscn")
+	_check_resource("res://scenes/tests/ProjectResourceAudit.tscn")
 
 	var main_scene := load("res://scenes/core/Main.tscn") as PackedScene
 	if main_scene == null:
@@ -125,9 +126,26 @@ func _ready() -> void:
 				if presentation.get_decor_texture(decor_key) == null:
 					_fail("Missing approved presentation slice: %s" % decor_key)
 
+	var construction := game.get_node_or_null("ConstructionQueue") as ConstructionQueue
+	if construction == null:
+		_fail("ConstructionQueue script is not active.")
+
+	var ui_styler := game.get_node_or_null("UIArtStyler") as UIArtStyler
+	if ui_styler == null:
+		_fail("UI art styler script is not active.")
+	else:
+		var top_panel := game.get_node_or_null("HUD/Root/TopBar/Panel") as PanelContainer
+		var base_button := game.get_node_or_null("HUD/Root/ViewBar/Base") as Button
+		if top_panel == null or not (top_panel.get_theme_stylebox("panel") is StyleBoxTexture):
+			_fail("Approved panel art is not applied at runtime.")
+		if base_button == null or not (base_button.get_theme_stylebox("normal") is StyleBoxTexture):
+			_fail("Approved button art is not applied at runtime.")
+
 	var city := game.get_node_or_null("CityMap")
 	if city == null or city.get_node_or_null("TurfOverlay") == null:
 		_fail("Turf ownership overlay is missing.")
+	elif not (city.get_node("TurfOverlay") is TurfOverlay):
+		_fail("TurfOverlay script is not active.")
 	elif city.lot_c == null or city.lot_d == null:
 		_fail("Resource-production build lots are missing.")
 

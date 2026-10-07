@@ -1,0 +1,304 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Concrete Dominion\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "FACTION_DOCK_RATS"
+msgstr "Dock Rats"
+
+msgid "FACTION_IRON_SERPENTS"
+msgstr "Iron Serpents"
+
+msgid "FACTION_MERIDIAN_BOYS"
+msgstr "Meridian Boys"
+
+msgid "FACTION_NORTHSIDE_CREW"
+msgstr "Northside Crew"
+
+msgid "FACTION_VELVET_CIRCLE"
+msgstr "Velvet Circle"
+
+msgid "FACTION_GENERIC"
+msgstr "Rival Crew"
+
+msgid "TRAIT_SCRAPPY"
+msgstr "Scrappy"
+
+msgid "TRAIT_ARMORED"
+msgstr "Armored"
+
+msgid "TRAIT_WATCHFUL"
+msgstr "Watchful"
+
+msgid "TRAIT_AGGRESSIVE"
+msgstr "Aggressive"
+
+msgid "TRAIT_CONNECTED"
+msgstr "Connected"
+
+msgid "ENCOUNTER_ROADBLOCK"
+msgstr "Roadblock"
+
+msgid "ENCOUNTER_SURVEILLANCE"
+msgstr "Surveillance Sweep"
+
+msgid "ENCOUNTER_CONVOY"
+msgstr "Convoy Ambush"
+
+msgid "ENCOUNTER_TURF_PUSH"
+msgstr "Turf Push"
+
+msgid "ACH_FIRST_TURF"
+msgstr "First Territory"
+
+msgid "ACH_ALL_DISTRICTS"
+msgstr "Citywide"
+
+msgid "ACH_ALLIANCE_4"
+msgstr "Trusted Crew"
+
+msgid "ACH_ACCOUNT_7"
+msgstr "Made Boss"
+
+msgid "ACH_MAX_SAFEHOUSE"
+msgstr "Command Center"
+
+msgid "ACH_RESOURCE_NETWORK"
+msgstr "Supply Network"
+
+msgid "ACH_SPECIALISTS_3"
+msgstr "Specialist Crew"
+
+msgid "ACH_DOMINION"
+msgstr "Concrete Dominion"
+
+msgid "ACH_DESC_FIRST_TURF"
+msgstr "Capture your first district."
+
+msgid "ACH_DESC_ALL_DISTRICTS"
+msgstr "Own every district in the city."
+
+msgid "ACH_DESC_ALLIANCE_4"
+msgstr "Reach Alliance Level 4."
+
+msgid "ACH_DESC_ACCOUNT_7"
+msgstr "Reach Account Level 7."
+
+msgid "ACH_DESC_MAX_SAFEHOUSE"
+msgstr "Upgrade the Safehouse to Level 5."
+
+msgid "ACH_DESC_RESOURCE_NETWORK"
+msgstr "Build both the Scrapyard and Data Hub."
+
+msgid "ACH_DESC_SPECIALISTS_3"
+msgstr "Reach Level 3 with Enforcer, Driver, and Spy specialists."
+
+msgid "ACH_DESC_DOMINION"
+msgstr "Complete the citywide endgame requirements."
+
+msgid "UI_STORE"
+msgstr "Store"
+
+msgid "UI_STORE_TITLE"
+msgstr "PROTOTYPE STORE"
+
+msgid "UI_STORE_NOTICE"
+msgstr "Preview only. No real payments are connected. Offers focus on progression speed and resources, not exclusive combat units."
+
+msgid "UI_STORE_DISABLED"
+msgstr "Purchases Disabled — Prototype Catalog"
+
+msgid "UI_STORE_TOOLTIP"
+msgstr "No billing SDK, store receipt validation, or real-money transaction is connected."
+
+msgid "UI_INCLUDES"
+msgstr "Includes:"
+
+msgid "UI_CLOSE"
+msgstr "Close"
+
+msgid "UI_TERRITORY"
+msgstr "Territory"
+
+msgid "UI_TERRITORY_TITLE"
+msgstr "TERRITORY COMMAND"
+
+msgid "UI_TURF_INCOME"
+msgstr "TURF INCOME"
+
+msgid "UI_DISTRICTS"
+msgstr "DISTRICTS"
+
+msgid "UI_NEXT_DISCOVERY"
+msgstr "NEXT DISCOVERY"
+
+msgid "UI_COMMAND_SCAN"
+msgstr "Safehouse Command Scan"
+
+msgid "UI_RESOURCE_FACILITIES"
+msgstr "RESOURCE FACILITIES"
+
+msgid "UI_RIVAL_ENCOUNTER"
+msgstr "RIVAL ENCOUNTER"
+
+msgid "UI_NO_THREAT"
+msgstr "No active threat."
+
+msgid "UI_ALLIANCE_TASKS"
+msgstr "ALLIANCE TASKS"
+
+msgid "UI_COLLECT_RESOURCES"
+msgstr "Collect Parts / Intel"
+
+msgid "UI_REVEAL_INTEL"
+msgstr "Reveal with Intel"
+
+msgid "UI_CLEAR_PATROL"
+msgstr "Clear Patrol"
+
+msgid "UI_PROGRESSION"
+msgstr "Progression"
+
+msgid "UI_ACCOUNT_LEVEL"
+msgstr "ACCOUNT LEVEL"
+
+msgid "UI_XP"
+msgstr "XP"
+
+msgid "UI_UNLOCKS_TITLE"
+msgstr "DISTRICT / CITY UNLOCKS"
+
+msgid "UI_MISSIONS"
+msgstr "MISSIONS"
+
+msgid "UI_NO_COST"
+msgstr "No cost"
+
+msgid "UI_ACHIEVEMENTS"
+msgstr "Achievements"
+
+msgid "UI_ACHIEVEMENTS_TITLE"
+msgstr "ACHIEVEMENTS & ENDGAME"
+
+msgid "UI_REWARDS"
+msgstr "Rewards"
+
+msgid "UI_PROFILE"
+msgstr "Profile"
+
+msgid "UI_AVATAR"
+msgstr "Avatar"
+
+msgid "UI_CHANGE"
+msgstr "Change"
+
+msgid "UI_POWER_RATING"
+msgstr "Power Rating"
+
+msgid "UI_BADGES"
+msgstr "BADGES"
+
+msgid "UI_INBOX"
+msgstr "INBOX"
+
+msgid "UI_NO_MESSAGES"
+msgstr "No messages."
+
+msgid "UI_CLAIM_ALL"
+msgstr "Claim All Mail Rewards"
+
+msgid "UI_CLAIMED"
+msgstr "CLAIMED"
+
+msgid "UI_REWARD_READY"
+msgstr "REWARD READY"
+
+msgid "UI_EVENT"
+msgstr "EVENT"
+
+msgid "UI_EVENT_MARKS"
+msgstr "Event Marks"
+
+msgid "UI_TIME_REMAINING"
+msgstr "Time remaining"
+
+msgid "UI_TACTICS"
+msgstr "TACTICS"
+
+msgid "UI_PRE_RAID_PLAN"
+msgstr "PRE-RAID PLAN"
+
+msgid "UI_RISK_PLAN"
+msgstr "Risk Plan"
+
+msgid "UI_EQUIPMENT"
+msgstr "Equipment"
+
+msgid "UI_UPGRADE"
+msgstr "Upgrade"
+
+msgid "UI_CONSUMABLE"
+msgstr "Consumable"
+
+msgid "UI_SELECTED_COUNTER"
+msgstr "SELECTED TARGET COUNTER"
+
+msgid "TUTORIAL_PROGRESS"
+msgstr "TUTORIAL"
+
+msgid "TUTORIAL_SKIP"
+msgstr "Skip Tutorial"
+
+msgid "TUTORIAL_START"
+msgstr "Start"
+
+msgid "TUTORIAL_WELCOME_TITLE"
+msgstr "WELCOME TO CONCRETE DOMINION"
+
+msgid "TUTORIAL_WELCOME_BODY"
+msgstr "Build a crew, strengthen your base, and take control of the city. This guide follows the core loop without blocking other actions."
+
+msgid "TUTORIAL_RECRUIT_TITLE"
+msgstr "BUILD YOUR CREW"
+
+msgid "TUTORIAL_RECRUIT_BODY"
+msgstr "Open Crew Barracks and complete any recruitment job. Enforcers provide frontline depth; Drivers and Spies are essential Alliance support."
+
+msgid "TUTORIAL_UPGRADE_TITLE"
+msgstr "STRENGTHEN THE SAFEHOUSE"
+
+msgid "TUTORIAL_UPGRADE_BODY"
+msgstr "Upgrade the Safehouse once. Higher Safehouse levels improve construction speed, raid Cash, and Command Scan cooldown."
+
+msgid "TUTORIAL_WORLD_TITLE"
+msgstr "ENTER THE WORLD MAP"
+
+msgid "TUTORIAL_WORLD_BODY"
+msgstr "Switch from BASE to WORLD. The World map contains rival districts, raid targets, turf income, fog, and patrol pressure."
+
+msgid "TUTORIAL_ALLIANCE_TITLE"
+msgstr "TAKE A SUPPORT SLOT"
+
+msgid "TUTORIAL_ALLIANCE_BODY"
+msgstr "Open the Alliance Raid panel and join a Driver or Spy slot. Your support contribution materially increases alliance damage."
+
+msgid "TUTORIAL_RAID_TITLE"
+msgstr "WIN YOUR FIRST RAID"
+
+msgid "TUTORIAL_RAID_BODY"
+msgstr "Select a discovered target, preview alliance damage, and win a raid. Defeated troops recover in the Clinic instead of dying permanently."
+
+msgid "TUTORIAL_DONE_TITLE"
+msgstr "CITY LOOP UNLOCKED"
+
+msgid "TUTORIAL_DONE_BODY"
+msgstr "You know the core loop: build, recruit, support the alliance, raid, capture turf, and expand."
+
+msgid "UI_DOMINION_COMPLETE"
+msgstr "DOMINION COMPLETE — citywide control secured."
+
+msgid "UI_DOMINION_REQUIREMENTS"
+msgstr "ENDGAME: own all districts, reach Account Lv.7 + Alliance Lv.4, max core buildings, and establish all specialist/resource facilities."
+

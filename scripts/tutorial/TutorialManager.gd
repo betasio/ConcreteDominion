@@ -106,6 +106,7 @@ func get_save_data() -> Dictionary:
 func load_save_data(data: Dictionary) -> void:
 	current_step = clampi(int(data.get("current_step", STEP_WELCOME)), STEP_WELCOME, STEP_DONE)
 	skipped = bool(data.get("skipped", false))
+	_evaluate_loaded_state()
 	changed.emit()
 
 

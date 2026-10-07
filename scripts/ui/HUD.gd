@@ -377,7 +377,8 @@ func _refresh_hospital() -> void:
 		return
 
 	if hospital_queue.wounded_queue.is_empty():
-		var slots := get_node("/root/Main/CoreBuildingEffects").get_clinic_slots()
+		var effects := get_node_or_null("/root/Main/CoreBuildingEffects") as CoreBuildingEffects
+		var slots: int = effects.get_clinic_slots() if effects != null else 1
 		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d" % slots
 		cost_label.text = "Instant heal cost: 0 Gold"
 		instant_button.disabled = true
@@ -394,7 +395,8 @@ func _refresh_hospital() -> void:
 			_format_time(float(entry["seconds_remaining"]))
 		])
 
-	var clinic_slots := get_node("/root/Main/CoreBuildingEffects").get_clinic_slots()
+	var effects := get_node_or_null("/root/Main/CoreBuildingEffects") as CoreBuildingEffects
+	var clinic_slots: int = effects.get_clinic_slots() if effects != null else 1
 	queue_label.text = "Treatment slots: %d\n%s" % [clinic_slots, "\n".join(lines)]
 	var cost := hospital_queue.get_instant_heal_cost()
 	cost_label.text = "Instant heal cost: %d Gold" % cost

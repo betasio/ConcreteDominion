@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
@@ -27,7 +27,7 @@ jobs:
           include-templates: true
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -36,30 +36,59 @@ jobs:
         run: godot --version
 
       - name: Import project
-        run: godot --headless --path . --import --quit
+        run: |
+          set -o pipefail
+          godot --headless --path . --import --quit 2>&1 | tee godot-import.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-import.log
+
+      - name: Compile/load all project resources
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/ProjectResourceAudit.tscn 2>&1 | tee godot-resources.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-resources.log
 
       - name: Validate game data
-        run: godot --headless --path . res://scenes/tests/DataValidation.tscn
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/DataValidation.tscn 2>&1 | tee godot-data.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-data.log
 
       - name: Run deterministic balance audit
-        run: godot --headless --path . res://scenes/tests/BalanceAudit.tscn
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/BalanceAudit.tscn 2>&1 | tee godot-balance.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-balance.log
 
       - name: Run smoke test
-        run: godot --headless --path . res://scenes/tests/SmokeTest.tscn
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
       - name: Export Windows debug build
-        run: godot --headless --path . --export-debug "Windows Desktop" build/windows/ConcreteDominion.exe
+        run: |
+          set -o pipefail
+          godot --headless --path . --export-debug "Windows Desktop" build/windows/ConcreteDominion.exe 2>&1 | tee godot-windows-export.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-windows-export.log
+
+      - name: Setup Android SDK tools
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools"
 
       - name: Prepare Android SDK
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "build-tools;35.0.1" "platforms;android-35"
+          sdkmanager "build-tools;35.0.1" "platforms;android-35" "cmdline-tools;latest" "cmake;3.10.2.4988404" "ndk;28.1.13356709"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
       - name: Export Android debug APK
-        run: godot --headless --path . --export-debug "Android" build/android/ConcreteDominion.apk
+        run: |
+          set -o pipefail
+          godot --headless --path . --export-debug "Android" build/android/ConcreteDominion.apk 2>&1 | tee godot-android-export.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-android-export.log
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4

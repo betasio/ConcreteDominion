@@ -123,6 +123,7 @@ func _validate_required_resources() -> void:
 		"res://scenes/core/Main.tscn",
 		"res://scenes/tests/SmokeTest.tscn",
 		"res://scenes/tests/BalanceAudit.tscn",
+		"res://scenes/tests/ProjectResourceAudit.tscn",
 		"res://scripts/core/GameBalance.gd",
 		"res://scripts/world/FactionRules.gd",
 		"res://scripts/content/LocalizedText.gd",
@@ -139,6 +140,7 @@ func _validate_required_resources() -> void:
 
 	for path in [
 		"res://localization/ui.csv",
+		"res://localization/en.po",
 		"res://export_presets.cfg",
 		"res://assets/README.md",
 		"res://assets/generated/city_atlas/base64/part_00.txt",

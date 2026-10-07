@@ -38,6 +38,7 @@ var achievements: Dictionary = {
 
 var lifetime_recruited := 0
 var lifetime_raid_wins := 0
+var _period_refresh_accumulator := 0.0
 
 
 func setup(
@@ -61,7 +62,11 @@ func setup(
 	changed.emit()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_period_refresh_accumulator += delta
+	if _period_refresh_accumulator < 30.0:
+		return
+	_period_refresh_accumulator = 0.0
 	_refresh_periods()
 
 
@@ -279,6 +284,12 @@ func _check_achievements() -> void:
 		_unlock_achievement("crew_builder")
 	if progression != null and progression.account_level >= 3:
 		_unlock_achievement("level_three")
+	if progression != null and (
+		progression.get_specialist_level(&"Enforcer") > 1
+		or progression.get_specialist_level(&"Driver") > 1
+		or progression.get_specialist_level(&"Spy") > 1
+	):
+		_unlock_achievement("specialist")
 
 
 func _unlock_achievement(achievement_id: String) -> void:
@@ -394,4 +405,5 @@ func load_save_data(data: Dictionary) -> void:
 			)
 
 	_refresh_periods()
+	_check_achievements()
 	changed.emit()

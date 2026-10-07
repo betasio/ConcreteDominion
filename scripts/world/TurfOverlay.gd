@@ -17,12 +17,15 @@ func _draw() -> void:
 	if control == null or city_map == null or city_map.get_view_mode() != &"world":
 		return
 
-	for target in city_map.get_raid_targets():
-		var target_id := target.get_target_id()
+	for target_value in city_map.get_raid_targets():
+		var target: RaidTarget = target_value as RaidTarget
+		if target == null:
+			continue
+		var target_id: String = target.get_target_id()
 		if not control.is_discovered(target_id):
 			continue
 
-		var center := target.position + Vector2(0, -25)
+		var center: Vector2 = target.position + Vector2(0, -25)
 		var color := Color(0.72, 0.24, 0.24, 0.78)
 		if control.is_owned(target_id):
 			color = Color(0.20, 0.72, 0.42, 0.82)

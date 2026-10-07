@@ -30,4 +30,4 @@ pointing/emulate_mouse_from_touch=false
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://localization/ui.en.translation")
+locale/translations=PackedStringArray("res://localization/en.po")
