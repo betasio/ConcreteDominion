@@ -377,6 +377,20 @@ func get_chapter_6_choice() -> String:
 	return chapter_6_choice
 
 
+func can_launch_chapter_6_convoy() -> bool:
+	if world_control == null:
+		return false
+	if not bool(missions["chapter_6_choice"]["completed"]) or bool(missions["clear_serpent_convoys"]["completed"]):
+		return false
+	return world_control.can_launch_family_operation("industrial_depot", "convoy_ambush")
+
+
+func launch_chapter_6_convoy() -> bool:
+	if not can_launch_chapter_6_convoy():
+		return false
+	return world_control.launch_family_operation("industrial_depot", "convoy_ambush")
+
+
 func _refresh_faction_state() -> void:
 	if faction == null:
 		return
