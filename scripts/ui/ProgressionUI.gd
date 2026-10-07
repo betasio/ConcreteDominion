@@ -5,11 +5,13 @@ var progression: PlayerProgression
 var missions: MissionTracker
 var loot: LootInventory
 var text_catalog: LocalizedText
+var presentation_catalog: PresentationCatalog
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
 @onready var level_label: Label = $Root/Panel/Margin/VBox/Level
 @onready var xp_label: Label = $Root/Panel/Margin/VBox/XP
+@onready var chapter_label: Label = $Root/Panel/Margin/VBox/Chapter
 @onready var unlocks_label: Label = $Root/Panel/Margin/VBox/Unlocks
 @onready var missions_label: Label = $Root/Panel/Margin/VBox/Missions
 @onready var enforcer_button: Button = $Root/Panel/Margin/VBox/EnforcerUpgrade
@@ -27,7 +29,9 @@ func setup(
 	missions = mission_tracker
 	loot = loot_inventory
 	text_catalog = localized_text
+	presentation_catalog = get_parent().get_node_or_null("PresentationCatalog") as PresentationCatalog
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
+	_apply_portrait_art()
 
 	progression.changed.connect(_refresh)
 	missions.changed.connect(_refresh)
@@ -63,6 +67,16 @@ func _refresh() -> void:
 		progression.get_xp_for_next_level()
 	]
 
+	var chapter := missions.get_story_chapter_status()
+	if bool(chapter["complete"]):
+		chapter_label.text = "CHAPTER %d • %s\nCOMPLETE — %d/%d operations. The city war is open.\nCompletion reward: %s" % [
+			int(chapter["chapter"]), String(chapter["title"]), int(chapter["progress"]), int(chapter["goal"]), String(chapter["completion_reward"])
+		]
+	else:
+		chapter_label.text = "CHAPTER %d • %s\n%d/%d operations complete\nNEXT: %s — %s\nCompletion reward: %s" % [
+			int(chapter["chapter"]), String(chapter["title"]), int(chapter["progress"]), int(chapter["goal"]), String(chapter["next_title"]), String(chapter["next_description"]), String(chapter["completion_reward"])
+		]
+
 	unlocks_label.text = text_catalog.text("UI_UNLOCKS_TITLE") + "\nLv.2 — Harbor District + Garage\nLv.3 — Midtown + Intel Office\nLv.4 — Northside + Scrapyard\nLv.5 — High Roller Strip + Data Hub\nLv.6 — Financial District\nLv.7 — Industrial Belt"
 
 	missions_label.text = text_catalog.text("UI_MISSIONS") + "\n" + "\n".join(missions.get_mission_lines())
@@ -70,6 +84,27 @@ func _refresh() -> void:
 	_refresh_upgrade_button(enforcer_button, &"Enforcer")
 	_refresh_upgrade_button(driver_button, &"Driver")
 	_refresh_upgrade_button(spy_button, &"Spy")
+
+
+func _apply_portrait_art() -> void:
+	if presentation_catalog == null:
+		return
+
+	var vex_portrait := presentation_catalog.get_character_portrait("vex")
+	if vex_portrait != null:
+		shortcut.icon = vex_portrait
+		shortcut.expand_icon = true
+
+	for entry in [
+		[enforcer_button, &"enforcer"],
+		[driver_button, &"driver"],
+		[spy_button, &"spy"]
+	]:
+		var button := entry[0] as Button
+		var portrait := presentation_catalog.get_unit_portrait(entry[1])
+		if portrait != null:
+			button.icon = portrait
+			button.expand_icon = true
 
 
 func _refresh_upgrade_button(button: Button, role: StringName) -> void:
