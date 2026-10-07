@@ -34,10 +34,10 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -455.0
-offset_top = -390.0
+offset_left = -544.0
+offset_top = -410.0
 offset_right = -24.0
-offset_bottom = 390.0
+offset_bottom = 410.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -73,6 +73,40 @@ theme_override_font_sizes/font_size = 18
 text = "CHAPTER 1 • A HIGHER KINGDOM"
 autowrap_mode = 2
 
+[node name="StoryBeat" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 102)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Portrait" type="TextureRect" parent="Root/Panel/Margin/VBox/StoryBeat"]
+custom_minimum_size = Vector2(92, 92)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Copy" type="VBoxContainer" parent="Root/Panel/Margin/VBox/StoryBeat"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Speaker" type="Label" parent="Root/Panel/Margin/VBox/StoryBeat/Copy"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "VEX"
+
+[node name="Line" type="Label" parent="Root/Panel/Margin/VBox/StoryBeat/Copy"]
+custom_minimum_size = Vector2(0, 66)
+layout_mode = 2
+size_flags_vertical = 3
+text = "Build the crew first."
+autowrap_mode = 2
+
+[node name="Milestones" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+text = "CHAPTER PAYOUTS"
+autowrap_mode = 2
+
 [node name="Unlocks" type="Label" parent="Root/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 90)
 layout_mode = 2
@@ -80,7 +114,7 @@ text = "UNLOCKS"
 autowrap_mode = 2
 
 [node name="Missions" type="Label" parent="Root/Panel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 125)
+custom_minimum_size = Vector2(0, 92)
 layout_mode = 2
 text = "MISSIONS"
 autowrap_mode = 2
