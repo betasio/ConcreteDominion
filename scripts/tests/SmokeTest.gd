@@ -15,6 +15,7 @@ func _ready() -> void:
 	_check_resource("res://scenes/tests/DataValidation.tscn")
 	_check_resource("res://scenes/tests/BalanceAudit.tscn")
 	_check_resource("res://scenes/tests/ProjectResourceAudit.tscn")
+	_check_resource("res://scenes/tests/GameplayRegressionAudit.tscn")
 
 	var main_scene := load("res://scenes/core/Main.tscn") as PackedScene
 	if main_scene == null:

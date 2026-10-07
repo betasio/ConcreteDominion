@@ -124,6 +124,7 @@ func _validate_required_resources() -> void:
 		"res://scenes/tests/SmokeTest.tscn",
 		"res://scenes/tests/BalanceAudit.tscn",
 		"res://scenes/tests/ProjectResourceAudit.tscn",
+		"res://scenes/tests/GameplayRegressionAudit.tscn",
 		"res://scripts/core/GameBalance.gd",
 		"res://scripts/world/FactionRules.gd",
 		"res://scripts/content/LocalizedText.gd",

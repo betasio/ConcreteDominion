@@ -65,6 +65,12 @@ jobs:
           godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
+      - name: Run gameplay regression audit
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/GameplayRegressionAudit.tscn 2>&1 | tee godot-regression.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-regression.log
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
