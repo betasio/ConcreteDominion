@@ -45,6 +45,15 @@ const CHARACTER_REGIONS := {
 	"spy": Rect2(64, 32, 32, 32)
 }
 
+const CAMPAIGN_ATLAS_PATH := "res://assets/generated/campaign/chapter_campaign_atlas.webp"
+const CAMPAIGN_ATLAS_SIZE := Vector2i(256, 64)
+const CAMPAIGN_REGIONS := {
+	"darius": Rect2(0, 0, 64, 64),
+	"northside": Rect2(64, 0, 64, 64),
+	"celeste": Rect2(128, 0, 64, 64),
+	"casino": Rect2(192, 0, 64, 64)
+}
+
 const DECOR_ATLAS_PATH := "res://assets/generated/presentation/presentation_atlas.webp"
 const DECOR_ATLAS_SIZE := Vector2i(256, 160)
 const DECOR_REGIONS := {
@@ -65,6 +74,7 @@ const AUDIO_PATHS := {
 
 var _city_atlas: ImageTexture
 var _character_atlas: Texture2D
+var _campaign_atlas: Texture2D
 var _decor_atlas: Texture2D
 var _atlas_load_attempted := false
 var _atlas_error := ""
@@ -73,6 +83,7 @@ var _atlas_error := ""
 func _ready() -> void:
 	_ensure_city_atlas()
 	_ensure_character_atlas()
+	_ensure_campaign_atlas()
 
 
 func apply_to_city(city_map: Node) -> void:
@@ -147,6 +158,30 @@ func get_unit_portrait(role: StringName) -> Texture2D:
 	return get_character_portrait(String(role).to_lower())
 
 
+func get_campaign_art(key: String) -> Texture2D:
+	_ensure_campaign_atlas()
+	var normalized := key.to_lower()
+	if _campaign_atlas == null or not CAMPAIGN_REGIONS.has(normalized):
+		return null
+	var region := AtlasTexture.new()
+	region.atlas = _campaign_atlas
+	region.region = CAMPAIGN_REGIONS[normalized]
+	region.filter_clip = true
+	return region
+
+
+func is_campaign_atlas_ready() -> bool:
+	_ensure_campaign_atlas()
+	return _campaign_atlas != null
+
+
+func get_campaign_atlas_size() -> Vector2i:
+	_ensure_campaign_atlas()
+	if _campaign_atlas == null:
+		return Vector2i.ZERO
+	return Vector2i(_campaign_atlas.get_width(), _campaign_atlas.get_height())
+
+
 func is_character_atlas_ready() -> bool:
 	_ensure_character_atlas()
 	return _character_atlas != null
@@ -203,6 +238,8 @@ func get_missing_asset_lines() -> PackedStringArray:
 		lines.append("Presentation atlas -> %s" % DECOR_ATLAS_PATH)
 	if not is_character_atlas_ready():
 		lines.append("Character atlas -> %s" % CHARACTER_ATLAS_PATH)
+	if not is_campaign_atlas_ready():
+		lines.append("Campaign atlas -> %s" % CAMPAIGN_ATLAS_PATH)
 
 	for key in AUDIO_PATHS.keys():
 		var path := String(AUDIO_PATHS[key])
@@ -273,3 +310,18 @@ func _ensure_character_atlas() -> void:
 			CHARACTER_ATLAS_SIZE
 		])
 		_character_atlas = null
+
+
+
+func _ensure_campaign_atlas() -> void:
+	if _campaign_atlas != null:
+		return
+	if not ResourceLoader.exists(CAMPAIGN_ATLAS_PATH):
+		return
+	_campaign_atlas = load(CAMPAIGN_ATLAS_PATH) as Texture2D
+	if _campaign_atlas != null and Vector2i(_campaign_atlas.get_width(), _campaign_atlas.get_height()) != CAMPAIGN_ATLAS_SIZE:
+		push_warning("Campaign atlas size mismatch: got %s, expected %s." % [
+			Vector2i(_campaign_atlas.get_width(), _campaign_atlas.get_height()),
+			CAMPAIGN_ATLAS_SIZE
+		])
+		_campaign_atlas = null
