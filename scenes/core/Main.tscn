@@ -1,4 +1,4 @@
-[gd_scene load_steps=50 format=3]
+[gd_scene load_steps=52 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -41,13 +41,15 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/WorldControlUI.tscn" id="39_world_control_ui"]
 [ext_resource type="Script" path="res://scripts/buildings/ResourceProductionManager.gd" id="40_resource_production"]
 [ext_resource type="Script" path="res://scripts/content/LocalizedText.gd" id="41_localized"]
-[ext_resource type="Script" path="res://scripts/world/FactionRules.gd" id="42_factions"]
+[ext_resource type="Script" path="res://scripts/world/RivalFamilyRules.gd" id="42_families"]
 [ext_resource type="Script" path="res://scripts/progression/AchievementManager.gd" id="43_achievements"]
 [ext_resource type="PackedScene" path="res://scenes/ui/AchievementUI.tscn" id="44_achievement_ui"]
 [ext_resource type="Script" path="res://scripts/content/PresentationCatalog.gd" id="45_presentation"]
 [ext_resource type="Script" path="res://scripts/tutorial/TutorialManager.gd" id="46_tutorial"]
 [ext_resource type="PackedScene" path="res://scenes/ui/TutorialUI.tscn" id="47_tutorial_ui"]
 [ext_resource type="Script" path="res://scripts/ui/UIArtStyler.gd" id="48_ui_art"]
+[ext_resource type="Script" path="res://scripts/faction/FactionManager.gd" id="49_faction_manager"]
+[ext_resource type="PackedScene" path="res://scenes/ui/FactionUI.tscn" id="50_faction_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -58,8 +60,8 @@ script = ExtResource("41_localized")
 [node name="PresentationCatalog" type="Node" parent="."]
 script = ExtResource("45_presentation")
 
-[node name="FactionRules" type="Node" parent="."]
-script = ExtResource("42_factions")
+[node name="RivalFamilyRules" type="Node" parent="."]
+script = ExtResource("42_families")
 
 [node name="GameBalance" type="Node" parent="."]
 script = ExtResource("27_balance")
@@ -96,6 +98,9 @@ script = ExtResource("13_alliance")
 
 [node name="AllianceSocial" type="Node" parent="."]
 script = ExtResource("14_social")
+
+[node name="FactionManager" type="Node" parent="."]
+script = ExtResource("49_faction_manager")
 
 [node name="TroopRoster" type="Node" parent="."]
 script = ExtResource("7_roster")
@@ -163,6 +168,8 @@ script = ExtResource("48_ui_art")
 [node name="RetentionUI" parent="." instance=ExtResource("19_retention_ui")]
 
 [node name="ProfileUI" parent="." instance=ExtResource("22_profile_ui")]
+
+[node name="FactionUI" parent="." instance=ExtResource("50_faction_ui")]
 
 [node name="EventUI" parent="." instance=ExtResource("24_event_ui")]
 
