@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -24,6 +24,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/ProfileUI.tscn" id="22_profile_ui"]
 [ext_resource type="Script" path="res://scripts/events/EventManager.gd" id="23_event"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EventUI.tscn" id="24_event_ui"]
+[ext_resource type="Script" path="res://scripts/combat/CombatLoadout.gd" id="25_loadout"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CombatStrategyUI.tscn" id="26_tactics_ui"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -73,6 +75,9 @@ script = ExtResource("8_recruit")
 [node name="SynergyRaid" type="Node" parent="."]
 script = ExtResource("9_raid")
 
+[node name="CombatLoadout" type="Node" parent="."]
+script = ExtResource("25_loadout")
+
 [node name="RaidBattle" type="Node" parent="."]
 script = ExtResource("11_battle")
 
@@ -90,3 +95,5 @@ script = ExtResource("10_save")
 [node name="ProfileUI" parent="." instance=ExtResource("22_profile_ui")]
 
 [node name="EventUI" parent="." instance=ExtResource("24_event_ui")]
+
+[node name="CombatStrategyUI" parent="." instance=ExtResource("26_tactics_ui")]

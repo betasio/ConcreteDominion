@@ -2,158 +2,275 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## District progression + live-event milestone
+## Strategic raid loadout milestone
 
-The World map now behaves like a progression ladder instead of a flat list of raid targets.
+Raids now have a real pre-battle strategy layer instead of only choosing alliance support slots.
 
-### District ladder
+### Tactics panel
 
-Current districts unlock through Account Level:
+A new **TACTICS** shortcut opens the pre-raid loadout panel.
 
-| Level | District | Target |
-| ---: | --- | --- |
-| 1 | Downtown Core | Downtown Bank |
-| 2 | Harbor District | Harbor Bank |
-| 4 | Northside | Northside Turf HQ |
-| 5 | High Roller Strip | Casino Vault |
-| 6 | Financial District | Financial Tower |
+Players can configure:
 
-The Progression panel now shows this full district ladder.
+- risk plan;
+- specialist equipment;
+- equipment/perk upgrades;
+- one-raid consumables;
+- target counter-role planning.
 
-## Defensive target modifiers
+The selected setup is persistent.
 
-Higher districts now change encounter rules through data-driven target modifiers.
+## Risk plans
 
-Each raid data resource owns:
+Three raid plans are available.
 
-- district name;
-- base HP;
-- HP multiplier;
-- modifier name;
-- modifier description;
-- difficulty;
-- unlock level;
-- rewards and cooldown.
+### Balanced
+- normal damage;
+- normal rewards;
+- normal injury severity.
 
-Current modifiers:
+### Blitz
+- +12% final damage;
+- +10% Cash and XP rewards;
+- +35% injury severity.
 
-- **Downtown Bank** — Standard Security — no HP modifier
-- **Harbor Bank** — Armored Doors — +5% effective HP
-- **Northside Turf HQ** — Fortified Turf — +10% effective HP
-- **Casino Vault** — Private Security — +15% effective HP
-- **Financial Tower** — Hardened Vault — +20% effective HP
+### Cautious
+- -6% final damage;
+- -5% Cash and XP rewards;
+- -35% injury severity.
 
-The raid lobby shows the district and modifier before launch, and target HP displays the effective HP after the modifier.
+This creates a real risk/reward choice without introducing permanent troop loss.
 
-This keeps future encounter design data-driven: new modifiers can be added to raid resources without rebuilding the world-selection flow.
+## Specialist equipment and perks
 
-## Blackout Week event
+The player can equip one specialist kit.
 
-A new 7-day prototype event is available through the **EVENT** shortcut.
+### Turbo Kit — Driver
+Improves raid effectiveness when Driver support is present.
 
-Winning raids while the event is active awards **Event Marks**.
+### Signal Jammer — Spy
+Improves raid effectiveness when Spy support is present.
 
-Current Mark rewards:
+### Ballistic Rig — Enforcer
+Improves raid effectiveness when frontline power is present.
 
-- Downtown Bank — 2 Marks
-- Harbor Bank — 4 Marks
-- Northside Turf HQ — 6 Marks
-- Casino Vault — 9 Marks
-- Financial Tower — 12 Marks
+Each equipment role has its own persistent perk level.
 
-Harder districts therefore advance the event track faster.
+Upgrades consume existing raid loot:
 
-## Event milestone track
+- Parts;
+- Intel.
 
-Blackout Week currently has four claimable milestones:
+Each perk level adds another 3% matched-role damage multiplier.
 
-### 5 Marks
-- $2,500 Cash
-- 30 XP
+## Consumable boosts
 
-### 12 Marks
-- 5 Gold
-- Parts x2
+Two optional consumables can be selected.
 
-### 25 Marks
-- $7,500 Cash
-- 100 XP
-- Intel x2
+### Intel Burst
+- costs Intel x1 at raid launch;
+- +10% final raid damage.
 
-### 45 Marks
-- 15 Gold
-- 180 XP
-- Contraband x1
+### Armor Plates
+- costs Parts x1 at raid launch;
+- reduces injury severity by 35%.
 
-The event panel shows:
+Choosing **None** has no cost.
 
-- event name;
-- remaining days/hours;
-- current Event Marks;
-- milestone reward buttons.
+Consumables are charged only when a valid raid actually launches.
 
-Milestones can only be claimed once.
+## Target weaknesses
+
+Every world target now has a recommended counter-role.
+
+| Target | Weakness | Bonus |
+| --- | --- | ---: |
+| Downtown Bank | Driver | +8% |
+| Harbor Bank | Spy | +12% |
+| Northside Turf HQ | Driver | +12% |
+| Casino Vault | Spy | +15% |
+| Financial Tower | Enforcer/frontline | +15% |
+
+The raid lobby displays the target weakness before launch.
+
+If the alliance composition contains the matching role, the bonus is included in final raid damage.
+
+## Full tactical preview
+
+**Preview Alliance Damage** now uses the same calculation that will be frozen at launch.
+
+The preview shows:
+
+- projected battle grade;
+- final damage versus effective target HP;
+- alliance support multiplier;
+- whether the target counter was matched;
+- selected risk plan;
+- equipment match;
+- selected consumable;
+- reward multiplier;
+- injury-risk multiplier;
+- named member contribution values.
+
+This makes the battle calculation understandable before committing.
+
+## Frozen battle snapshots
+
+When a raid launches, the following values are frozen into the active battle:
+
+- participant roster;
+- calculated final damage;
+- contribution scores;
+- support bonus;
+- target counter status;
+- equipment status;
+- risk plan;
+- consumable;
+- reward multiplier;
+- injury multiplier;
+- projected grade.
+
+Changing the Tactics panel while the convoy is traveling therefore cannot alter an already-launched battle.
+
+This also keeps offline save/load deterministic.
+
+## Performance grades
+
+Raid results now receive a grade based on final damage compared with target HP:
+
+- **S** — 135%+ of target HP
+- **A** — 115%+
+- **B** — successful clear
+- **C** — near miss
+- **D** — significant miss
+
+The animated result overlay and raid lobby both display the grade.
+
+## Injury severity
+
+Troops still **never die permanently**.
+
+Instead, difficult battles can produce different injury severity:
+
+- Minor
+- Standard
+- Serious
+- Critical
+
+Severity changes Clinic healing duration.
+
+Risk plan, Armor Plates, victory/defeat, and target difficulty all contribute to the severity multiplier.
+
+For example:
+
+- Cautious + Armor Plates can significantly reduce recovery time;
+- Blitz against Boss/Mythic targets can lead to Serious or Critical recovery;
+- losing increases injury severity.
+
+The Clinic queue now displays severity next to each wounded entry.
+
+## Reward risk
+
+Risk plans also affect successful raid Cash and XP:
+
+- Blitz: x1.10
+- Balanced: x1.00
+- Cautious: x0.95
+
+Loot drops remain target-defined and are not multiplied.
+
+This avoids turning the aggressive option into an unlimited material multiplier.
 
 ## Persistence
 
-Save version 10 now also stores:
+Save version 11 now also stores:
 
-- event start timestamp;
-- event end timestamp;
-- Event Marks;
-- claimed event milestones.
+- selected raid plan;
+- equipped specialist role;
+- selected consumable;
+- equipment/perk levels.
 
-All previous profile, mailbox, alliance, progression, rewards, world, battle, and economy state remains in the same save.
+Active raids already preserve the frozen tactical snapshot.
+
+Clinic save data now includes:
+
+- injury severity label;
+- severity multiplier;
+- remaining healing time.
 
 ## Architecture additions
 
 ```text
 Main
-├── EventManager
-└── EventUI
+├── CombatLoadout
+├── RaidBattle
+├── HospitalQueue
+└── CombatStrategyUI
 
-scripts/events/
-└── EventManager.gd
+scripts/combat/
+├── CombatLoadout.gd
+├── RaidBattle.gd
+└── HospitalQueue.gd
 
 scripts/ui/
-└── EventUI.gd
+└── CombatStrategyUI.gd
 
 scenes/ui/
-└── EventUI.tscn
+└── CombatStrategyUI.tscn
 ```
 
-`EventManager` listens to raid results and awards event progress.
+`CombatLoadout` owns persistent player choices and perk levels.
 
-`RaidTargetData` now contains district and modifier metadata.
+`RaidBattle` owns the authoritative local prototype calculation and freezes the launch snapshot.
 
-`RaidTarget` calculates effective HP from the target's base HP and defense multiplier.
+`RaidTargetData` owns each target's weakness role and counter bonus.
+
+`HospitalQueue` translates injury severity into recovery duration.
 
 ## Suggested future test path
 
-When the full game is ready to test:
+When the game reaches the final testing phase:
 
-1. Open World view and compare district names/modifiers.
-2. Preview Downtown and Harbor to compare effective HP.
-3. Win raids and watch EVENT Marks increase.
-4. Claim event milestones.
-5. Level through Northside, Casino Vault, and Financial Tower.
-6. Confirm stronger targets award Event Marks faster.
-7. Restart and confirm event timer/Marks/claims persist.
+1. Select Downtown Bank.
+2. Open TACTICS.
+3. Compare Balanced, Blitz, and Cautious previews.
+4. Match Downtown's Driver weakness.
+5. Equip/upgrade Turbo Kit.
+6. Select Intel Burst and confirm final damage increases.
+7. Launch and verify the consumable is spent once.
+8. Compare the projected grade with the final grade.
+9. Try a higher-tier Boss/Mythic target with Blitz.
+10. Check Clinic injury severity and healing time.
+11. Repeat with Cautious + Armor Plates and compare recovery.
+12. Restart during an active convoy and confirm the frozen result remains unchanged.
 
 ## Production note
 
-The event timer currently uses the local system clock and is client-authoritative.
+The combat/loadout system is still client-authoritative in this prototype.
 
-For a live game, event start/end times, Event Marks, milestone claims, raid modifiers, and district eligibility must be server-authoritative.
+Before live multiplayer, the server must validate:
+
+- loadout ownership;
+- consumable spending;
+- target weaknesses;
+- participant snapshots;
+- damage calculations;
+- reward multipliers;
+- grades;
+- injuries;
+- Clinic timers.
 
 ## Next strong milestone
 
-The next major gameplay step should add **strategic combat loadouts and target counterplay**:
+The next major step should be **economy/balance hardening and production readiness**:
 
-- crew loadout presets;
-- specialist equipment/perks;
-- target weaknesses and recommended roles;
-- optional consumable boosts;
-- pre-raid risk/reward choices;
-- post-raid performance grading;
-- deeper wounded/healing severity.
+- central data tables for troop/building costs and timers;
+- account progression tuning;
+- Gold economy and speed-up pricing review;
+- analytics/event hooks;
+- settings/audio/haptics;
+- accessibility options;
+- mobile safe-area handling;
+- error/debug panel;
+- automated save migrations;
+- final Godot runtime validation and bug-fix pass.

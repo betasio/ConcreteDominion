@@ -1,0 +1,97 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/CombatStrategyUI.gd" id="1"]
+
+[node name="CombatStrategyUI" type="CanvasLayer"]
+layer = 6
+script = ExtResource("1")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Shortcut" type="Button" parent="Root"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 374.0
+offset_right = -24.0
+offset_bottom = 420.0
+grow_horizontal = 0
+text = "TACTICS • Balanced"
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -320.0
+offset_right = -24.0
+offset_bottom = 320.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "RAID TACTICS"
+
+[node name="Summary" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+text = "PRE-RAID PLAN"
+autowrap_mode = 2
+
+[node name="Preset" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Risk Plan: Balanced"
+
+[node name="Equipment" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Equipment: Turbo Kit"
+
+[node name="Upgrade" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Upgrade Equipment"
+
+[node name="Consumable" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Consumable: None"
+
+[node name="Counter" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+text = "SELECTED TARGET COUNTER"
+autowrap_mode = 2
+
+[node name="Notes" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 115)
+layout_mode = 2
+text = "Blitz: +12% damage, +10% rewards, higher injury severity.\nCautious: -6% damage, -5% rewards, much lower injury severity.\nNo raid can permanently kill troops; severity only changes Clinic time."
+autowrap_mode = 2
+
+[node name="Close" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Close"

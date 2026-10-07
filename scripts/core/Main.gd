@@ -15,6 +15,7 @@ extends Node
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
 @onready var recruitment_queue: RecruitmentQueue = $RecruitmentQueue
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
+@onready var combat_loadout: CombatLoadout = $CombatLoadout
 @onready var raid_battle: RaidBattle = $RaidBattle
 @onready var save_manager: SaveManager = $SaveManager
 @onready var city_map = $CityMap
@@ -23,6 +24,7 @@ extends Node
 @onready var retention_ui: RetentionUI = $RetentionUI
 @onready var profile_ui: ProfileUI = $ProfileUI
 @onready var event_ui: EventUI = $EventUI
+@onready var combat_strategy_ui: CombatStrategyUI = $CombatStrategyUI
 
 
 func _ready() -> void:
@@ -33,6 +35,7 @@ func _ready() -> void:
 	hospital_queue.setup(economy, troop_roster)
 	construction_queue.setup(economy)
 	recruitment_queue.setup(economy, troop_roster)
+	combat_loadout.setup(loot_inventory, progression)
 
 	raid_battle.setup(
 		economy,
@@ -42,6 +45,7 @@ func _ready() -> void:
 		loot_inventory,
 		alliance_manager,
 		progression,
+		combat_loadout,
 		city_map
 	)
 
@@ -83,6 +87,7 @@ func _ready() -> void:
 		mission_tracker,
 		retention,
 		event_manager,
+		combat_loadout,
 		player_profile,
 		mailbox,
 		alliance_manager,
@@ -114,12 +119,11 @@ func _ready() -> void:
 	retention_ui.setup(retention)
 	profile_ui.setup(player_profile, mailbox, progression)
 	event_ui.setup(event_manager)
+	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map)
 
 	hud.setup(
 		economy,
 		loot_inventory,
-		progression,
-		mission_tracker,
 		alliance_manager,
 		alliance_social,
 		troop_roster,

@@ -9,6 +9,8 @@ extends Resource
 @export_range(1.0, 2.0, 0.01) var hp_multiplier: float = 1.0
 @export var modifier_name: String = "Standard Security"
 @export_multiline var modifier_description: String = "No special defenses."
+@export var weakness_role: StringName = &"Driver"
+@export_range(0.0, 1.0, 0.01) var weakness_bonus: float = 0.10
 @export var reward_cash: int = 5000
 @export var reward_xp: int = 75
 @export var required_account_level: int = 1

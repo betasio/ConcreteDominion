@@ -90,6 +90,8 @@ func get_battle_data() -> Dictionary:
 		"hp_multiplier": data.hp_multiplier,
 		"modifier_name": data.modifier_name,
 		"modifier_description": data.modifier_description,
+		"weakness_role": String(data.weakness_role),
+		"weakness_bonus": data.weakness_bonus,
 		"reward_cash": data.reward_cash,
 		"reward_xp": data.reward_xp,
 		"required_account_level": data.required_account_level,
@@ -126,6 +128,14 @@ func get_modifier_name() -> String:
 
 func get_modifier_description() -> String:
 	return data.modifier_description if data != null else ""
+
+
+func get_weakness_role() -> StringName:
+	return data.weakness_role if data != null else &""
+
+
+func get_weakness_bonus() -> float:
+	return data.weakness_bonus if data != null else 0.0
 
 
 func get_reward_cash() -> int:

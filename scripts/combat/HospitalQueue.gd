@@ -37,17 +37,25 @@ func add_wounded(troop_type: StringName, amount: int) -> void:
 	send_to_hospital(troop_type, amount)
 
 
-func send_to_hospital(troop_type: StringName, amount: int) -> bool:
+func send_to_hospital(
+	troop_type: StringName,
+	amount: int,
+	severity_multiplier: float = 1.0,
+	severity_label: String = "Standard"
+) -> bool:
 	if amount <= 0:
 		return false
 
 	if roster != null and not roster.remove_troops(troop_type, amount):
 		return false
 
+	var severity := maxf(0.25, severity_multiplier)
 	wounded_queue.append({
 		"troop_type": troop_type,
 		"amount": amount,
-		"seconds_remaining": maxf(1.0, amount * seconds_per_troop)
+		"severity": severity_label,
+		"severity_multiplier": severity,
+		"seconds_remaining": maxf(1.0, amount * seconds_per_troop * severity)
 	})
 	queue_changed.emit()
 	return true
@@ -100,6 +108,8 @@ func get_save_data() -> Dictionary:
 		saved_queue.append({
 			"troop_type": String(entry["troop_type"]),
 			"amount": int(entry["amount"]),
+			"severity": String(entry.get("severity", "Standard")),
+			"severity_multiplier": float(entry.get("severity_multiplier", 1.0)),
 			"seconds_remaining": float(entry["seconds_remaining"])
 		})
 	return {"queue": saved_queue}
@@ -113,6 +123,8 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			wounded_queue.append({
 				"troop_type": StringName(raw_entry.get("troop_type", "Enforcer")),
 				"amount": int(raw_entry.get("amount", 0)),
+				"severity": String(raw_entry.get("severity", "Standard")),
+				"severity_multiplier": float(raw_entry.get("severity_multiplier", 1.0)),
 				"seconds_remaining": float(raw_entry.get("seconds_remaining", 0.0))
 			})
 

@@ -346,10 +346,11 @@ func _refresh_hospital() -> void:
 	var lines: PackedStringArray = []
 	for i in range(hospital_queue.wounded_queue.size()):
 		var entry: Dictionary = hospital_queue.wounded_queue[i]
-		lines.append("%d. %s x%d — %s" % [
+		lines.append("%d. %s x%d — %s — %s" % [
 			i + 1,
 			String(entry["troop_type"]),
 			int(entry["amount"]),
+			String(entry.get("severity", "Standard")),
 			_format_time(float(entry["seconds_remaining"]))
 		])
 
@@ -558,13 +559,15 @@ func _refresh_raid() -> void:
 		return
 
 	var loot_preview := _format_loot(selected_raid_target.get_loot_preview())
-	raid_target_label.text = "TARGET: %s\nDistrict: %s   HP: %s   Difficulty: %s\nModifier: %s — %s\nReward: $%s + %d XP + %s\nUnlock: Account Lv.%d" % [
+	raid_target_label.text = "TARGET: %s\nDistrict: %s   HP: %s   Difficulty: %s\nModifier: %s — %s\nWeakness: %s (+%d%% when present)\nReward: $%s + %d XP + %s\nUnlock: Account Lv.%d" % [
 		selected_raid_target.get_display_name(),
 		selected_raid_target.get_district_name(),
 		_format_number(roundi(selected_raid_target.get_max_hp())),
 		selected_raid_target.get_difficulty(),
 		selected_raid_target.get_modifier_name(),
 		selected_raid_target.get_modifier_description(),
+		String(selected_raid_target.get_weakness_role()),
+		roundi(selected_raid_target.get_weakness_bonus() * 100.0),
 		_format_number(selected_raid_target.get_reward_cash()),
 		selected_raid_target.get_reward_xp(),
 		loot_preview,
@@ -647,17 +650,37 @@ func _calculate_raid() -> void:
 	if selected_raid_target == null:
 		return
 
-	_rebuild_synergy_from_alliance()
-	var result := synergy_raid.calculate_raid_damage()
-	var contribution_text := _format_contributions(
-		result.get("contributions", {}),
-		alliance_manager.build_participant_snapshot(raid_drivers, raid_spies)
+	var preview := raid_battle.preview_battle(
+		selected_raid_target,
+		raid_drivers,
+		raid_spies
 	)
 
-	raid_result_label.text = "Preview damage: %s / %s HP\nSupport: +%d%%\n%s" % [
-		_format_number(roundi(float(result["damage"]))),
-		_format_number(roundi(selected_raid_target.get_max_hp())),
-		roundi(float(result["support_bonus"]) * 100.0),
+	if preview.is_empty():
+		raid_result_label.text = "Unable to build a valid raid preview."
+		return
+
+	var raid_math: Dictionary = preview["raid_math"]
+	var contribution_text := _format_contributions(
+		raid_math.get("contributions", {}),
+		preview.get("participants", [])
+	)
+
+	var weakness_text := "COUNTER MATCHED" if bool(preview["weakness_matched"]) else "Counter missing"
+	var equipment_text := "active" if bool(preview["equipment_matched"]) else "not matched"
+
+	raid_result_label.text = "Projected Grade: %s\nFinal damage: %s / %s HP\nSupport: +%d%%   %s\nPreset: %s   Equipment: %s (%s)\nConsumable: %s   Reward x%.2f   Injury risk x%.2f\n%s" % [
+		String(preview["grade"]),
+		_format_number(roundi(float(preview["damage"]))),
+		_format_number(roundi(float(preview["target_hp"]))),
+		roundi(float(raid_math["support_bonus"]) * 100.0),
+		weakness_text,
+		String(preview["preset"]),
+		String(preview["equipment_role"]),
+		equipment_text,
+		String(preview["consumable"]),
+		float(preview["reward_multiplier"]),
+		float(preview["wound_multiplier"]),
 		contribution_text
 	]
 
@@ -686,11 +709,16 @@ func _show_raid_result(result: Dictionary) -> void:
 		result.get("participants", [])
 	)
 
-	raid_result_label.text = "%s — %s\nDamage: %s / %s HP\nAlliance reward pool: $%s\nYour Cash: $%s   Loot: %s\n%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)" % [
+	raid_result_label.text = "%s — Grade %s — %s\nDamage: %s / %s HP\nPlan: %s   Consumable: %s\nCounter: %s   Injury severity: %s\nAlliance reward pool: $%s\nYour Cash: $%s   XP: +%d   Loot: %s\n%s\nWounded: %d Enforcer(s), %d Driver(s), %d Spy(s)" % [
 		outcome,
+		String(result.get("grade", "D")),
 		String(result.get("target_name", "Target")),
 		_format_number(roundi(float(result.get("damage", 0.0)))),
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),
+		String(result.get("preset", "Balanced")),
+		String(result.get("consumable", "None")),
+		"Matched" if bool(result.get("weakness_matched", false)) else "Missed",
+		String(result.get("injury_severity", "None")),
 		_format_number(int(result.get("reward_pool", 0))),
 		_format_number(int(result.get("local_cash_reward", 0))),
 		int(result.get("xp_reward", 0)),
@@ -899,15 +927,22 @@ func _refresh_alliance_profiles() -> void:
 
 func _show_result_overlay(result: Dictionary) -> void:
 	var victory := bool(result.get("victory", false))
-	result_overlay_title.text = "RAID VICTORY" if victory else "RAID DEFEAT"
+	result_overlay_title.text = "%s • GRADE %s" % [
+		"RAID VICTORY" if victory else "RAID DEFEAT",
+		String(result.get("grade", "D"))
+	]
 
 	var loot_text := _format_loot(result.get("loot", {}))
-	result_overlay_body.text = "%s\n\nDamage: %s / %s HP\nYour Cash: $%s   XP: +%d\nLoot: %s\nSupport bonus: +%d%%\n\n%s" % [
+	result_overlay_body.text = "%s\n\nDamage: %s / %s HP\nYour Cash: $%s   XP: +%d\nLoot: %s\nPlan: %s   Counter: %s\nInjury severity: %s\nSupport bonus: +%d%%\n\n%s" % [
 		String(result.get("target_name", "Target")),
 		_format_number(roundi(float(result.get("damage", 0.0)))),
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),
 		_format_number(int(result.get("local_cash_reward", 0))),
+		int(result.get("xp_reward", 0)),
 		loot_text,
+		String(result.get("preset", "Balanced")),
+		"Matched" if bool(result.get("weakness_matched", false)) else "Missed",
+		String(result.get("injury_severity", "None")),
 		roundi(float(result.get("support_bonus", 0.0)) * 100.0),
 		_format_reward_splits(
 			result.get("reward_splits", {}),
