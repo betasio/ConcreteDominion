@@ -59,7 +59,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 27:
+	if save == null or SaveManager.SAVE_VERSION < 28:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -109,6 +109,12 @@ func _ready() -> void:
 			_fail("Chapter 5 objective chain is incomplete.")
 		if not missions.missions.has("discover_financial") or not missions.missions.has("chapter_5_choice") or not missions.missions.has("capture_faction_objective") or not missions.missions.has("chapter_5_complete"):
 			_fail("Chapter 5 Financial District/Faction objective campaign missions are missing.")
+		if MissionTracker.CHAPTER_6_TASKS.size() != 5:
+			_fail("Chapter 6 objective chain is incomplete.")
+		if not missions.missions.has("discover_industrial") or not missions.missions.has("chapter_6_choice") or not missions.missions.has("clear_serpent_convoys") or not missions.missions.has("chapter_6_complete"):
+			_fail("Chapter 6 Industrial Belt convoy campaign missions are missing.")
+		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/ChapterAction") == null:
+			_fail("Chapter operation action control is missing.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Force") == null or game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Approach/Intel") == null:
 			_fail("Chapter strategic choice controls are missing.")
 
@@ -136,6 +142,8 @@ func _ready() -> void:
 		_fail("Family rivalry baseline is invalid.")
 	elif world_control.get_rivalry_reward_multiplier("harbor_bank") < 1.0:
 		_fail("Family rivalry reward scaling is invalid.")
+	elif world_control.get_rival_family_id("industrial_depot") != "iron_serpents":
+		_fail("Industrial Belt is not assigned to the Iron Serpent family.")
 	else:
 		var harbor_dossier := world_control.get_faction_dossier("harbor_bank")
 		if String(harbor_dossier.get("boss", "")).is_empty() or String(harbor_dossier.get("perk", "")).is_empty():
@@ -168,6 +176,8 @@ func _ready() -> void:
 		_fail("Named Rival Family bosses are missing.")
 	elif family_rules.get_perk_summary("harbor_bank").is_empty():
 		_fail("Rival Family gameplay identity is missing.")
+	elif not "convoy_ambush" in family_rules.get_encounter_cycle("industrial_depot"):
+		_fail("Industrial Belt is missing Iron Serpent convoy encounters.")
 
 	var faction_manager := game.get_node_or_null("FactionManager") as FactionManager
 	if faction_manager == null:
@@ -193,6 +203,8 @@ func _ready() -> void:
 			_fail("Chapter Faction integration is not wired.")
 		if not faction_manager.territory_captured.is_connected(missions._on_faction_territory_captured):
 			_fail("Chapter 5 Faction territory objective signal is not wired.")
+		if world_control != null and not world_control.family_encounter_resolved.is_connected(missions._on_family_encounter_resolved):
+			_fail("Chapter 6 Rival Family encounter signal is not wired.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CreateBox/Create") == null:
 		_fail("Player Faction creation UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/DailyButtons/ClaimDaily") == null:
