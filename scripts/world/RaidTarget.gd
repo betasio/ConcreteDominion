@@ -177,8 +177,8 @@ func _draw() -> void:
 	var accent := data.accent_color if data != null else Color(0.72, 0.52, 0.18)
 	if art_texture != null:
 		var size := art_texture.get_size()
-		var scale_factor := minf(190.0 / maxf(1.0, size.x), 155.0 / maxf(1.0, size.y))
-		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -48), size * scale_factor), false)
+		var scale_factor := minf(136.0 / maxf(1.0, size.x), 116.0 / maxf(1.0, size.y))
+		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -44), size * scale_factor), false)
 		_draw_status_bar(accent)
 		if is_selected:
 			draw_arc(Vector2(0, -38), 114.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)

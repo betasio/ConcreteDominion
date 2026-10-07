@@ -139,7 +139,11 @@ func _validate_required_resources() -> void:
 	for path in [
 		"res://localization/ui.csv",
 		"res://export_presets.cfg",
-		"res://assets/README.md"
+		"res://assets/README.md",
+		"res://assets/generated/city_atlas/base64/part_00.txt",
+		"res://assets/generated/city_atlas/base64/part_01.txt",
+		"res://assets/generated/city_atlas/base64/part_02.txt",
+		"res://assets/generated/city_atlas/README.md"
 	]:
 		if not FileAccess.file_exists(path):
 			_fail("Release-readiness file is missing: %s" % path)

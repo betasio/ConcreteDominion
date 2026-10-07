@@ -105,6 +105,14 @@ func _ready() -> void:
 	var presentation := game.get_node_or_null("PresentationCatalog") as PresentationCatalog
 	if presentation == null:
 		_fail("Presentation catalog is missing.")
+	elif not presentation.is_city_atlas_ready():
+		_fail("Approved city art atlas failed to decode: %s" % presentation.get_atlas_error())
+	elif presentation.get_city_atlas_size() != Vector2i(320, 160):
+		_fail("Approved city art atlas has an unexpected size.")
+	else:
+		for art_key in ["safehouse", "hospital", "barracks", "Garage", "Intel Office", "Scrapyard", "Data Hub", "raid_target"]:
+			if presentation.get_texture(art_key) == null:
+				_fail("Missing approved art slice: %s" % art_key)
 
 	var city := game.get_node_or_null("CityMap")
 	if city == null or city.get_node_or_null("TurfOverlay") == null:

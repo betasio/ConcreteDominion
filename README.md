@@ -495,3 +495,32 @@ CI artifacts:
 - `concrete-dominion-android-debug`
 
 The Android artifact is an unsigned-store-development/debug-style build path for QA, not a Google Play release package. Production publishing still requires secure release signing/credentials outside version control.
+
+
+## Approved visual-art integration
+
+The approved Concrete Dominion city-building art direction is now active in gameplay.
+
+A compact generated sprite atlas supplies:
+
+- Safehouse
+- Underground Clinic
+- Crew Barracks
+- Garage
+- Intel Office
+- Scrapyard
+- Data Hub
+- raid-target visual
+
+The atlas is decoded at runtime by `PresentationCatalog`, cached once, and exposed as named `AtlasTexture` slices. This keeps the project lightweight while giving all major city structures a consistent dark-concrete / warm-gold / selective-neon style.
+
+The map renderer still retains procedural fallback art, so a corrupt or missing visual pack cannot make the game unplayable.
+
+CI now verifies:
+
+- all three embedded atlas payload parts exist;
+- the WebP payload decodes successfully;
+- the decoded atlas is exactly 320×160;
+- all eight named art slices resolve to valid textures.
+
+Individual loose PNGs can override atlas entries later without changing gameplay code.

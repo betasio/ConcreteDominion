@@ -93,8 +93,8 @@ func restore_progress(built: bool, saved_level: int = 1) -> void:
 func _draw() -> void:
 	if art_texture != null and is_built:
 		var size := art_texture.get_size()
-		var scale_factor := minf(180.0 / maxf(1.0, size.x), 135.0 / maxf(1.0, size.y))
-		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -38), size * scale_factor), false)
+		var scale_factor := minf(130.0 / maxf(1.0, size.x), 110.0 / maxf(1.0, size.y))
+		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -36), size * scale_factor), false)
 		if is_selected:
 			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 		draw_string(ThemeDB.fallback_font, Vector2(-70, 62), building_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 140, 18, Color(0.95, 0.91, 0.78))

@@ -67,8 +67,8 @@ func restore_progress(saved_level: int) -> void:
 func _draw() -> void:
 	if art_texture != null:
 		var size := art_texture.get_size()
-		var scale_factor := minf(180.0 / maxf(1.0, size.x), 145.0 / maxf(1.0, size.y))
-		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -45), size * scale_factor), false)
+		var scale_factor := minf(132.0 / maxf(1.0, size.x), 116.0 / maxf(1.0, size.y))
+		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -42), size * scale_factor), false)
 		if is_constructing:
 			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
 		if is_selected:

@@ -29,3 +29,27 @@ Place OGG files at:
 If an audio file is absent, AudioManager falls back to the generated tone.
 
 Do not commit licensed/source assets unless their redistribution rights are clear.
+
+
+## Approved generated city atlas
+
+The approved dark-luxury isometric building direction is now integrated into the runtime.
+
+The primary runtime pack is embedded as a compact WebP payload split across:
+
+- `assets/generated/city_atlas/base64/part_00.txt`
+- `assets/generated/city_atlas/base64/part_01.txt`
+- `assets/generated/city_atlas/base64/part_02.txt`
+
+`PresentationCatalog` decodes the payload once at startup and slices it into named 80×80 regions.
+
+Current atlas layout:
+
+| Row | Column 0 | Column 1 | Column 2 | Column 3 |
+| --- | --- | --- | --- | --- |
+| 0 | Safehouse | Underground Clinic | Crew Barracks | Garage |
+| 1 | Intel Office | Scrapyard | Data Hub | Raid Target |
+
+Loose PNG paths documented above remain supported as **per-asset overrides**. If an art director later replaces only one building, the loose PNG automatically wins over the embedded atlas slice.
+
+Procedural drawing remains the final fallback if neither the atlas nor an override is available.
