@@ -15,6 +15,7 @@ var alliance_manager: AllianceManager
 var alliance_social: AllianceSocial
 var raid_battle: RaidBattle
 var settings_manager: SettingsManager
+var presentation_catalog: PresentationCatalog
 var city_map: Node
 var core_effects: CoreBuildingEffects
 var progression: PlayerProgression
@@ -110,6 +111,7 @@ func setup(
 	core_effects = building_effects
 	progression = player_progression
 	settings_manager = settings
+	presentation_catalog = get_parent().get_node_or_null("PresentationCatalog") as PresentationCatalog
 
 	economy.changed.connect(_refresh_all)
 	loot_inventory.changed.connect(_refresh_all)
@@ -163,6 +165,7 @@ func setup(
 	$Root/AlliancePanel/Margin/VBox/Close.pressed.connect(_close_alliance_panel)
 	$Root/ResultOverlay/Margin/VBox/Close.pressed.connect(_close_result_overlay)
 
+	_apply_portrait_art()
 	_refresh_all()
 	_refresh_alliance_social()
 	_refresh_alliance_profiles()
@@ -931,6 +934,33 @@ func _on_alliance_changed() -> void:
 	_refresh_alliance_profiles()
 
 
+func _apply_portrait_art() -> void:
+	if presentation_catalog == null:
+		return
+
+	var enforcer_icon := presentation_catalog.get_unit_portrait(&"enforcer")
+	var driver_icon := presentation_catalog.get_unit_portrait(&"driver")
+	var spy_icon := presentation_catalog.get_unit_portrait(&"spy")
+
+	if enforcer_icon != null:
+		recruit_enforcer_button.icon = enforcer_icon
+		recruit_enforcer_button.expand_icon = true
+	if driver_icon != null:
+		recruit_driver_button.icon = driver_icon
+		recruit_driver_button.expand_icon = true
+		add_driver_button.icon = driver_icon
+		add_driver_button.expand_icon = true
+		invite_driver_button.icon = driver_icon
+		invite_driver_button.expand_icon = true
+	if spy_icon != null:
+		recruit_spy_button.icon = spy_icon
+		recruit_spy_button.expand_icon = true
+		add_spy_button.icon = spy_icon
+		add_spy_button.expand_icon = true
+		invite_spy_button.icon = spy_icon
+		invite_spy_button.expand_icon = true
+
+
 func _refresh_alliance_profiles() -> void:
 	if alliance_profiles == null or alliance_manager == null:
 		return
@@ -953,6 +983,16 @@ func _refresh_alliance_profiles() -> void:
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 3)
 		margin.add_child(box)
+
+		if presentation_catalog != null and not bool(member["is_local"]):
+			var portrait := TextureRect.new()
+			portrait.custom_minimum_size = Vector2(104, 68)
+			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			portrait.texture = presentation_catalog.get_character_portrait(String(member["name"]).to_lower())
+			if portrait.texture != null:
+				box.add_child(portrait)
 
 		var name_label := Label.new()
 		name_label.text = String(member["name"])
