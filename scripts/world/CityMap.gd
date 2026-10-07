@@ -1,9 +1,17 @@
 extends Node2D
 
+signal building_selected(building: Building)
+
 @export var grid_width: int = 18
 @export var grid_height: int = 18
 @export var tile_width: float = 128.0
 @export var tile_height: float = 64.0
+
+@onready var camera: Camera2D = $StrategyCamera
+@onready var safehouse: Building = $Buildings/Safehouse
+@onready var hospital: Building = $Buildings/Hospital
+
+var selected_building: Building
 
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
@@ -12,6 +20,11 @@ var _line_color := Color(0.38, 0.42, 0.39, 0.55)
 
 
 func _ready() -> void:
+	safehouse.position = iso_to_screen(Vector2i(8, 8))
+	hospital.position = iso_to_screen(Vector2i(11, 8))
+
+	safehouse.selected.connect(_select_building)
+	hospital.selected.connect(_select_building)
 	queue_redraw()
 
 
@@ -23,8 +36,6 @@ func _draw() -> void:
 			var color := _road_color if is_road else (_lot_color_a if (x + y) % 2 == 0 else _lot_color_b)
 			_draw_diamond(center, color)
 
-	_draw_safehouse_marker(iso_to_screen(Vector2i(8, 8)))
-
 
 func iso_to_screen(cell: Vector2i) -> Vector2:
 	var origin := Vector2(0.0, -grid_height * tile_height * 0.25)
@@ -32,6 +43,28 @@ func iso_to_screen(cell: Vector2i) -> Vector2:
 		(cell.x - cell.y) * tile_width * 0.5,
 		(cell.x + cell.y) * tile_height * 0.5
 	)
+
+
+func focus_building(building_type: StringName) -> void:
+	var target: Building
+	if building_type == &"hospital":
+		target = hospital
+	elif building_type == &"safehouse":
+		target = safehouse
+	else:
+		return
+
+	_select_building(target)
+	camera.position = target.position + Vector2(0, -40)
+
+
+func _select_building(building: Building) -> void:
+	if selected_building != null:
+		selected_building.set_selected(false)
+
+	selected_building = building
+	selected_building.set_selected(true)
+	building_selected.emit(building)
 
 
 func _draw_diamond(center: Vector2, fill: Color) -> void:
@@ -45,15 +78,3 @@ func _draw_diamond(center: Vector2, fill: Color) -> void:
 	])
 	draw_colored_polygon(points, fill)
 	draw_polyline(PackedVector2Array([points[0], points[1], points[2], points[3], points[0]]), _line_color, 1.5)
-
-
-func _draw_safehouse_marker(center: Vector2) -> void:
-	var base := PackedVector2Array([
-		center + Vector2(0, -80),
-		center + Vector2(110, -25),
-		center + Vector2(0, 30),
-		center + Vector2(-110, -25)
-	])
-	draw_colored_polygon(base, Color(0.12, 0.12, 0.14))
-	draw_polyline(PackedVector2Array([base[0], base[1], base[2], base[3], base[0]]), Color(0.75, 0.58, 0.22), 4.0)
-	draw_string(ThemeDB.fallback_font, center + Vector2(-62, 75), "SAFEHOUSE", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.95, 0.85, 0.56))

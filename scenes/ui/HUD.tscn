@@ -1,6 +1,9 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1"]
 
 [node name="HUD" type="CanvasLayer"]
+script = ExtResource("1")
 
 [node name="Root" type="Control" parent="."]
 layout_mode = 3
@@ -33,7 +36,6 @@ layout_mode = 2
 text = "CONCRETE DOMINION"
 
 [node name="Spacer" type="Control" parent="Root/TopBar/Panel/HBox"]
-custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -45,6 +47,120 @@ text = "Cash: $25,000"
 layout_mode = 2
 text = "Gold: 250"
 
+[node name="HospitalShortcut" type="Button" parent="Root"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -196.0
+offset_top = 92.0
+offset_right = -24.0
+offset_bottom = 142.0
+grow_horizontal = 0
+text = "Clinic"
+
+[node name="SelectionPanel" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -390.0
+offset_top = -130.0
+offset_right = -24.0
+offset_bottom = 130.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/SelectionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Root/SelectionPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Building"
+
+[node name="Description" type="Label" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Building details"
+autowrap_mode = 2
+
+[node name="OpenHospital" type="Button" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+text = "Open Clinic"
+
+[node name="Close" type="Button" parent="Root/SelectionPanel/Margin/VBox"]
+layout_mode = 2
+text = "Close"
+
+[node name="HospitalPanel" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -330.0
+offset_top = -330.0
+offset_right = 330.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Margin" type="MarginContainer" parent="Root/HospitalPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Root/HospitalPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "UNDERGROUND CLINIC"
+
+[node name="Hint" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+text = "Prototype: simulate a battle to send wounded crew here."
+
+[node name="Queue" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+text = "Clinic queue is empty."
+autowrap_mode = 2
+
+[node name="Cost" type="Label" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+text = "Instant heal cost: 0 Gold"
+
+[node name="SimulateBattle" type="Button" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+text = "Simulate Battle Wounds (+16 troops)"
+
+[node name="InstantHeal" type="Button" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+text = "Instant Heal"
+
+[node name="Close" type="Button" parent="Root/HospitalPanel/Margin/VBox"]
+layout_mode = 2
+text = "Close"
+
 [node name="Help" type="Label" parent="Root"]
 layout_mode = 1
 anchors_preset = 3
@@ -52,12 +168,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -370.0
-offset_top = -88.0
+offset_left = -410.0
+offset_top = -86.0
 offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "WASD / Arrows: Pan   •   Wheel: Zoom\nRight/Middle drag: Pan   •   Mobile: Drag + Pinch"
+text = "Click a building to inspect it\nWASD / Arrows + Mouse Wheel • Mobile: Drag + Pinch"
 horizontal_alignment = 2
 vertical_alignment = 2

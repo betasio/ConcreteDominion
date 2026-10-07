@@ -9,6 +9,7 @@ signal treatment_completed(entry: Dictionary)
 @export var premium_currency: int = 250
 
 var wounded_queue: Array[Dictionary] = []
+var _last_displayed_second := -1
 
 
 func _process(delta: float) -> void:
@@ -20,11 +21,16 @@ func _process(delta: float) -> void:
 		float(wounded_queue[0]["seconds_remaining"]) - delta
 	)
 
+	var displayed_second := ceili(float(wounded_queue[0]["seconds_remaining"]))
+	if displayed_second != _last_displayed_second:
+		_last_displayed_second = displayed_second
+		queue_changed.emit()
+
 	if float(wounded_queue[0]["seconds_remaining"]) <= 0.0:
 		var completed := wounded_queue.pop_front()
+		_last_displayed_second = -1
 		treatment_completed.emit(completed)
-
-	queue_changed.emit()
+		queue_changed.emit()
 
 
 func add_wounded(troop_type: StringName, amount: int) -> void:
@@ -62,5 +68,6 @@ func instant_heal() -> bool:
 		completed["seconds_remaining"] = 0.0
 		treatment_completed.emit(completed)
 
+	_last_displayed_second = -1
 	queue_changed.emit()
 	return true
