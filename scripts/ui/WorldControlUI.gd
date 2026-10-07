@@ -116,7 +116,7 @@ func _show_district_victory(district_id: String) -> void:
 		String(summary["boss"]),
 		String(summary["faction"]).to_upper()
 	]
-	victory_summary.text = "%s\n\nRival status: %s %d/10\nFuture feud encounters now pay +%d%% from rivalry, before faction modifiers." % [
+	victory_summary.text = "%s\n\nRival status: %s %d/10\nFuture feud encounters now pay +%d%% from rivalry, before family modifiers." % [
 		String(summary["victory_line"]),
 		String(summary["rivalry"]),
 		int(summary["rivalry_score"]),
@@ -159,7 +159,7 @@ func _refresh() -> void:
 	collect_button.disabled = control.production_bank < 1.0
 
 	districts_label.text = text_catalog.text("UI_DISTRICTS") + "\n" + "\n".join(control.get_district_lines())
-	rivalries_label.text = "RIVAL DOSSIERS\n" + "\n".join(control.get_rivalry_lines())
+	rivalries_label.text = "RIVAL FAMILY DOSSIERS\n" + "\n".join(control.get_rivalry_lines())
 	discovery_label.text = text_catalog.text("UI_NEXT_DISCOVERY") + "\n%s" % control.get_next_discovery_summary()
 	intel_button.disabled = not control.has_discoverable_target()
 
