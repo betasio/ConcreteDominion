@@ -36,9 +36,9 @@ anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
 offset_left = -544.0
-offset_top = -310.0
+offset_top = -390.0
 offset_right = -24.0
-offset_bottom = 310.0
+offset_bottom = 390.0
 grow_horizontal = 0
 grow_vertical = 2
 
@@ -49,52 +49,84 @@ theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 18
 
-[node name="VBox" type="VBoxContainer" parent="Root/Panel/Margin"]
+[node name="Scroll" type="ScrollContainer" parent="Root/Panel/Margin"]
 layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel/Margin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="Title" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 27
 text = "DOMINION"
 
-[node name="Summary" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="Summary" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 92)
 layout_mode = 2
 text = "DOMINION LOCKED"
 autowrap_mode = 2
 
-[node name="Contracts" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="Season" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 104)
+layout_mode = 2
+text = "DOMINION SEASON"
+autowrap_mode = 2
+
+[node name="Featured" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+text = "CITYWIDE MODIFIER"
+autowrap_mode = 2
+
+[node name="Leaderboard" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+text = "SEASON LEADERBOARD"
+autowrap_mode = 2
+
+[node name="SeasonReward" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "SEASON REWARD"
+autowrap_mode = 2
+
+[node name="ClaimSeasonReward" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Claim Season Tier Reward"
+
+[node name="Contracts" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 105)
 layout_mode = 2
 text = "WEEKLY DOMINION CONTRACTS"
 autowrap_mode = 2
 
-[node name="RivalOperation" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="RivalOperation" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Launch Rival Family Operation"
 
-[node name="BossRematch" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="BossRematch" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Launch Boss Rematch"
 
-[node name="FactionWar" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="FactionWar" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Open Faction War"
 
-[node name="Reward" type="Label" parent="Root/Panel/Margin/VBox"]
+[node name="Reward" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "2/3 CACHE • $15,000 + 10 Gold + Parts x3 + Intel x2 + 250 XP + 100 Dominion Marks\n3/3 MASTERY • $10,000 + 10 Gold + Contraband x1 + Intel x2 + 150 XP + 50 Marks"
 autowrap_mode = 2
 
-[node name="ClaimCache" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="ClaimCache" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Claim 2/3 Dominion Cache"
 
-[node name="ClaimMastery" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="ClaimMastery" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Claim 3/3 Mastery Bonus"
 
-[node name="Close" type="Button" parent="Root/Panel/Margin/VBox"]
+[node name="Close" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Close"
