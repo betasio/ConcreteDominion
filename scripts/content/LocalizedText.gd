@@ -27,7 +27,7 @@ var fallback: Dictionary = {
 	"ACH_DOMINION": "Concrete Dominion",
 	"ACH_DESC_FIRST_TURF": "Capture your first district.",
 	"ACH_DESC_ALL_DISTRICTS": "Own every district in the city.",
-	"ACH_DESC_ALLIANCE_4": "Reach Alliance Level 4.",
+	"ACH_DESC_ALLIANCE_4": "Reach Crew Support Level 4.",
 	"ACH_DESC_ACCOUNT_7": "Reach Account Level 7.",
 	"ACH_DESC_MAX_SAFEHOUSE": "Upgrade the Safehouse to Level 5.",
 	"ACH_DESC_RESOURCE_NETWORK": "Build both the Scrapyard and Data Hub.",
@@ -49,7 +49,7 @@ var fallback: Dictionary = {
 	"UI_RESOURCE_FACILITIES": "RESOURCE FACILITIES",
 	"UI_RIVAL_ENCOUNTER": "RIVAL ENCOUNTER",
 	"UI_NO_THREAT": "No active threat.",
-	"UI_ALLIANCE_TASKS": "ALLIANCE TASKS",
+	"UI_ALLIANCE_TASKS": "CREW OPERATIONS",
 	"UI_COLLECT_RESOURCES": "Collect Parts / Intel",
 	"UI_REVEAL_INTEL": "Reveal with Intel",
 	"UI_CLEAR_PATROL": "Clear Patrol",
@@ -88,19 +88,19 @@ var fallback: Dictionary = {
 	"TUTORIAL_WELCOME_TITLE": "WELCOME TO CONCRETE DOMINION",
 	"TUTORIAL_WELCOME_BODY": "Build a crew, strengthen your base, and take control of the city. This guide follows the core loop without blocking other actions.",
 	"TUTORIAL_RECRUIT_TITLE": "BUILD YOUR CREW",
-	"TUTORIAL_RECRUIT_BODY": "Open Crew Barracks and complete any recruitment job. Enforcers provide frontline depth; Drivers and Spies are essential Alliance support.",
+	"TUTORIAL_RECRUIT_BODY": "Open Crew Barracks and complete any recruitment job. Enforcers provide frontline depth; Drivers and Spies are essential crew-support specialists.",
 	"TUTORIAL_UPGRADE_TITLE": "STRENGTHEN THE SAFEHOUSE",
 	"TUTORIAL_UPGRADE_BODY": "Upgrade the Safehouse once. Higher Safehouse levels improve construction speed, raid Cash, and Command Scan cooldown.",
 	"TUTORIAL_WORLD_TITLE": "ENTER THE WORLD MAP",
 	"TUTORIAL_WORLD_BODY": "Switch from BASE to WORLD. The World map contains rival districts, raid targets, turf income, fog, and patrol pressure.",
-	"TUTORIAL_ALLIANCE_TITLE": "TAKE A SUPPORT SLOT",
-	"TUTORIAL_ALLIANCE_BODY": "Open the Alliance Raid panel and join a Driver or Spy slot. Your support contribution materially increases alliance damage.",
+	"TUTORIAL_ALLIANCE_TITLE": "BUILD CREW SUPPORT",
+	"TUTORIAL_ALLIANCE_BODY": "Open Crew Support and join a Driver or Spy slot. These are story crew allies, separate from the real-player Faction system.",
 	"TUTORIAL_RAID_TITLE": "WIN YOUR FIRST RAID",
-	"TUTORIAL_RAID_BODY": "Select a discovered target, preview alliance damage, and win a raid. Defeated troops recover in the Clinic instead of dying permanently.",
+	"TUTORIAL_RAID_BODY": "Select a discovered target, preview crew-support damage, and win a raid. Defeated troops recover in the Clinic instead of dying permanently.",
 	"TUTORIAL_DONE_TITLE": "CITY LOOP UNLOCKED",
-	"TUTORIAL_DONE_BODY": "You know the core loop: build, recruit, support the alliance, raid, capture turf, and expand.",
+	"TUTORIAL_DONE_BODY": "You know the core loop: build your Family, recruit crew, use story support, raid Rival Families, capture turf, and later join a player Faction.",
 	"UI_DOMINION_COMPLETE": "DOMINION COMPLETE — citywide control secured.",
-	"UI_DOMINION_REQUIREMENTS": "ENDGAME: own all districts, reach Account Lv.7 + Alliance Lv.4, max core buildings, and establish all specialist/resource facilities."
+	"UI_DOMINION_REQUIREMENTS": "ENDGAME: own all districts, reach Account Lv.7 + Crew Support Lv.4, max core buildings, and establish all specialist/resource facilities."
 }
 
 
