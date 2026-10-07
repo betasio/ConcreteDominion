@@ -58,7 +58,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 18:
+	if save == null or SaveManager.SAVE_VERSION < 19:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -86,6 +86,19 @@ func _ready() -> void:
 			_fail("Chapter 1 objective chain is incomplete.")
 		if game.get_node_or_null("ProgressionUI/Root/Panel/Margin/VBox/Chapter") == null:
 			_fail("Chapter 1 progression presentation is missing.")
+
+	var retention := game.get_node_or_null("RetentionManager") as RetentionManager
+	if retention == null:
+		_fail("RetentionManager is missing.")
+	else:
+		var daily := retention.get_daily_status()
+		var weekly := retention.get_weekly_status()
+		if int(daily.get("required_contracts", 0)) != 2 or int(daily.get("construction_goal", 0)) != 1:
+			_fail("Daily flexible contract configuration is invalid.")
+		if int(weekly.get("required_contracts", 0)) != 2 or int(weekly.get("construction_goal", 0)) != 3:
+			_fail("Weekly flexible contract configuration is invalid.")
+		if game.get_node_or_null("RetentionUI/Root/Panel/Margin/VBox/ClaimComeback") == null:
+			_fail("Comeback reward control is missing.")
 
 	var alliance := game.get_node_or_null("AllianceManager") as AllianceManager
 	if alliance == null or alliance.get_xp_for_next_level() <= 0:
