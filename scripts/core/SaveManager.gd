@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 21
+const SAVE_VERSION := 22
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -19,6 +19,7 @@ var player_profile: PlayerProfile
 var mailbox: MailboxManager
 var alliance: AllianceManager
 var alliance_social: AllianceSocial
+var faction: FactionManager
 var roster: TroopRoster
 var hospital: HospitalQueue
 var construction: ConstructionQueue
@@ -50,6 +51,7 @@ func setup(
 	mailbox_manager: MailboxManager,
 	alliance_manager: AllianceManager,
 	social: AllianceSocial,
+	faction_manager: FactionManager,
 	troop_roster: TroopRoster,
 	hospital_queue: HospitalQueue,
 	construction_queue: ConstructionQueue,
@@ -72,6 +74,7 @@ func setup(
 	mailbox = mailbox_manager
 	alliance = alliance_manager
 	alliance_social = social
+	faction = faction_manager
 	roster = troop_roster
 	hospital = hospital_queue
 	construction = construction_queue
@@ -94,6 +97,7 @@ func setup(
 	mailbox.changed.connect(mark_dirty)
 	alliance.changed.connect(mark_dirty)
 	alliance_social.changed.connect(mark_dirty)
+	faction.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
 	hospital.queue_changed.connect(mark_dirty)
 	construction.queue_changed.connect(mark_dirty)
@@ -144,6 +148,7 @@ func save_game() -> bool:
 		"mailbox": mailbox.get_save_data(),
 		"alliance": alliance.get_save_data(),
 		"alliance_social": alliance_social.get_save_data(),
+		"faction": faction.get_save_data(),
 		"roster": roster.get_save_data(),
 		"hospital": hospital.get_save_data(),
 		"construction": construction.get_save_data(),
@@ -203,6 +208,7 @@ func load_game() -> bool:
 	mailbox.load_save_data(data.get("mailbox", {}))
 	alliance.load_save_data(data.get("alliance", {}))
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
+	faction.load_save_data(data.get("faction", {}))
 	roster.load_save_data(data.get("roster", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	world_control.load_save_data(data.get("world_control", {}), elapsed)
@@ -362,6 +368,10 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 				"velvet_circle": 0
 			}
 		data["world_control"] = world_control_data
+
+	if version < 22:
+		if not data.has("faction"):
+			data["faction"] = {}
 
 	data["schema_meta"] = {
 		"migrated_from": version,
