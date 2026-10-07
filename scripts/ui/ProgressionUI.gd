@@ -67,7 +67,10 @@ func _upgrade(role: StringName) -> void:
 
 func _choose_approach(choice_id: String) -> void:
 	var chapter := missions.get_story_chapter_status()
-	if int(chapter.get("chapter", 1)) == 3:
+	var chapter_number := int(chapter.get("chapter", 1))
+	if chapter_number == 4:
+		missions.choose_chapter_4_approach("buy_in" if choice_id == "force" else "blackmail")
+	elif chapter_number == 3:
 		missions.choose_chapter_3_approach("pressure" if choice_id == "force" else "patience")
 	else:
 		missions.choose_chapter_2_approach(choice_id)
@@ -99,7 +102,10 @@ func _refresh() -> void:
 	approach_box.visible = bool(chapter.get("choice_required", false))
 	force_button.disabled = not approach_box.visible
 	intel_button.disabled = not approach_box.visible
-	if int(chapter["chapter"]) == 3:
+	if int(chapter["chapter"]) == 4:
+		force_button.text = "BUY IN • $6,000 + 3 Gold"
+		intel_button.text = "BLACKMAIL • 5 Gold + Intel x4"
+	elif int(chapter["chapter"]) == 3:
 		force_button.text = "PRESSURE • $4,000 + Parts x3"
 		intel_button.text = "PATIENCE • 4 Gold + Intel x3"
 	else:
@@ -117,10 +123,16 @@ func _refresh() -> void:
 			"UNDECIDED" if choice.is_empty() else choice.to_upper(),
 			String(chapter["completion_reward"])
 		]
-	else:
+	elif int(chapter["chapter"]) == 3:
 		var chapter_3_choice := String(chapter.get("choice", ""))
 		milestones_label.text = "NORTHSIDE CAMPAIGN\nDarius Knox • Northside Crew\nDoctrine: %s • Final objective: join/create a player Faction\nChapter reward: %s" % [
 			"UNDECIDED" if chapter_3_choice.is_empty() else chapter_3_choice.to_upper(),
+			String(chapter["completion_reward"])
+		]
+	else:
+		var chapter_4_choice := String(chapter.get("choice", ""))
+		milestones_label.text = "VELVET CIRCLE CAMPAIGN\nCeleste Marrow • Casino Vault\nLeverage: %s • Data Hub required before the final score\nChapter reward: %s" % [
+			"UNDECIDED" if chapter_4_choice.is_empty() else chapter_4_choice.to_upper().replace("_", " "),
 			String(chapter["completion_reward"])
 		]
 
@@ -137,7 +149,11 @@ func _refresh_story_beat(chapter: Dictionary) -> void:
 	story_speaker.text = String(chapter.get("speaker", "Vex")).to_upper()
 	story_line.text = "“%s”" % String(chapter.get("story_line", ""))
 	if presentation_catalog != null:
-		story_portrait.texture = presentation_catalog.get_character_portrait(String(chapter.get("portrait", "vex")))
+		var portrait_key := String(chapter.get("portrait", "vex"))
+		var portrait := presentation_catalog.get_character_portrait(portrait_key)
+		if portrait == null:
+			portrait = presentation_catalog.get_campaign_art(portrait_key)
+		story_portrait.texture = portrait
 
 
 func _apply_portrait_art() -> void:
