@@ -14,6 +14,7 @@ var hospital: HospitalQueue
 var synergy: SynergyRaid
 var loot_inventory: LootInventory
 var alliance: AllianceManager
+var progression: PlayerProgression
 var city_map: Node
 
 var active_battle: Dictionary = {}
@@ -29,6 +30,7 @@ func setup(
 	synergy_raid: SynergyRaid,
 	loot: LootInventory,
 	alliance_manager: AllianceManager,
+	player_progression: PlayerProgression,
 	world: Node
 ) -> void:
 	economy = player_economy
@@ -37,6 +39,7 @@ func setup(
 	synergy = synergy_raid
 	loot_inventory = loot
 	alliance = alliance_manager
+	progression = player_progression
 	city_map = world
 
 
@@ -63,7 +66,7 @@ func is_active() -> bool:
 
 
 func start_battle(target: RaidTarget, local_driver_count: int, local_spy_count: int) -> bool:
-	if is_active() or target == null or not target.is_available():
+	if is_active() or target == null or not target.is_available() or not target.is_unlocked():
 		return false
 
 	if economy == null or roster == null or hospital == null or synergy == null or alliance == null:
@@ -112,6 +115,7 @@ func start_battle(target: RaidTarget, local_driver_count: int, local_spy_count: 
 		"target_name": String(target_data["name"]),
 		"target_hp": float(target_data["hp"]),
 		"reward_cash": int(target_data["reward_cash"]),
+		"reward_xp": int(target_data.get("reward_xp", 0)),
 		"difficulty": String(target_data["difficulty"]),
 		"loot": (target_data.get("loot", {}) as Dictionary).duplicate(true),
 		"local_drivers": local_driver_count,
@@ -147,9 +151,14 @@ func _resolve_active_battle() -> void:
 
 	var local_cash_reward := int(reward_splits.get("local_player", 0))
 
+	var local_participated := _local_player_participated()
+
 	if victory:
 		if local_cash_reward > 0:
 			economy.add_cash(local_cash_reward)
+
+		if local_participated and progression != null:
+			progression.add_xp(int(active_battle.get("reward_xp", 0)))
 
 		awarded_loot = (active_battle.get("loot", {}) as Dictionary).duplicate(true)
 
@@ -195,6 +204,7 @@ func _resolve_active_battle() -> void:
 		"damage": damage,
 		"reward_pool": reward_pool,
 		"local_cash_reward": local_cash_reward,
+		"xp_reward": int(active_battle.get("reward_xp", 0)) if victory and local_participated else 0,
 		"reward_splits": reward_splits,
 		"contributions": raid_math.get("contributions", {}).duplicate(true),
 		"participants": (active_battle.get("participants", []) as Array).duplicate(true),

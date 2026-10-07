@@ -18,8 +18,35 @@ func add_item(item_name: String, amount: int) -> void:
 
 
 func add_loot(loot: Dictionary) -> void:
+	var did_change := false
+
 	for item_name in loot.keys():
-		add_item(String(item_name), int(loot[item_name]))
+		var amount := int(loot[item_name])
+		if amount <= 0:
+			continue
+		items[String(item_name)] = get_count(String(item_name)) + amount
+		did_change = true
+
+	if did_change:
+		changed.emit()
+
+
+func can_afford(loot: Dictionary) -> bool:
+	for item_name in loot.keys():
+		if get_count(String(item_name)) < int(loot[item_name]):
+			return false
+	return true
+
+
+func spend_loot(loot: Dictionary) -> bool:
+	if not can_afford(loot):
+		return false
+
+	for item_name in loot.keys():
+		items[String(item_name)] = get_count(String(item_name)) - int(loot[item_name])
+
+	changed.emit()
+	return true
 
 
 func get_count(item_name: String) -> int:

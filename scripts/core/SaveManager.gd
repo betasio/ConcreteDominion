@@ -5,10 +5,12 @@ signal save_completed
 signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
+var progression: PlayerProgression
+var missions: MissionTracker
 var alliance: AllianceManager
 var alliance_social: AllianceSocial
 var roster: TroopRoster
@@ -28,6 +30,8 @@ var _is_loading := false
 func setup(
 	player_economy: PlayerEconomy,
 	loot: LootInventory,
+	player_progression: PlayerProgression,
+	mission_tracker: MissionTracker,
 	alliance_manager: AllianceManager,
 	social: AllianceSocial,
 	troop_roster: TroopRoster,
@@ -39,6 +43,8 @@ func setup(
 ) -> void:
 	economy = player_economy
 	loot_inventory = loot
+	progression = player_progression
+	missions = mission_tracker
 	alliance = alliance_manager
 	alliance_social = social
 	roster = troop_roster
@@ -50,6 +56,8 @@ func setup(
 
 	economy.changed.connect(mark_dirty)
 	loot_inventory.changed.connect(mark_dirty)
+	progression.changed.connect(mark_dirty)
+	missions.changed.connect(mark_dirty)
 	alliance.changed.connect(mark_dirty)
 	alliance_social.changed.connect(mark_dirty)
 	roster.changed.connect(mark_dirty)
@@ -91,6 +99,8 @@ func save_game() -> bool:
 		"saved_at_unix": Time.get_unix_time_from_system(),
 		"economy": economy.get_save_data(),
 		"loot": loot_inventory.get_save_data(),
+		"progression": progression.get_save_data(),
+		"missions": missions.get_save_data(),
 		"alliance": alliance.get_save_data(),
 		"alliance_social": alliance_social.get_save_data(),
 		"roster": roster.get_save_data(),
@@ -142,6 +152,8 @@ func load_game() -> bool:
 
 	economy.load_save_data(data.get("economy", {}))
 	loot_inventory.load_save_data(data.get("loot", {}))
+	progression.load_save_data(data.get("progression", {}))
+	missions.load_save_data(data.get("missions", {}))
 	alliance.load_save_data(data.get("alliance", {}))
 	alliance_social.load_save_data(data.get("alliance_social", {}), elapsed)
 	roster.load_save_data(data.get("roster", {}))

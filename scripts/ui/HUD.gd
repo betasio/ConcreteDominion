@@ -242,8 +242,27 @@ func _refresh_selection() -> void:
 		upgrade_button.disabled = construction_queue.is_busy() or selected_building.is_constructing or economy.cash < cash_cost
 
 	if selected_lot != null:
-		build_button.text = "Build %s — $%s" % [selected_lot.building_name, _format_number(selected_lot.build_cash_cost)]
-		build_button.disabled = construction_queue.is_busy() or selected_lot.is_built or economy.cash < selected_lot.build_cash_cost
+		var progression: PlayerProgression = get_node("/root/Main/PlayerProgression")
+		var unlocked := progression.is_building_unlocked(selected_lot.building_name)
+		var required_level := progression.get_building_unlock_level(selected_lot.building_name)
+
+		if unlocked:
+			build_button.text = "Build %s — $%s" % [
+				selected_lot.building_name,
+				_format_number(selected_lot.build_cash_cost)
+			]
+		else:
+			build_button.text = "%s unlocks at Account Lv.%d" % [
+				selected_lot.building_name,
+				required_level
+			]
+
+		build_button.disabled = (
+			not unlocked
+			or construction_queue.is_busy()
+			or selected_lot.is_built
+			or economy.cash < selected_lot.build_cash_cost
+		)
 
 
 func _upgrade_selected() -> void:
@@ -539,12 +558,14 @@ func _refresh_raid() -> void:
 		return
 
 	var loot_preview := _format_loot(selected_raid_target.get_loot_preview())
-	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward pool: $%s + %s" % [
+	raid_target_label.text = "TARGET: %s\nHP: %s   Difficulty: %s   Reward: $%s + %d XP + %s\nUnlock: Account Lv.%d" % [
 		selected_raid_target.get_display_name(),
 		_format_number(roundi(selected_raid_target.get_max_hp())),
 		selected_raid_target.get_difficulty(),
 		_format_number(selected_raid_target.get_reward_cash()),
-		loot_preview
+		selected_raid_target.get_reward_xp(),
+		loot_preview,
+		selected_raid_target.get_required_account_level()
 	]
 
 	_refresh_alliance_labels()
@@ -575,6 +596,9 @@ func _refresh_raid() -> void:
 	if active:
 		raid_status_label.text = "Raid convoy launching... %s" % _format_time(float(raid_battle.active_battle["seconds_remaining"]))
 		launch_raid_button.text = "Raid In Progress"
+	elif not selected_raid_target.is_unlocked():
+		raid_status_label.text = "LOCKED — reach Account Lv.%d." % selected_raid_target.get_required_account_level()
+		launch_raid_button.text = "Target Locked"
 	elif not target_available:
 		raid_status_label.text = "Target respawning in %s" % _format_time(selected_raid_target.cooldown_remaining)
 		launch_raid_button.text = "Target Unavailable"
@@ -666,6 +690,7 @@ func _show_raid_result(result: Dictionary) -> void:
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),
 		_format_number(int(result.get("reward_pool", 0))),
 		_format_number(int(result.get("local_cash_reward", 0))),
+		int(result.get("xp_reward", 0)),
 		loot_text,
 		split_text,
 		int(result.get("wounded_enforcers", 0)),
@@ -874,7 +899,7 @@ func _show_result_overlay(result: Dictionary) -> void:
 	result_overlay_title.text = "RAID VICTORY" if victory else "RAID DEFEAT"
 
 	var loot_text := _format_loot(result.get("loot", {}))
-	result_overlay_body.text = "%s\n\nDamage: %s / %s HP\nYour Cash: $%s\nLoot: %s\nSupport bonus: +%d%%\n\n%s" % [
+	result_overlay_body.text = "%s\n\nDamage: %s / %s HP\nYour Cash: $%s   XP: +%d\nLoot: %s\nSupport bonus: +%d%%\n\n%s" % [
 		String(result.get("target_name", "Target")),
 		_format_number(roundi(float(result.get("damage", 0.0)))),
 		_format_number(roundi(float(result.get("target_hp", 0.0)))),

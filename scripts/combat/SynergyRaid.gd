@@ -4,11 +4,14 @@ extends Node
 signal roster_changed
 signal raid_calculated(result: Dictionary)
 
-@export_range(0.0, 1.0, 0.01) var driver_bonus_each: float = 0.15
-@export_range(0.0, 1.0, 0.01) var spy_bonus_each: float = 0.18
-@export_range(0.0, 2.0, 0.05) var maximum_support_bonus: float = 1.00
+@export_range(0.0, 2.0, 0.05) var maximum_support_bonus: float = 1.25
 
 var participants: Dictionary = {}
+var progression: PlayerProgression
+
+
+func setup(player_progression: PlayerProgression) -> void:
+	progression = player_progression
 
 
 func clear() -> void:
@@ -37,6 +40,14 @@ func leave_raid(player_id: String) -> void:
 		roster_changed.emit()
 
 
+func get_driver_bonus_each() -> float:
+	return progression.get_driver_bonus() if progression != null else 0.15
+
+
+func get_spy_bonus_each() -> float:
+	return progression.get_spy_bonus() if progression != null else 0.18
+
+
 func calculate_raid_damage() -> Dictionary:
 	var strongest_frontline := 0.0
 	var driver_count := 0
@@ -56,8 +67,10 @@ func calculate_raid_damage() -> Dictionary:
 		elif role == &"spy":
 			spy_count += 1
 
-	var speed_bonus := float(driver_count) * driver_bonus_each
-	var defense_break_bonus := float(spy_count) * spy_bonus_each
+	var driver_bonus := get_driver_bonus_each()
+	var spy_bonus := get_spy_bonus_each()
+	var speed_bonus := float(driver_count) * driver_bonus
+	var defense_break_bonus := float(spy_count) * spy_bonus
 	var support_bonus := minf(speed_bonus + defense_break_bonus, maximum_support_bonus)
 	var total_damage := strongest_frontline * (1.0 + support_bonus)
 
@@ -70,9 +83,9 @@ func calculate_raid_damage() -> Dictionary:
 		if String(player_id) == frontline_id:
 			score = strongest_frontline
 		elif role == &"driver":
-			score = strongest_frontline * driver_bonus_each
+			score = strongest_frontline * driver_bonus
 		elif role == &"spy":
-			score = strongest_frontline * spy_bonus_each
+			score = strongest_frontline * spy_bonus
 
 		contributions[String(player_id)] = score
 
@@ -82,6 +95,8 @@ func calculate_raid_damage() -> Dictionary:
 		"frontline_id": frontline_id,
 		"driver_count": driver_count,
 		"spy_count": spy_count,
+		"driver_bonus_each": driver_bonus,
+		"spy_bonus_each": spy_bonus,
 		"speed_bonus": speed_bonus,
 		"defense_break_bonus": defense_break_bonus,
 		"support_bonus": support_bonus,

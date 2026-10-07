@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func _create_mock_alliance() -> void:
 	members = [
-		{"id":"boss_01","name":"Vex","level":45,"power":6000.0,"preferred_role":ROLE_FRONTLINE,"online":true,"is_local":false},
+		{"id":"boss_01","name":"Vex","level":45,"power":8000.0,"preferred_role":ROLE_FRONTLINE,"online":true,"is_local":false},
 		{"id":"driver_ally_01","name":"Mia","level":17,"power":850.0,"preferred_role":ROLE_DRIVER,"online":true,"is_local":false},
 		{"id":"spy_ally_01","name":"Noah","level":14,"power":720.0,"preferred_role":ROLE_SPY,"online":true,"is_local":false},
 		{"id":"driver_ally_02","name":"Kira","level":12,"power":610.0,"preferred_role":ROLE_DRIVER,"online":false,"is_local":false},

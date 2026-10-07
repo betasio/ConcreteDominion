@@ -2,150 +2,244 @@
 
 A cross-platform 2.5D isometric RTS prototype built with **Godot 4** and GDScript.
 
-## Visual polish milestone
+## Player progression milestone
 
-The current build adds a first presentation pass to the existing Base / World / Alliance raid loop without requiring external art assets.
+The prototype now has a persistent account progression loop tied directly to raids, loot, unlocks, specialist upgrades, and tutorial-style missions.
 
-### Street-following raid convoys
+### Account XP and levels
 
-Raid convoys no longer move in a straight line from the Safehouse to a target.
+The player now has:
 
-Each current target has a district route made from world-map waypoints. The convoy:
+- Account Level
+- current XP
+- escalating XP required for the next level
 
-- follows multiple street turns;
-- rotates to face its current route segment;
-- uses the raid launch countdown as total travel time;
-- restores along the route after reopening during an active raid.
+Raid victories grant XP when the local player actually participated in the raid.
 
-The routing system is still lightweight and deterministic, making it suitable for replacement with proper pathfinding later.
+Current target progression:
 
-### Raid target status bars
+| Target | Required level | XP reward |
+| --- | ---: | ---: |
+| Downtown Bank | 1 | 80 XP |
+| Harbor Bank | 2 | 140 XP |
+| Northside Turf HQ | 4 | 220 XP |
 
-World-map targets now display a compact status bar.
+Locked targets remain visible in World view but clearly show their required account level.
 
-When available, the bar shows:
+## Building unlocks
 
-- target HP;
-- difficulty tier;
-- ready state.
+Progression now gates specialist facilities:
 
-After defeat, the same area changes into a recovery/respawn progress bar and the existing countdown remains visible.
+- Garage — Account Lv.2
+- Intel Office — Account Lv.3
 
-### Raid impact effects
+Locked build lots show their level requirement directly on the Build button.
 
-Raid resolution now spawns a procedural impact effect over the attacked target.
+The core Safehouse, Clinic, and Barracks remain available from the beginning.
 
-- victories use a bright impact/explosion burst;
-- defeats use a harsher red impact;
-- the effect expands and fades automatically.
+## Loot utility
 
-This uses Godot drawing code only, so there are no new texture dependencies.
+Raid loot is no longer display-only.
 
-### Animated raid result overlay
+The persistent loot inventory now supports spending:
 
-Battle results now appear in a dedicated center-screen overlay with a short fade/scale animation.
+- Parts
+- Intel
+- Contraband
 
-The overlay shows:
+Loot is consumed by specialist upgrades.
 
-- victory or defeat;
-- target name;
-- damage versus target HP;
-- the local player's Cash share;
-- local loot;
-- total support bonus;
-- named alliance reward shares.
+## Specialist upgrades
 
-The original detailed raid-lobby result remains available underneath.
+The **Progression** panel lets players upgrade:
 
-### Alliance member profile cards
+- Enforcer
+- Driver
+- Spy
 
-The Alliance Hub now renders the alliance roster as responsive member cards.
+Driver upgrades increase the Driver raid multiplier.
 
-Each card shows:
+Base Driver support:
+- Lv.1: +15% per Driver slot
+- each additional Driver level: +3%
 
-- member name;
-- level;
-- preferred role;
-- power;
-- online/offline state.
+Spy upgrades increase defense-break support.
 
-Cards use an `HFlowContainer` so they wrap on narrower screens rather than assuming desktop width.
+Base Spy support:
+- Lv.1: +18% per Spy slot
+- each additional Spy level: +4%
 
-## Current player flow
+Upgrade costs scale by level and consume different raid loot combinations.
 
-1. Manage buildings and crew in **BASE**.
-2. Switch to **WORLD**.
-3. Review target HP/difficulty bars.
-4. Select a Bank or Turf HQ.
-5. Open **Alliance** and review member cards/activity.
-6. Send a raid invite or configure the raid lobby.
-7. Launch the raid.
-8. Watch the convoy travel through district waypoints.
-9. See the target impact effect at resolution.
-10. Review the animated result overlay.
-11. Heal wounded specialists and continue progression.
+This gives lower-power alliance support players a long-term progression path that improves their strategic value rather than merely increasing raw troop quantity.
+
+## Tutorial / mission objectives
+
+The first mission set now acts as a lightweight first-time-user progression guide:
+
+### Grow the Crew
+Recruit 5 troops.
+
+Reward:
+- 60 XP
+- $1,500 Cash
+
+### First Score
+Defeat Downtown Bank.
+
+Reward:
+- 80 XP
+- $2,500 Cash
+
+### Make a Name
+Reach Account Lv.2.
+
+Reward:
+- 40 XP
+- $2,000 Cash
+
+Mission state and completion are saved.
+
+These objectives deliberately teach the existing gameplay loop:
+recruit → raid → level up → unlock new content.
+
+## Progression panel
+
+A new responsive **Progression** shortcut shows the player's current account level.
+
+Opening it displays:
+
+- current level
+- XP / next-level requirement
+- upcoming unlocks
+- mission progress
+- Enforcer upgrade
+- Driver upgrade
+- Spy upgrade
+- current loot costs
+
+Upgrade buttons automatically disable when the required loot is unavailable.
+
+## Raid progression UI
+
+Raid panels now show:
+
+- target HP
+- difficulty
+- Cash reward
+- XP reward
+- loot reward
+- account-level requirement
+
+The raid status clearly distinguishes:
+
+- Ready
+- Respawning
+- Locked by account level
+- Raid in progress
+
+The animated result overlay also shows XP earned.
+
+## Balance correction
+
+The prototype alliance frontline member Vex is now set to **8,000 frontline power**.
+
+With current base specialist bonuses:
+
+- Vex alone cannot clear Downtown Bank.
+- Vex + normal Driver/Spy support clears Downtown.
+- Harbor benefits from filling the second Driver slot.
+- Northside remains a later target requiring account progression and stronger specialist bonuses.
+
+This better matches the intended design: frontline power matters, but coordinated support is required.
+
+## Persistence
+
+Save version 7 now includes:
+
+- Account Level
+- XP
+- specialist upgrade levels
+- mission progress/completion
+
+All previous persistent systems remain intact:
+
+- Cash and Gold
+- loot
+- troops
+- buildings
+- construction/recruitment/healing queues
+- raid state
+- target cooldowns
+- alliance roster/slots/social feed
+- Base/World view
+
+## Suggested test
+
+1. Open **Progression** and review the three tutorial missions.
+2. Recruit 5 troops and confirm **Grow the Crew** completes.
+3. Switch to **WORLD** and inspect Harbor Bank; it should show **Lv.2 required**.
+4. Raid Downtown Bank with alliance support.
+5. Confirm the result overlay grants XP.
+6. Reopen **Progression** and watch account XP/mission state update.
+7. Reach Lv.2 and confirm Harbor Bank + Garage unlock.
+8. Earn Parts/Intel from raids.
+9. Spend loot upgrading Driver or Spy.
+10. Preview another raid and verify the support percentage increases.
+11. Restart and verify level, XP, upgrades, and missions persist.
 
 ## Architecture additions
 
 ```text
-scenes/effects/
-└── RaidImpactVFX.tscn
-
-scripts/effects/
-└── RaidImpactVFX.gd
-
-CityMap
-├── Buildings
-├── RaidTargets
-├── Convoys
-├── Effects
-└── StrategyCamera
+Main
+├── PlayerEconomy
+├── LootInventory
+├── PlayerProgression
+├── MissionTracker
+├── AllianceManager
+├── AllianceSocial
+├── TroopRoster
+├── HospitalQueue
+├── ConstructionQueue
+├── RecruitmentQueue
+├── SynergyRaid
+├── RaidBattle
+├── SaveManager
+├── CityMap
+├── HUD
+└── ProgressionUI
 ```
 
-`ConvoyVisual.gd` now accepts a `PackedVector2Array` route instead of requiring only a start/end point.
+New scripts:
 
-`CityMap.gd` owns prototype district routes and spawns impact effects on battle resolution.
+```text
+scripts/progression/
+├── PlayerProgression.gd
+└── MissionTracker.gd
 
-`RaidTarget.gd` draws target HP/difficulty and recovery status directly in world space.
+scripts/ui/
+└── ProgressionUI.gd
 
-`HUD.gd` builds responsive alliance profile cards and animates the result overlay.
+scenes/ui/
+└── ProgressionUI.tscn
+```
+
+Raid target data resources now own both `reward_xp` and `required_account_level`, keeping the progression ladder data-driven.
 
 ## Production direction
 
-This is intentionally a procedural prototype presentation layer.
+This progression model is still intentionally local/client-authoritative.
 
-Later art passes can replace the procedural shapes with:
-
-- vehicle sprites;
-- road/path navigation;
-- particles;
-- screen shake;
-- target hit animations;
-- portrait art;
-- polished panel textures;
-- sound and haptics;
-
-without changing the underlying raid/economy/alliance models.
-
-## Suggested test
-
-1. Switch to **WORLD**.
-2. Observe HP/difficulty above each target.
-3. Select a target and launch a raid.
-4. Watch the convoy turn through multiple route waypoints.
-5. Wait for resolution and observe the impact VFX.
-6. Confirm the animated result overlay opens.
-7. Open **Alliance** and resize the window to verify profile cards wrap.
-8. Defeat a target and verify its HP bar changes to respawn/recovery progress.
+Before live multiplayer or real-money monetization, XP, levels, mission completion, loot spending, specialist upgrades, unlock eligibility, and raid rewards should all be validated server-side.
 
 ## Next strong milestone
 
-The strongest next feature step is to add actual **player progression and inventory utility**:
+A strong next step is the first **content/retention layer**:
 
-- player/account level and XP;
-- building unlock requirements;
-- Parts/Intel/Contraband uses;
-- specialist upgrades;
-- target tier unlocking;
-- daily/mission objectives;
-- first-time-user tutorial flow.
+- daily and weekly objectives;
+- daily login rewards;
+- reward crates that consume Parts/Intel/Contraband;
+- player profile/name/avatar;
+- achievements;
+- tutorial callouts/highlights;
+- additional data-driven raid targets and district expansion.

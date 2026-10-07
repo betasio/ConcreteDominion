@@ -9,6 +9,19 @@ signal changed
 var cooldown_remaining := 0.0
 var is_selected := false
 var _last_displayed_second := -1
+var progression: PlayerProgression
+
+
+func setup_progression(player_progression: PlayerProgression) -> void:
+	progression = player_progression
+	if not progression.changed.is_connected(_on_progression_changed):
+		progression.changed.connect(_on_progression_changed)
+	queue_redraw()
+
+
+func _on_progression_changed() -> void:
+	changed.emit()
+	queue_redraw()
 
 
 func _ready() -> void:
@@ -34,8 +47,16 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
+func is_unlocked() -> bool:
+	if data == null:
+		return false
+	if progression == null:
+		return true
+	return progression.account_level >= data.required_account_level
+
+
 func is_available() -> bool:
-	return cooldown_remaining <= 0.0
+	return is_unlocked() and cooldown_remaining <= 0.0
 
 
 func set_selected(value: bool) -> void:
@@ -65,6 +86,8 @@ func get_battle_data() -> Dictionary:
 		"name": data.display_name,
 		"hp": data.max_hp,
 		"reward_cash": data.reward_cash,
+		"reward_xp": data.reward_xp,
+		"required_account_level": data.required_account_level,
 		"difficulty": data.difficulty,
 		"loot": data.guaranteed_loot.duplicate(true)
 	}
@@ -84,6 +107,14 @@ func get_max_hp() -> float:
 
 func get_reward_cash() -> int:
 	return data.reward_cash if data != null else 0
+
+
+func get_reward_xp() -> int:
+	return data.reward_xp if data != null else 0
+
+
+func get_required_account_level() -> int:
+	return data.required_account_level if data != null else 1
 
 
 func get_difficulty() -> String:
@@ -111,6 +142,7 @@ func load_save_data(saved: Dictionary, offline_seconds: float = 0.0) -> void:
 func _draw() -> void:
 	var accent := data.accent_color if data != null else Color(0.72, 0.52, 0.18)
 	var id := get_target_id()
+	var unlocked := is_unlocked()
 
 	var base := PackedVector2Array([
 		Vector2(0, -62),
@@ -144,7 +176,17 @@ func _draw() -> void:
 
 	_draw_status_bar(accent)
 
-	if not is_available():
+	if not unlocked:
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(-70, 12),
+			"LOCKED • LV.%d" % get_required_account_level(),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			140,
+			15,
+			Color(0.82, 0.58, 0.32)
+		)
+	elif cooldown_remaining > 0.0:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(-70, 12),
@@ -173,7 +215,18 @@ func _draw_status_bar(accent: Color) -> void:
 	var bar_rect := Rect2(-72, -164, 144, 12)
 	draw_rect(bar_rect, Color(0.05, 0.05, 0.06, 0.9), true)
 
-	if is_available():
+	if not is_unlocked():
+		draw_rect(Rect2(bar_rect.position + Vector2(2, 2), Vector2(140, 8)), Color(0.28, 0.29, 0.31), true)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(-68, -172),
+			"LV.%d REQUIRED" % get_required_account_level(),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			150,
+			13,
+			Color(0.78, 0.78, 0.78)
+		)
+	elif cooldown_remaining <= 0.0:
 		draw_rect(Rect2(bar_rect.position + Vector2(2, 2), Vector2(140, 8)), accent, true)
 		draw_string(
 			ThemeDB.fallback_font,

@@ -30,11 +30,18 @@ const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 var selected_target: Node
 var active_convoy: ConvoyVisual
 var view_mode: StringName = &"base"
+var progression: PlayerProgression
 
 var _road_color := Color(0.17, 0.19, 0.21)
 var _lot_color_a := Color(0.22, 0.25, 0.23)
 var _lot_color_b := Color(0.25, 0.28, 0.26)
 var _line_color := Color(0.38, 0.42, 0.39, 0.55)
+
+
+func setup_progression(player_progression: PlayerProgression) -> void:
+	progression = player_progression
+	for target in get_raid_targets():
+		target.setup_progression(progression)
 
 
 func _ready() -> void:
