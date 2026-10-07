@@ -145,6 +145,7 @@ func _validate_required_resources() -> void:
 	for path in [
 		"res://localization/ui.csv",
 		"res://localization/en.po",
+		"res://assets/generated/app_icon.svg",
 		"res://export_presets.cfg",
 		"res://assets/README.md",
 		"res://assets/generated/city_atlas/base64/part_00.txt",
