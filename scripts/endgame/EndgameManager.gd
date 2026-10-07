@@ -4,11 +4,55 @@ extends Node
 signal changed
 signal dominion_cache_claimed
 signal dominion_mastery_claimed
+signal season_reward_claimed(tier: String)
 
 const WEEKLY_REQUIRED := 2
 const FAMILY_OPERATION_GOAL := 3
 const BOSS_REMATCH_GOAL := 1
 const FACTION_WAR_GOAL := 1
+
+const SEASON_WEEKS := 4
+const FEATURED_WIN_POINTS := 25
+const NORMAL_WIN_POINTS := 10
+
+const SEASON_MODIFIERS := [
+	{
+		"id":"supply_shock",
+		"title":"SUPPLY SHOCK",
+		"family_id":"iron_serpents",
+		"district_id":"industrial_depot",
+		"description":"Iron Serpent logistics are exposed. Industrial operations pay bonus seasonal progress.",
+		"bonus_cash":2500,
+		"bonus_loot":{"Parts":1}
+	},
+	{
+		"id":"velvet_liquidity",
+		"title":"VELVET LIQUIDITY",
+		"family_id":"velvet_circle",
+		"district_id":"financial_tower",
+		"description":"Velvet Circle money is moving fast. Financial operations are especially valuable this week.",
+		"bonus_cash":3000,
+		"bonus_loot":{"Intel":1}
+	},
+	{
+		"id":"northside_pressure",
+		"title":"NORTHSIDE PRESSURE",
+		"family_id":"northside_crew",
+		"district_id":"northside_hq",
+		"description":"Northside is testing every border. Wins there generate extra Dominion influence.",
+		"bonus_cash":2500,
+		"bonus_loot":{"Parts":1,"Intel":1}
+	},
+	{
+		"id":"meridian_blackout",
+		"title":"MERIDIAN BLACKOUT",
+		"family_id":"meridian_boys",
+		"district_id":"midtown_exchange",
+		"description":"Meridian surveillance is disrupted. Midtown operations are paying out intelligence caches.",
+		"bonus_cash":2000,
+		"bonus_loot":{"Intel":2}
+	}
+]
 
 const TARGET_ROTATION := [
 	"downtown_bank",
@@ -39,6 +83,11 @@ var operation_cursor := 0
 var boss_cursor := 0
 var active_boss_target := ""
 
+var season_period := -1
+var season_points := 0
+var season_reward_claimed := false
+var featured_wins := 0
+
 
 func setup(
 	mission_tracker: MissionTracker,
@@ -58,6 +107,7 @@ func setup(
 	world_control.family_encounter_resolved.connect(_on_family_encounter_resolved)
 	faction.war_completed.connect(_on_faction_war_completed)
 	missions.mission_completed.connect(_on_mission_completed)
+	_refresh_season()
 	_refresh_week()
 	changed.emit()
 
@@ -81,7 +131,23 @@ func _get_week_index() -> int:
 	return floori(float(floori(Time.get_unix_time_from_system() / 86400.0)) / 7.0)
 
 
+func _get_season_index() -> int:
+	return floori(float(_get_week_index()) / float(SEASON_WEEKS))
+
+
+func _refresh_season() -> void:
+	var season := _get_season_index()
+	if season_period == season:
+		return
+	season_period = season
+	season_points = 0
+	season_reward_claimed = false
+	featured_wins = 0
+	changed.emit()
+
+
 func _refresh_week() -> void:
+	_refresh_season()
 	var week := _get_week_index()
 	if weekly_period == week:
 		return
@@ -124,8 +190,64 @@ func get_status() -> Dictionary:
 		"mastery_claimed": mastery_claimed,
 		"dominion_marks": dominion_marks,
 		"rank": get_dominion_rank(),
-		"cycles_completed": cycles_completed
+		"cycles_completed": cycles_completed,
+		"season_points": season_points,
+		"season_tier": get_season_tier(),
+		"season_reward_claimable": is_season_reward_claimable(),
+		"season_reward_claimed": season_reward_claimed,
+		"featured_wins": featured_wins,
+		"season_week": posmod(_get_week_index(), SEASON_WEEKS) + 1
 	}
+
+
+func get_current_modifier() -> Dictionary:
+	return SEASON_MODIFIERS[posmod(_get_week_index(), SEASON_MODIFIERS.size())].duplicate(true)
+
+
+func get_featured_family_name() -> String:
+	var modifier := get_current_modifier()
+	var district_id := String(modifier.get("district_id", ""))
+	if world_control != null:
+		return world_control.get_rival_faction(district_id)
+	return String(modifier.get("family_id", "Rival Family")).replace("_", " ").capitalize()
+
+
+func get_featured_summary() -> String:
+	var modifier := get_current_modifier()
+	return "%s • %s\n%s" % [
+		String(modifier["title"]),
+		get_featured_family_name(),
+		String(modifier["description"])
+	]
+
+
+func get_season_tier() -> String:
+	if season_points >= 700:
+		return "PLATINUM"
+	if season_points >= 450:
+		return "GOLD"
+	if season_points >= 250:
+		return "SILVER"
+	return "BRONZE"
+
+
+func is_season_reward_claimable() -> bool:
+	# Season rewards become available once the player proves sustained activity.
+	# We intentionally do not require the 4-week season to end so missed weeks do not
+	# turn the system into a punitive deadline.
+	return is_unlocked() and season_points >= 250 and not season_reward_claimed
+
+
+func get_season_reward_summary() -> String:
+	match get_season_tier():
+		"PLATINUM":
+			return "$30,000 + 25 Gold + Parts x5 + Intel x5 + Contraband x2"
+		"GOLD":
+			return "$22,000 + 18 Gold + Parts x4 + Intel x4 + Contraband x1"
+		"SILVER":
+			return "$15,000 + 12 Gold + Parts x3 + Intel x3"
+		_:
+			return "$8,000 + 6 Gold + Parts x2 + Intel x2"
 
 
 func get_dominion_rank() -> String:
@@ -136,6 +258,25 @@ func get_dominion_rank() -> String:
 	if dominion_marks >= 300:
 		return "KINGPIN"
 	return "OPERATOR"
+
+
+func get_season_leaderboard_lines() -> PackedStringArray:
+	var player_name := faction.faction_name if faction != null and faction.has_faction() else "Your Family"
+	var faction_bonus := faction.season_points if faction != null and faction.has_faction() else 0
+	var player_score := season_points + int(faction_bonus / 4)
+	var rows: Array[Dictionary] = [
+		{"name":"Black Crown","score":maxi(320, player_score + 110)},
+		{"name":"Night Union","score":maxi(260, player_score + 55)},
+		{"name":player_name,"score":player_score},
+		{"name":"Red Hands","score":maxi(90, player_score - 45)}
+	]
+	rows.sort_custom(func(a: Dictionary, b: Dictionary): return int(a["score"]) > int(b["score"]))
+	var lines := PackedStringArray()
+	var rank := 1
+	for row in rows:
+		lines.append("#%d %s — %d influence" % [rank, String(row["name"]), int(row["score"])])
+		rank += 1
+	return lines
 
 
 func get_contract_lines() -> PackedStringArray:
@@ -178,12 +319,40 @@ func launch_boss_rematch() -> bool:
 	return false
 
 
+func claim_season_reward() -> bool:
+	if not is_season_reward_claimable():
+		return false
+	season_reward_claimed = true
+	var tier := get_season_tier()
+	match tier:
+		"PLATINUM":
+			economy.add_cash(30000)
+			economy.add_gold(25)
+			loot.add_loot({"Parts":5,"Intel":5,"Contraband":2})
+		"GOLD":
+			economy.add_cash(22000)
+			economy.add_gold(18)
+			loot.add_loot({"Parts":4,"Intel":4,"Contraband":1})
+		"SILVER":
+			economy.add_cash(15000)
+			economy.add_gold(12)
+			loot.add_loot({"Parts":3,"Intel":3})
+		_:
+			economy.add_cash(8000)
+			economy.add_gold(6)
+			loot.add_loot({"Parts":2,"Intel":2})
+	season_reward_claimed.emit(tier)
+	changed.emit()
+	return true
+
+
 func claim_weekly_cache() -> bool:
 	var status := get_status()
 	if not bool(status["claimable"]):
 		return false
 	weekly_claimed = true
 	dominion_marks += 100
+	season_points += 100
 	cycles_completed += 1
 	economy.add_cash(15000)
 	economy.add_gold(10)
@@ -200,6 +369,7 @@ func claim_mastery() -> bool:
 		return false
 	mastery_claimed = true
 	dominion_marks += 50
+	season_points += 50
 	economy.add_cash(10000)
 	economy.add_gold(10)
 	loot.add_loot({"Contraband":1,"Intel":2})
@@ -215,6 +385,15 @@ func _on_family_encounter_resolved(district_id: String, _encounter_type: String,
 			active_boss_target = ""
 		return
 	family_operation_wins = mini(FAMILY_OPERATION_GOAL, family_operation_wins + 1)
+	var modifier := get_current_modifier()
+	var featured := district_id == String(modifier.get("district_id", ""))
+	season_points += FEATURED_WIN_POINTS if featured else NORMAL_WIN_POINTS
+	if featured:
+		featured_wins += 1
+		economy.add_cash(int(modifier.get("bonus_cash", 0)))
+		var bonus_loot = modifier.get("bonus_loot", {})
+		if bonus_loot is Dictionary:
+			loot.add_loot(bonus_loot)
 	if district_id == active_boss_target:
 		boss_rematch_wins = mini(BOSS_REMATCH_GOAL, boss_rematch_wins + 1)
 		active_boss_target = ""
@@ -225,6 +404,7 @@ func _on_faction_war_completed(won: bool, _season_points_awarded: int) -> void:
 	if not is_unlocked() or not won:
 		return
 	faction_war_wins = mini(FACTION_WAR_GOAL, faction_war_wins + 1)
+	season_points += 40
 	changed.emit()
 
 
@@ -246,7 +426,11 @@ func get_save_data() -> Dictionary:
 		"cycles_completed": cycles_completed,
 		"operation_cursor": operation_cursor,
 		"boss_cursor": boss_cursor,
-		"active_boss_target": active_boss_target
+		"active_boss_target": active_boss_target,
+		"season_period": season_period,
+		"season_points": season_points,
+		"season_reward_claimed": season_reward_claimed,
+		"featured_wins": featured_wins
 	}
 
 
@@ -262,5 +446,10 @@ func load_save_data(data: Dictionary) -> void:
 	operation_cursor = posmod(int(data.get("operation_cursor", 0)), TARGET_ROTATION.size())
 	boss_cursor = posmod(int(data.get("boss_cursor", 0)), TARGET_ROTATION.size())
 	active_boss_target = String(data.get("active_boss_target", ""))
+	season_period = int(data.get("season_period", season_period))
+	season_points = maxi(0, int(data.get("season_points", 0)))
+	season_reward_claimed = bool(data.get("season_reward_claimed", false))
+	featured_wins = maxi(0, int(data.get("featured_wins", 0)))
+	_refresh_season()
 	_refresh_week()
 	changed.emit()
