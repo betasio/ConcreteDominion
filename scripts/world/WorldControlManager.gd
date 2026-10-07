@@ -7,6 +7,7 @@ signal district_captured(district_id: String)
 signal patrol_spawned(district_id: String)
 signal patrol_resolved(district_id: String, victory: bool)
 signal family_encounter_resolved(district_id: String, encounter_type: String, victory: bool)
+signal operation_resolved(result: Dictionary)
 signal alliance_task_completed(task_id: String)
 signal task_cycle_refreshed
 
@@ -376,6 +377,11 @@ func resolve_patrol() -> Dictionary:
 	var encounter_type := String(active_patrol.get("type", "roadblock"))
 	var required_power := float(active_patrol["power"])
 	var role := StringName(active_patrol.get("role", "Enforcer"))
+	var district_name := String(active_patrol.get("district_name", target_id))
+	var family_name := String(active_patrol.get("faction", get_rival_faction(target_id)))
+	var was_dominion_boss := bool(active_patrol.get("dominion_boss", false))
+	var boss_name := String(active_patrol.get("boss_name", family_rules.get_boss_name(target_id) if family_rules != null else ""))
+	var rivalry_before := get_rivalry_score(target_id)
 	var count := roster.get_count(role)
 	var unit_power := _get_unit_power(role)
 	var player_power := float(count) * unit_power
@@ -403,21 +409,31 @@ func resolve_patrol() -> Dictionary:
 		if encounter_type == "turf_push":
 			pressure[target_id] = 0.80
 
-	active_patrol.clear()
-	patrol_elapsed = 0.0
-	patrol_resolved.emit(target_id, victory)
-	family_encounter_resolved.emit(target_id, encounter_type, victory)
-	changed.emit()
-
-	return {
+	var result := {
 		"victory": victory,
 		"district_id": target_id,
+		"district_name": district_name,
+		"family": family_name,
 		"encounter_type": encounter_type,
 		"role": String(role),
 		"player_power": player_power,
 		"required_power": required_power,
-		"cash_reward": cash_reward
+		"cash_reward": cash_reward,
+		"loot": {"Intel":1} if victory and encounter_type == "surveillance" else ({"Parts":1} if victory and encounter_type == "convoy_ambush" else {}),
+		"dominion_boss": was_dominion_boss,
+		"boss_name": boss_name,
+		"rivalry_before": rivalry_before,
+		"rivalry_after": get_rivalry_score(target_id),
+		"rivalry_label": get_rivalry_label(target_id)
 	}
+
+	active_patrol.clear()
+	patrol_elapsed = 0.0
+	patrol_resolved.emit(target_id, victory)
+	family_encounter_resolved.emit(target_id, encounter_type, victory)
+	operation_resolved.emit(result)
+	changed.emit()
+	return result
 
 
 func get_district_lines() -> PackedStringArray:
