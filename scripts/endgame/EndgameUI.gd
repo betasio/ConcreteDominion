@@ -101,7 +101,7 @@ func _refresh() -> void:
 		int(status["featured_wins"])
 	]
 	featured_label.text = "CITYWIDE MODIFIER\n%s" % endgame.get_featured_summary()
-	leaderboard_label.text = "SEASON LEADERBOARD\n" + "\n".join(endgame.get_season_leaderboard_lines())
+	leaderboard_label.text = "SEASON RANKING PREVIEW • server sync pending\n" + "\n".join(endgame.get_season_leaderboard_lines())
 	var next_tier := String(status["next_season_reward_tier"])
 	season_reward_label.text = "SEASON TIER REWARD\n%s" % endgame.get_season_reward_summary(next_tier)
 	season_reward_button.text = "Claim %s Tier Reward" % next_tier if not next_tier.is_empty() else "Next Tier Reward Locked"
