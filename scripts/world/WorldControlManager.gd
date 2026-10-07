@@ -223,6 +223,68 @@ func get_rivalry_reward_multiplier(target_id: String) -> float:
 	return 1.0 + minf(0.25, float(get_rivalry_score(target_id)) * 0.05)
 
 
+func get_faction_dossier(target_id: String) -> Dictionary:
+	if faction_rules == null or not districts.has(target_id):
+		return {}
+	var data: Dictionary = districts[target_id]
+	return {
+		"target_id": target_id,
+		"district": String(data["name"]),
+		"faction": get_rival_faction(target_id),
+		"trait": get_rival_trait(target_id),
+		"boss": faction_rules.get_boss_name(target_id),
+		"boss_title": faction_rules.get_boss_title(target_id),
+		"boss_quote": faction_rules.get_boss_quote(target_id),
+		"perk": faction_rules.get_perk_summary(target_id),
+		"preferred_encounter": faction_rules.get_preferred_encounter(target_id),
+		"rivalry": get_rivalry_label(target_id),
+		"rivalry_score": get_rivalry_score(target_id),
+		"feud_bonus_percent": roundi((get_rivalry_reward_multiplier(target_id) - 1.0) * 100.0),
+		"base_cash_bonus_percent": faction_rules.get_reward_bonus_percent(target_id),
+		"power_modifier_percent": faction_rules.get_power_modifier_percent(target_id)
+	}
+
+
+func get_rivalry_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	var seen_factions := {}
+	for target_id in _ordered_ids():
+		if not is_discovered(target_id):
+			continue
+		var faction_id := faction_rules.get_faction_id(target_id) if faction_rules != null else target_id
+		if seen_factions.has(faction_id):
+			continue
+		seen_factions[faction_id] = true
+		var dossier := get_faction_dossier(target_id)
+		if dossier.is_empty():
+			continue
+		lines.append("%s — %s, %s — %s %d/10 — feud rewards +%d%%" % [
+			String(dossier["faction"]),
+			String(dossier["boss"]),
+			String(dossier["boss_title"]),
+			String(dossier["rivalry"]),
+			int(dossier["rivalry_score"]),
+			int(dossier["feud_bonus_percent"])
+		])
+	if lines.is_empty():
+		lines.append("No rival dossiers revealed.")
+	return lines
+
+
+func get_capture_victory_summary(target_id: String) -> Dictionary:
+	var dossier := get_faction_dossier(target_id)
+	if dossier.is_empty():
+		return {}
+	var data: Dictionary = districts[target_id]
+	dossier["income_per_hour"] = int(data["cash_per_hour"])
+	dossier["victory_line"] = "%s has been taken from %s. Turf income unlocked: $%d/hr." % [
+		String(data["name"]),
+		String(dossier["faction"]),
+		int(data["cash_per_hour"])
+	]
+	return dossier
+
+
 func _increase_rivalry(target_id: String, amount: int = 1) -> void:
 	if faction_rules == null:
 		return
