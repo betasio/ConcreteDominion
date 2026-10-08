@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 33
+const SAVE_VERSION := 34
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -518,6 +518,18 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 	if version < 33:
 		if not data.has("battle_reports"):
 			data["battle_reports"] = {}
+
+	if version < 34:
+		var faction_data_v34 = data.get("faction", {})
+		if not (faction_data_v34 is Dictionary):
+			faction_data_v34 = {}
+		if not faction_data_v34.has("war_preparation"):
+			faction_data_v34["war_preparation"] = {
+				"captain_id":"",
+				"defense":"fortified",
+				"doctrine":"disciplined"
+			}
+		data["faction"] = faction_data_v34
 
 	data["schema_meta"] = {
 		"migrated_from": version,
