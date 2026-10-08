@@ -384,6 +384,74 @@ class FactionApiTests(unittest.TestCase):
         self.api = Store(self.path)
         self.assertEqual(len(self.api.call("GET","/v1/pvp/history",{},at)[1]["matches"]),3)
 
+    def test_direct_rival_challenge_rematch_replay_and_permissions(self):
+        alpha=self.register("Challenge Alpha")
+        beta=self.register("Challenge Beta")
+        member=self.register("Challenge Member")
+        outsider=self.register("Challenge Outsider")
+        at,bt,mt,ot=[x["session_token"] for x in (alpha,beta,member,outsider)]
+        self.api.call("POST","/v1/factions",{"name":"Challenge North","tag":"CN"},at)
+        self.api.call("POST","/v1/factions",{"name":"Challenge South","tag":"CS"},bt)
+        fa=self.api.call("GET","/v1/me",{},at)[1]["faction_id"]
+        fb=self.api.call("GET","/v1/me",{},bt)[1]["faction_id"]
+        _, invite=self.api.call("POST","/v1/invitations",{"player_id":member["player_id"]},at)
+        self.api.call("POST",f"/v1/invitations/{invite['invitation_id']}/accept",{},mt)
+        path="/v1/pvp/challenges"
+        with self.assertRaises(ApiError) as never_met:
+            self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(never_met.exception.status,403)
+        self.api.execute("INSERT INTO pvp_matches(id,faction_a,faction_b,status) VALUES('prior',?,?,'complete')",(fa,fb))
+        self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason) VALUES('prior',?,25,'pvp_settlement')",(fa,))
+        self.api.db.commit()
+        with self.assertRaises(ApiError) as member_denied:
+            self.api.call("POST",path,{"target_faction_id":fb},mt)
+        self.assertEqual(member_denied.exception.status,403)
+        _, sent=self.api.call("POST",path,{"target_faction_id":fb},at)
+        cid=sent["challenge_id"]
+        with self.assertRaises(ApiError) as duplicate:
+            self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(duplicate.exception.status,409)
+        self.assertEqual(self.api.call("GET",path,{},bt)[1]["challenges"][0]["direction"],"received")
+        self.assertEqual(self.api.call("GET",path,{},at)[1]["challenges"][0]["direction"],"sent")
+        with self.assertRaises(ApiError) as unauthorized:
+            self.api.call("POST",f"{path}/{cid}/accept",{},ot)
+        self.assertEqual(unauthorized.exception.status,403)
+        with self.assertRaises(ApiError) as wrong_side:
+            self.api.call("POST",f"{path}/{cid}/accept",{},at)
+        self.assertEqual(wrong_side.exception.status,403)
+        _, accepted=self.api.call("POST",f"{path}/{cid}/accept",{},bt)
+        self.assertEqual(accepted["status"],"accepted")
+        self.assertEqual(self.api.call("POST",f"{path}/{cid}/accept",{},bt)[1]["match_id"],accepted["match_id"])
+        self.assertEqual(self.api.execute("SELECT COUNT(*) FROM pvp_matches WHERE id=?",(accepted["match_id"],)).fetchone()[0],1)
+        self.assertEqual(self.api.call("GET","/v1/pvp",{},at)[1]["match"]["status"],"active")
+        with self.assertRaises(ApiError) as busy:
+            self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(busy.exception.status,409)
+        self.api.db.close()
+        self.api=Store(self.path)
+        self.assertEqual(self.api.call("GET",path,{},bt)[1]["challenges"][0]["status"],"accepted")
+
+    def test_direct_rival_challenge_decline_cancel_and_queue_conflict(self):
+        a=self.register("Cancel Leader")
+        b=self.register("Decline Leader")
+        at,bt=a["session_token"],b["session_token"]
+        self.api.call("POST","/v1/factions",{"name":"Cancel North","tag":"CX"},at)
+        self.api.call("POST","/v1/factions",{"name":"Cancel South","tag":"CY"},bt)
+        fa=self.api.call("GET","/v1/me",{},at)[1]["faction_id"]
+        fb=self.api.call("GET","/v1/me",{},bt)[1]["faction_id"]
+        self.api.execute("INSERT INTO pvp_matches(id,faction_a,faction_b,status) VALUES('past',?,?,'complete')",(fa,fb))
+        self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason) VALUES('past',?,25,'pvp_settlement')",(fa,))
+        self.api.db.commit()
+        path="/v1/pvp/challenges"
+        _,sent=self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(self.api.call("POST",f"{path}/{sent['challenge_id']}/decline",{},bt)[1]["status"],"declined")
+        _,sent=self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(self.api.call("POST",f"{path}/{sent['challenge_id']}/cancel",{},at)[1]["status"],"cancelled")
+        self.api.call("POST","/v1/pvp/queue",{},bt)
+        with self.assertRaises(ApiError) as queued:
+            self.api.call("POST",path,{"target_faction_id":fb},at)
+        self.assertEqual(queued.exception.status,409)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
