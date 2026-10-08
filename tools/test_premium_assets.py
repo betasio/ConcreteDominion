@@ -28,7 +28,7 @@ class PremiumArtTests(unittest.TestCase):
         installed = [BUILDINGS / (name + ".png") for name in REQUIRED + OPTIONAL
                      if (BUILDINGS / (name + ".png")).exists()]
         if not installed:
-            self.skipTest("Optional premium PNG pack is not installed")
+            self.fail("Premium building sprites must be present in the game repository")
         for name in REQUIRED:
             self.assertTrue((BUILDINGS / (name + ".png")).is_file(),
                             f"Missing premium sprite: {name}.png")
