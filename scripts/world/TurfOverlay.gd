@@ -32,7 +32,24 @@ func _draw() -> void:
 		if control.is_contested(target_id):
 			color = Color(0.95, 0.62, 0.18, 0.9)
 
-		draw_arc(center, 112.0, 0.0, TAU, 48, color, 5.0)
+		# A translucent diamond reads as controlled city blocks at map scale.
+		# This is visual feedback only; ownership remains with WorldControlManager.
+		var footprint := PackedVector2Array([
+			center + Vector2(0, -82),
+			center + Vector2(134, 0),
+			center + Vector2(0, 82),
+			center + Vector2(-134, 0)
+		])
+		var tint := color
+		tint.a = 0.13
+		draw_colored_polygon(footprint, tint)
+		var border := PackedVector2Array([
+			footprint[0], footprint[1], footprint[2], footprint[3], footprint[0]
+		])
+		draw_polyline(border, color.darkened(0.1), 3.0, true)
+		draw_arc(center, 112.0, 0.0, TAU, 48, color, 3.0, true)
+		draw_circle(center + Vector2(0, -99), 5.0, color)
+
 
 		var pressure := control.get_pressure(target_id)
 		if control.is_owned(target_id) and pressure > 0.0:
