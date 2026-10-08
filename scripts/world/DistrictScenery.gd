@@ -26,6 +26,9 @@ func _draw() -> void:
 	_draw_cranes(Vector2i(17, 4))
 	_draw_tanks(Vector2i(20, 18))
 	_draw_marquee(Vector2i(2, 16))
+	_draw_financial_plaza(Vector2i(9, 3))
+	_draw_northside_checkpoint(Vector2i(17, 17))
+	_draw_harbor_containers(Vector2i(16, 5))
 
 func _mark_district(cell: Vector2i, label: String, accent: Color) -> void:
 	var pos: Vector2 = city_map.iso_to_screen(cell) + Vector2(0, -175)
@@ -56,3 +59,40 @@ func _draw_marquee(cell: Vector2i) -> void:
 	draw_rect(Rect2(p + Vector2(-55, -24), Vector2(110, 37)), CRIMSON, false, 3.0)
 	for i in range(8):
 		draw_circle(p + Vector2(-46 + i * 13, -18), 2.4, GOLD)
+
+
+func _draw_financial_plaza(cell: Vector2i) -> void:
+	var p: Vector2 = city_map.iso_to_screen(cell)
+	# A layered art-deco plaza silhouette distinguishes the financial district.
+	draw_colored_polygon(PackedVector2Array([
+		p + Vector2(-73, -10), p + Vector2(0, -46),
+		p + Vector2(73, -10), p + Vector2(0, 26)]), Color("#243643"))
+	for index in range(5):
+		var x: float = -44.0 + float(index) * 22.0
+		draw_line(p + Vector2(x, -34), p + Vector2(x, -66), GOLD, 3.0)
+	draw_line(p + Vector2(-58, -68), p + Vector2(58, -68), GOLD, 4.0)
+	draw_circle(p + Vector2(0, -81), 8.0, GOLD)
+
+
+func _draw_northside_checkpoint(cell: Vector2i) -> void:
+	var p: Vector2 = city_map.iso_to_screen(cell)
+	# Defensive gates and barricades are cosmetic, not attack targets.
+	for side in [-1.0, 1.0]:
+		var x: float = side * 55.0
+		draw_rect(Rect2(p + Vector2(x - 10, -46), Vector2(20, 55)), Color("#384754"))
+		draw_line(p + Vector2(x - 12, -47), p + Vector2(x + 12, -47), CRIMSON, 4.0)
+	draw_line(p + Vector2(-44, -22), p + Vector2(44, -22), STEEL, 5.0)
+	for index in range(5):
+		var x: float = -36.0 + float(index) * 18.0
+		draw_line(p + Vector2(x, -28), p + Vector2(x + 12, -16), CRIMSON, 3.0)
+
+
+func _draw_harbor_containers(cell: Vector2i) -> void:
+	var p: Vector2 = city_map.iso_to_screen(cell)
+	for index in range(3):
+		var offset := Vector2(float(index) * 36.0 - 55.0, float(index % 2) * -14.0)
+		var color := Color("#42596a") if index != 1 else Color("#8b4c4a")
+		draw_rect(Rect2(p + offset + Vector2(-17, -35), Vector2(32, 28)), color)
+		for bar in range(3):
+			var x: float = -12.0 + float(bar) * 10.0
+			draw_line(p + offset + Vector2(x, -33), p + offset + Vector2(x, -10), STEEL, 1.5)
