@@ -447,6 +447,10 @@ func _ready() -> void:
 			_fail("Direct rivalry challenge inbox is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AcceptChallenge") == null:
 			_fail("Direct rivalry rematch acceptance is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshTrophies") == null:
+			_fail("Rivalry trophy case refresh is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/TrophyStatus") == null:
+			_fail("Rivalry trophy case display is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshRivalries") == null:
 			_fail("PvP rivalry history refresh button is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RivalryStatus") == null:
