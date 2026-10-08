@@ -44,6 +44,9 @@ var missions: MissionTracker
 @onready var convoy_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Convoy
 @onready var intel_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Intel
 @onready var war_attack_report_label: Label = $Root/Panel/Margin/Scroll/VBox/WarAttackReport
+@onready var war_objectives_label: Label = $Root/Panel/Margin/Scroll/VBox/WarObjectives
+@onready var war_participation_label: Label = $Root/Panel/Margin/Scroll/VBox/WarParticipation
+@onready var war_reward_split_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRewardSplit
 @onready var start_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar
 @onready var claim_war_reward_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward
 @onready var clear_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClearWar
@@ -251,6 +254,9 @@ func _refresh() -> void:
 		war_strategy_label,
 		$Root/Panel/Margin/Scroll/VBox/WarPlanButtons,
 		war_attack_report_label,
+		war_objectives_label,
+		war_participation_label,
+		war_reward_split_label,
 		$Root/Panel/Margin/Scroll/VBox/WarButtons,
 		$Root/Panel/Margin/Scroll/VBox/WarRewardButtons,
 		leave_button
@@ -355,6 +361,11 @@ func _refresh() -> void:
 		faction.get_last_war_attack_summary(),
 		"\n" + "\n".join(attack_history) if not attack_history.is_empty() else ""
 	]
+	var objective_lines := faction.get_war_objective_lines()
+	war_objectives_label.text = "SHARED WAR OBJECTIVES\n%s" % ("\n".join(objective_lines) if not objective_lines.is_empty() else "Start a Faction War to reveal shared objectives.")
+	var participation_lines := faction.get_war_participation_lines()
+	war_participation_label.text = "WAR PARTICIPATION\n%s" % ("\n".join(participation_lines) if not participation_lines.is_empty() else "Participation begins when the war starts.")
+	war_reward_split_label.text = "PARTICIPATION REWARD\n%s" % "\n".join(faction.get_war_reward_split_lines())
 	start_war_button.disabled = not faction.can_start_war() or not faction.active_war.is_empty()
 	var can_attack := (
 		not faction.active_war.is_empty()
