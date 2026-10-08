@@ -255,13 +255,13 @@ func _test_battle_report_history_invariants() -> void:
 	var saved_reports: Array = []
 	for i in range(30):
 		saved_reports.append({
-			"source":"raid" if i % 2 == 0 else "family_operation",
+			"type":"raid" if i % 2 == 0 else "operation",
 			"timestamp":-50 if i == 0 else i,
-			"target_name":"Target %d" % i,
+			"title":"Target %d" % i,
 			"victory":i % 3 != 0,
 			"advice":"x".repeat(500)
 		})
-	saved_reports.append({"source":"invalid"})
+	saved_reports.append({"type":"invalid"})
 	manager.load_save_data({"reports":saved_reports})
 	if manager.get_report_count() != BattleReportManager.MAX_REPORTS:
 		_fail("Battle report history cap was not enforced on load.")
