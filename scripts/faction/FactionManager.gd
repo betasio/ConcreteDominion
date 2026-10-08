@@ -26,6 +26,33 @@ const WAR_DURATION_SECONDS := 24.0 * 60.0 * 60.0
 const RALLY_DURATION_SECONDS := 10.0 * 60.0
 const MAX_MEMBERS_BASE := 20
 const SEASON_WEEKS := 4
+const WAR_STRATEGIES := {
+	"muscle": {
+		"name":"Muscle Push",
+		"counter":"watchful",
+		"base_multiplier":1.00,
+		"counter_bonus":35,
+		"mismatch_penalty":8,
+		"summary":"Reliable pressure. Best against WATCHFUL defenses."
+	},
+	"convoy": {
+		"name":"Convoy Break",
+		"counter":"fortified",
+		"base_multiplier":0.96,
+		"counter_bonus":45,
+		"mismatch_penalty":10,
+		"summary":"Route-control strike. Best against FORTIFIED defenses."
+	},
+	"intel": {
+		"name":"Intel Cut",
+		"counter":"mobile",
+		"base_multiplier":0.92,
+		"counter_bonus":55,
+		"mismatch_penalty":12,
+		"summary":"High-value disruption. Best against MOBILE defenses."
+	}
+}
+const WAR_DEFENSE_CYCLE := ["watchful", "fortified", "mobile"]
 
 var economy: PlayerEconomy
 var loot: LootInventory
@@ -719,7 +746,10 @@ func start_prototype_war() -> bool:
 		"attacks_remaining": 3,
 		"status": "active",
 		"result": "",
-		"reward_tier": ""
+		"reward_tier": "",
+		"attack_cursor": 0,
+		"attack_history": [],
+		"last_attack": {}
 	}
 	war_reward_claimed = false
 	war_started.emit(String(opponent["name"]))
@@ -727,8 +757,62 @@ func start_prototype_war() -> bool:
 	return true
 
 
-func perform_prototype_war_attack() -> Dictionary:
+func get_current_war_defense() -> String:
+	if active_war.is_empty():
+		return ""
+	var cursor := maxi(0, int(active_war.get("attack_cursor", 0)))
+	var opponent_seed := abs(String(active_war.get("opponent_id", "")).hash()) % WAR_DEFENSE_CYCLE.size()
+	return String(WAR_DEFENSE_CYCLE[(opponent_seed + cursor) % WAR_DEFENSE_CYCLE.size()])
+
+
+func get_war_strategy_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	for strategy_id in ["muscle", "convoy", "intel"]:
+		var strategy: Dictionary = WAR_STRATEGIES[strategy_id]
+		lines.append("%s — %s" % [String(strategy["name"]), String(strategy["summary"])])
+	return lines
+
+
+func get_last_war_attack_summary() -> String:
+	if active_war.is_empty():
+		return "No war attack report yet."
+	var last = active_war.get("last_attack", {})
+	if not (last is Dictionary) or last.is_empty():
+		return "Enemy stance: %s • choose a counter-plan." % get_current_war_defense().to_upper()
+	return "%s vs %s • %s • %d–%d pts%s" % [
+		String(last.get("strategy_name", "Attack")),
+		String(last.get("enemy_defense", "")).to_upper(),
+		"COUNTER HIT" if bool(last.get("countered", false)) else "NO COUNTER",
+		int(last.get("our_points", 0)),
+		int(last.get("their_points", 0)),
+		" • ROUND WON" if bool(last.get("victory", false)) else " • ROUND LOST"
+	]
+
+
+func get_war_attack_history_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	if active_war.is_empty():
+		return lines
+	var history = active_war.get("attack_history", [])
+	if not (history is Array):
+		return lines
+	for i in range(history.size()):
+		var attack: Dictionary = history[i]
+		lines.append("#%d %s vs %s — %d:%d%s" % [
+			i + 1,
+			String(attack.get("strategy_name", "Attack")),
+			String(attack.get("enemy_defense", "")).to_upper(),
+			int(attack.get("our_points", 0)),
+			int(attack.get("their_points", 0)),
+			" • COUNTER" if bool(attack.get("countered", false)) else ""
+		])
+	return lines
+
+
+func perform_war_attack(strategy_id: String) -> Dictionary:
 	if active_war.is_empty() or String(active_war.get("status", "")) != "active":
+		return {}
+	if not WAR_STRATEGIES.has(strategy_id):
 		return {}
 	var attacks := int(active_war.get("attacks_remaining", 0))
 	if attacks <= 0:
@@ -740,16 +824,55 @@ func perform_prototype_war_attack() -> Dictionary:
 			contribution = int(member.get("contribution", 0))
 			break
 
+	var strategy: Dictionary = WAR_STRATEGIES[strategy_id]
+	var enemy_defense := get_current_war_defense()
+	var countered := enemy_defense == String(strategy.get("counter", ""))
 	var territory_bonus := get_owned_territory_count() * 10
-	var our_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5) + territory_bonus
+	var base_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5) + territory_bonus
+	var our_points := roundi(float(base_points) * float(strategy.get("base_multiplier", 1.0)))
+	if countered:
+		our_points += int(strategy.get("counter_bonus", 0))
+	else:
+		our_points = maxi(1, our_points - int(strategy.get("mismatch_penalty", 0)))
+
 	var their_points := 95 + faction_level * 10 + int(active_war.get("opponent_rating", 0)) / 100
+	var defense_modifier := 0
+	match enemy_defense:
+		"fortified":
+			defense_modifier = 12
+		"mobile":
+			defense_modifier = 6
+		"watchful":
+			defense_modifier = 9
+	their_points += defense_modifier
+
+	var result := {
+		"strategy_id":strategy_id,
+		"strategy_name":String(strategy.get("name", strategy_id)),
+		"enemy_defense":enemy_defense,
+		"countered":countered,
+		"our_points":our_points,
+		"their_points":their_points,
+		"victory":our_points > their_points
+	}
+
 	active_war["our_score"] = int(active_war.get("our_score", 0)) + our_points
 	active_war["their_score"] = int(active_war.get("their_score", 0)) + their_points
 	active_war["attacks_remaining"] = attacks - 1
+	active_war["attack_cursor"] = int(active_war.get("attack_cursor", 0)) + 1
+	active_war["last_attack"] = result.duplicate(true)
+	var history = active_war.get("attack_history", [])
+	if not (history is Array):
+		history = []
+	history.append(result.duplicate(true))
+	while history.size() > 3:
+		history.pop_front()
+	active_war["attack_history"] = history
+
 	_add_local_contribution(20)
 	award_faction_xp(15)
 
-	if our_points > their_points:
+	if bool(result["victory"]):
 		gift_charges += 1
 		faction_gift_earned.emit()
 
@@ -757,11 +880,11 @@ func perform_prototype_war_attack() -> Dictionary:
 		_complete_war()
 
 	changed.emit()
-	return {
-		"our_points": our_points,
-		"their_points": their_points,
-		"victory": our_points > their_points
-	}
+	return result
+
+
+func perform_prototype_war_attack() -> Dictionary:
+	return perform_war_attack("muscle")
 
 
 func _complete_war() -> void:
@@ -839,7 +962,8 @@ func get_war_rules_lines() -> PackedStringArray:
 	return PackedStringArray([
 		"24-hour war window with server-ready opponent/rating fields",
 		"3 attacks per member in the prototype ruleset",
-		"Score scales with Faction level, contribution, Raid Coordination, and held objectives",
+		"Choose Muscle, Convoy, or Intel for each attack; each plan counters a visible enemy stance",
+		"Score scales with Faction level, contribution, Raid Coordination, held objectives, and counter choice",
 		"Victory adds 120 season points; defeat still grants 35 participation points",
 		"Bronze/Silver/Gold reward tiers are claimable after war completion",
 		"Live matchmaking and server authority will replace prototype opponents"
@@ -984,6 +1108,13 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 
 	var saved_war = data.get("active_war", {})
 	active_war = saved_war.duplicate(true) if saved_war is Dictionary else {}
+	if not active_war.is_empty():
+		if not active_war.has("attack_cursor"):
+			active_war["attack_cursor"] = 0
+		if not active_war.has("attack_history") or not (active_war["attack_history"] is Array):
+			active_war["attack_history"] = []
+		if not active_war.has("last_attack") or not (active_war["last_attack"] is Dictionary):
+			active_war["last_attack"] = {}
 	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
 		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
 		if float(active_war["seconds_remaining"]) <= 0.0:
