@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=3]
+[gd_scene load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -55,6 +55,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/OperationResultUI.tscn" id="53_operation_result_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/OnlineFactionUI.tscn" id="55_online_faction_ui"]
 [ext_resource type="Script" path="res://scripts/combat/BattleReportManager.gd" id="54_battle_reports"]
+
+[ext_resource type="Script" path="res://scripts/ui/SecondaryMenu.gd" id="56_secondary_menu"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -204,3 +206,6 @@ script = ExtResource("48_ui_art")
 [node name="AchievementUI" parent="." instance=ExtResource("44_achievement_ui")]
 
 [node name="TutorialUI" parent="." instance=ExtResource("47_tutorial_ui")]
+
+[node name="SecondaryMenu" type="CanvasLayer" parent="."]
+script = ExtResource("56_secondary_menu")
