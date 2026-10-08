@@ -225,6 +225,20 @@ layout_mode = 2
 text = "No PvP match"
 autowrap_mode = 2
 
+[node name="RivalryTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "PVP WAR ROOM • RIVALRY HISTORY"
+
+[node name="RefreshRivalries" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh past matchups and rivals"
+
+[node name="RivalryStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 190)
+layout_mode = 2
+text = "No past matches loaded."
+autowrap_mode = 2
+
 [node name="SeasonTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "ONLINE PvP SEASON • SERVER RANKINGS"
