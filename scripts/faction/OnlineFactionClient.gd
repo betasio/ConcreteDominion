@@ -10,6 +10,8 @@ var session_token := ""
 var _busy := false
 var _http: HTTPRequest
 var _pending_action := ""
+var _retry_id := ""
+var _retry_strategy := ""
 
 
 func _ready() -> void:
@@ -75,6 +77,10 @@ func attack_war(strategy: String) -> bool:
 	return _request("war_attack", HTTPClient.METHOD_POST, "/v1/war/attack", {"strategy":strategy}, true)
 
 
+func cancel_pvp_queue() -> bool:
+	return _request("pvp_cancel", HTTPClient.METHOD_POST, "/v1/pvp/cancel", {}, true)
+
+
 func get_pvp() -> bool:
 	return _request("pvp", HTTPClient.METHOD_GET, "/v1/pvp", {}, true)
 
@@ -85,8 +91,14 @@ func queue_pvp() -> bool:
 
 func attack_pvp(strategy: String) -> bool:
 	# Unique request receipt lets server return the original score on retry.
+	if not _retry_id.is_empty() and _retry_strategy != strategy:
+		connection_failed.emit("pvp_attack", "Retry your pending attack first")
+		return false
+	if _retry_id.is_empty():
+		_retry_id = _new_request_id()
+		_retry_strategy = strategy
 	return _request("pvp_attack", HTTPClient.METHOD_POST, "/v1/pvp/attack",
-		{"strategy":strategy, "request_id":_new_request_id()}, true)
+		{"strategy":strategy, "request_id":_retry_id}, true)
 
 
 func _new_request_id() -> String:
@@ -132,4 +144,7 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 		return
 	# A registration session token is intentionally returned only to the caller.
 	# The caller must decide how to securely persist it; this node does not save it.
+	if action == "pvp_attack":
+		_retry_id = ""
+		_retry_strategy = ""
 	request_completed.emit(action, response_code, parsed)
