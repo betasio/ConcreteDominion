@@ -266,17 +266,26 @@ class Store:
 
 
 def handler_factory(store):
+    sensitive_limit = RateLimiter(limit=8,window=60)
+    request_limit = RateLimiter(limit=120,window=60)
     class Handler(BaseHTTPRequestHandler):
         def send_json(self, status, payload):
             body = json.dumps(payload).encode()
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
         def dispatch(self):
             try:
+                client_ip = self.client_address[0]
+                if not request_limit.allow(client_ip):
+                    raise ApiError(429, "Request rate limit exceeded")
+                if self.command == "POST" and self.path in ("/v1/players", "/v1/recover"):
+                    if not sensitive_limit.allow(client_ip):
+                        raise ApiError(429, "Account request limit exceeded")
                 size = int(self.headers.get("Content-Length", "0"))
                 if size < 0 or size > 16384:
                     raise ApiError(413, "Request too large")
@@ -305,7 +314,9 @@ def main():
     parser.add_argument("--port",type=int,default=8765)
     args = parser.parse_args()
     store = Store(args.db)
-    ThreadingHTTPServer((args.host,args.port),handler_factory(store)).serve_forever()
+    httpd = ThreadingHTTPServer((args.host,args.port),handler_factory(store))
+    httpd.timeout = 10
+    httpd.serve_forever()
 
 
 if __name__ == "__main__":
