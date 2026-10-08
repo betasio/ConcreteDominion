@@ -48,6 +48,49 @@ class FactionApiTests(unittest.TestCase):
             self.api.call("POST",f"/v1/invitations/{invite['invitation_id']}/accept",{},player_token)
         self.assertEqual(duplicate.exception.status,404)
 
+    def test_two_member_shared_war_and_server_scoring(self):
+        leader = self.register("Boss")
+        member = self.register("Partner")
+        outsider = self.register("Intruder")
+        lt, mt, ot = (x["session_token"] for x in (leader, member, outsider))
+        self.api.call("POST","/v1/factions",{"name":"Steel Union","tag":"STL"},lt)
+        _, invite = self.api.call("POST","/v1/invitations",{"player_id":member["player_id"]},lt)
+        self.api.call("POST",f"/v1/invitations/{invite['invitation_id']}/accept",{},mt)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("POST","/v1/war/start",{},mt)
+        self.assertEqual(denied.exception.status,403)
+        _, war = self.api.call("POST","/v1/war/start",{},lt)
+        with self.assertRaises(ApiError) as duplicate:
+            self.api.call("POST","/v1/war/start",{},lt)
+        self.assertEqual(duplicate.exception.status,409)
+        with self.assertRaises(ApiError) as outsider_denied:
+            self.api.call("GET","/v1/war",{},ot)
+        self.assertEqual(outsider_denied.exception.status,403)
+        with self.assertRaises(ApiError) as bad_strategy:
+            self.api.call("POST","/v1/war/attack",{"strategy":"win","our_points":999999},lt)
+        self.assertEqual(bad_strategy.exception.status,400)
+        for i in range(6):
+            token = lt if i % 2 == 0 else mt
+            _, before = self.api.call("GET","/v1/war",{},token)
+            defense = before["defense"]
+            strategy = {"watchful":"muscle","fortified":"convoy","mobile":"intel"}[defense]
+            _, result = self.api.call("POST","/v1/war/attack",{"strategy":strategy,"our_points":999999},token)
+            self.assertEqual(result["our_points"],140)
+            self.assertTrue(result["countered"])
+        _, ended = self.api.call("GET","/v1/war",{},mt)
+        self.assertEqual(ended["war"]["status"],"complete")
+        self.assertEqual(ended["war"]["result"],"VICTORY")
+        self.assertEqual(ended["war"]["our_score"],840)
+        self.assertEqual(len(ended["attacks"]),6)
+        self.assertEqual(sum(x["contribution"] for x in ended["contributions"]),840)
+        self.assertEqual({x["attacks"] for x in ended["contributions"]},{3})
+        with self.assertRaises(ApiError) as extra:
+            self.api.call("POST","/v1/war/attack",{"strategy":"muscle"},lt)
+        self.assertEqual(extra.exception.status,409)
+        self.api.db.close()
+        self.api = Store(self.path)
+        self.assertEqual(self.api.call("GET","/v1/war",{},mt)[1]["war"]["our_score"],840)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
