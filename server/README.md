@@ -99,3 +99,7 @@ Developer endpoints: `GET /v1/pvp/challenges`, `POST /v1/pvp/challenges` with `{
 ## Competitive rivalry trophies and win streaks
 
 The **Online • Dev → Refresh rivalry trophies and streaks** button calls `GET /v1/pvp/trophies`. The backend computes a Faction's **current and longest all-time winning streak** from chronological server-settled PvP matches; draws, defeats, and timeouts break a streak. Winning a match created by an **accepted direct rivalry challenge** grants a cosmetic **RIVAL_CONQUEROR** trophy for that match. Random matchmaking wins do not earn this direct-rematch trophy. The server derives trophies from the single accepted challenge linked to the settled match, so replays cannot award duplicates. The trophy case exposes the 30 most recent rematch trophies, a lifetime total, and the server-derived win/loss/draw/timeout record. Results survive SQLite restarts, are read-only to clients, and grant no currency or gameplay bonuses.
+
+## Illustrated rivalry prestige across the online UI
+
+Public Faction profiles (`GET /v1/profiles/faction/<id>`) now include server-derived `rivalry_prestige` with verified rematch trophy totals, current win streak, and best win streak. Active and completed PvP snapshots include the same read-only prestige data for **both** Factions. Godot's illustrated `FactionIdentityCard` renders the counts and streaks in public profiles, opposing matchup cards and completed match results. No cosmetic property is client-awarded; no competitive scores or offline rewards are changed.
