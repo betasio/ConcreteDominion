@@ -62,6 +62,7 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
         self.db.executescript(pvp.PVP_SCHEMA)
+        self.db.executescript(seasons.ARCHIVE_SCHEMA)
         if "created_at" not in {r["name"] for r in self.db.execute("PRAGMA table_info(pvp_ledger)")}:
             self.db.execute("ALTER TABLE pvp_ledger ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
             self.db.execute("UPDATE pvp_ledger SET created_at=unixepoch() WHERE created_at=0")
@@ -234,6 +235,10 @@ class Store:
                 self.execute("INSERT INTO war_attacks(war_id,player_id,strategy,defense,our_points,enemy_points) VALUES(?,?,?,?,?,?)", (war["id"],actor["id"],strategy,defense,our,enemy))
                 self.execute("UPDATE wars SET our_score=?,their_score=?,rounds=?,status=?,result=? WHERE id=?", (total_our,total_enemy,rounds,status,result,war["id"]))
             return 200, {"war_id":war["id"],"round":rounds,"strategy":strategy,"defense":defense,"our_points":our,"enemy_points":enemy,"countered":counter==defense,"status":status,"result":result}
+        if method == "GET" and path == "/v1/seasons/history":
+            if not actor["faction_id"]:
+                raise ApiError(403, "Faction membership required")
+            return 200, seasons.history(self, actor["faction_id"])
         if method == "GET" and path == "/v1/seasons/leaderboard":
             if not actor["faction_id"]:
                 raise ApiError(403, "Faction membership required")
