@@ -444,7 +444,9 @@ func _test_faction_war_debrief_archive() -> void:
 			_fail("War outcome was lost in archive.")
 		if int(record.get("local_share", -1)) <= 0:
 			_fail("Local participation share was lost in archive.")
-	faction.clear_completed_war()
+	faction.war_reward_claimed = true
+	if not faction.clear_completed_war():
+		_fail("Completed war could not be archived after reward claim.")
 	if faction.war_history.size() != 1:
 		_fail("Clearing completed war erased the debrief.")
 	var saved := faction.get_save_data()
