@@ -103,3 +103,7 @@ The **Online • Dev → Refresh rivalry trophies and streaks** button calls `GE
 ## Illustrated rivalry prestige across the online UI
 
 Public Faction profiles (`GET /v1/profiles/faction/<id>`) now include server-derived `rivalry_prestige` with verified rematch trophy totals, current win streak, and best win streak. Active and completed PvP snapshots include the same read-only prestige data for **both** Factions. Godot's illustrated `FactionIdentityCard` renders the counts and streaks in public profiles, opposing matchup cards and completed match results. No cosmetic property is client-awarded; no competitive scores or offline rewards are changed.
+
+## Player-facing Faction Hub navigation
+
+The existing Online • Dev shortcut now opens the **Faction Hub**, a six-section UI over the same private multiplayer prototype. **Identity** shows the illustrated Faction profile and cosmetics, **Wars** contains NPC war operations and live Faction PvP, **Rivals** groups rematch challenges, trophy streaks, and rivalry history, **Rankings** shows active season standings, **Prestige** shows completed seasons, and **Account** retains all developer-only registration, token recovery, Faction creation, and invitation tools. Tab changes do not alter stored credentials or server state. The development-only backend restrictions still apply; this UI reorganization is not a production launch or a replacement for account verification.
