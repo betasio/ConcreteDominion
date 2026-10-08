@@ -259,6 +259,16 @@ layout_mode = 2
 text = "No challenges loaded."
 autowrap_mode = 2
 
+[node name="RefreshTrophies" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh rivalry trophies and streaks"
+
+[node name="TrophyStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+text = "No rivalry trophies loaded."
+autowrap_mode = 2
+
 [node name="RivalryTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "PVP WAR ROOM • RIVALRY HISTORY"
