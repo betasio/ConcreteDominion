@@ -87,6 +87,36 @@ text = "PROGRESS"
 horizontal_alignment = 1
 autowrap_mode = 2
 
+[node name="Advice" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+text = "TACTICAL READ"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HistoryNav" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Previous" type="Button" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Previous"
+
+[node name="History" type="Button" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reports"
+
+[node name="Next" type="Button" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Next"
+
+[node name="Rematch" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Rematch"
+
 [node name="Close" type="Button" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
 text = "Continue"
