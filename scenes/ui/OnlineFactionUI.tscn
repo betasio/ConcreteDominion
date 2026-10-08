@@ -225,6 +225,40 @@ layout_mode = 2
 text = "No PvP match"
 autowrap_mode = 2
 
+[node name="ChallengeTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "RIVALRY CHALLENGES • DIRECT REMATCHES"
+
+[node name="RivalFactionId" type="LineEdit" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+placeholder_text = "Previous opponent Faction ID"
+
+[node name="SendChallenge" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Challenge previous rival (leader)"
+
+[node name="RefreshChallenges" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh rivalry challenges"
+
+[node name="AcceptChallenge" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Accept first pending incoming challenge (leader)"
+
+[node name="DeclineChallenge" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Decline first pending incoming challenge"
+
+[node name="CancelChallenge" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Cancel first pending outgoing challenge"
+
+[node name="ChallengeStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 145)
+layout_mode = 2
+text = "No challenges loaded."
+autowrap_mode = 2
+
 [node name="RivalryTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "PVP WAR ROOM • RIVALRY HISTORY"
