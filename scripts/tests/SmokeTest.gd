@@ -403,7 +403,8 @@ func _ready() -> void:
 	elif city.lot_c == null or city.lot_d == null:
 		_fail("Resource-production build lots are missing.")
 
-	game.free()
+	game.queue_free()
+	await get_tree().process_frame
 	_finish()
 
 
