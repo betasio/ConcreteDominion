@@ -35,6 +35,10 @@ var missions: MissionTracker
 @onready var matchmaking_label: Label = $Root/Panel/Margin/Scroll/VBox/Matchmaking
 @onready var war_label: Label = $Root/Panel/Margin/Scroll/VBox/War
 @onready var war_rules_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRules
+@onready var war_preparation_label: Label = $Root/Panel/Margin/Scroll/VBox/WarPreparation
+@onready var captain_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Captain
+@onready var doctrine_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Doctrine
+@onready var defense_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Defense
 @onready var war_strategy_label: Label = $Root/Panel/Margin/Scroll/VBox/WarStrategy
 @onready var muscle_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Muscle
 @onready var convoy_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Convoy
@@ -75,6 +79,9 @@ func setup(
 	clear_rally_button.pressed.connect(_clear_rally)
 	capture_territory_button.pressed.connect(_capture_territory)
 	start_war_button.pressed.connect(_start_war)
+	captain_button.pressed.connect(_cycle_war_captain)
+	doctrine_button.pressed.connect(_cycle_war_doctrine)
+	defense_button.pressed.connect(_cycle_war_defense)
 	muscle_button.pressed.connect(func(): _war_attack("muscle"))
 	convoy_button.pressed.connect(func(): _war_attack("convoy"))
 	intel_button.pressed.connect(func(): _war_attack("intel"))
@@ -170,6 +177,21 @@ func _capture_territory() -> void:
 	_refresh()
 
 
+func _cycle_war_captain() -> void:
+	faction.cycle_war_captain()
+	_refresh()
+
+
+func _cycle_war_doctrine() -> void:
+	faction.cycle_war_doctrine()
+	_refresh()
+
+
+func _cycle_war_defense() -> void:
+	faction.cycle_war_defense()
+	_refresh()
+
+
 func _start_war() -> void:
 	faction.start_prototype_war()
 	_refresh()
@@ -224,6 +246,8 @@ func _refresh() -> void:
 		matchmaking_label,
 		war_label,
 		war_rules_label,
+		war_preparation_label,
+		$Root/Panel/Margin/Scroll/VBox/WarPrepButtons,
 		war_strategy_label,
 		$Root/Panel/Margin/Scroll/VBox/WarPlanButtons,
 		war_attack_report_label,
@@ -310,6 +334,18 @@ func _refresh() -> void:
 
 	war_label.text = "FACTION WAR\n%s" % faction.get_war_summary()
 	war_rules_label.text = "WAR RULES\n" + "\n".join(faction.get_war_rules_lines())
+	war_preparation_label.text = "WAR PREPARATION\n%s\n%s" % [
+		faction.get_war_preparation_summary(),
+		faction.get_war_doctrine_summary()
+	]
+	var prep_locked := not faction.active_war.is_empty()
+	captain_button.text = "Captain"
+	doctrine_button.text = "Doctrine"
+	defense_button.text = "Defense"
+	captain_button.disabled = prep_locked or not faction.can_start_war()
+	doctrine_button.disabled = prep_locked or not faction.can_start_war()
+	defense_button.disabled = prep_locked or not faction.can_start_war()
+
 	war_strategy_label.text = "WAR STRATEGY\nEnemy stance: %s\n%s" % [
 		faction.get_current_war_defense().to_upper() if not faction.active_war.is_empty() else "—",
 		"\n".join(faction.get_war_strategy_lines())
