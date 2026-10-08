@@ -73,6 +73,18 @@ func _check_city_art(presentation: PresentationCatalog, city: Node) -> void:
 		if lot == null or lot.art_texture == null:
 			_fail("A buildable facility did not receive approved art at runtime.")
 
+	# Verify the in-game texture survived PresentationCatalog.apply_to_city;
+	# existence checks alone failed to catch the old atlas replacing premium art.
+	for building in [city.safehouse, city.hospital, city.barracks]:
+		var asset_path: String = "res://assets/premium/buildings/%s.png" % String(building.building_type)
+		if building.art_texture == null or building.art_texture.resource_path != asset_path:
+			_fail("Premium art was overridden on building: %s" % asset_path)
+
+	for lot in [city.lot_a, city.lot_b, city.lot_c, city.lot_d]:
+		var asset_path: String = "res://assets/premium/buildings/%s.png" % String(lot.building_name).to_snake_case()
+		if lot.art_texture == null or lot.art_texture.resource_path != asset_path:
+			_fail("Premium art was overridden on lot: %s" % asset_path)
+
 	for target in city.get_raid_targets():
 		if target == null or target.art_texture == null:
 			_fail("A raid target did not receive approved art at runtime.")
