@@ -93,6 +93,10 @@ func cancel_pvp_queue() -> bool:
 	return _request("pvp_cancel", HTTPClient.METHOD_POST, "/v1/pvp/cancel", {}, true)
 
 
+func get_season_history() -> bool:
+	return _request("season_history", HTTPClient.METHOD_GET, "/v1/seasons/history", {}, true)
+
+
 func get_season_rankings() -> bool:
 	return _request("season_rankings", HTTPClient.METHOD_GET, "/v1/seasons/leaderboard", {}, true)
 
