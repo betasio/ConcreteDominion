@@ -146,6 +146,8 @@ func _ready() -> void:
 		progression
 	)
 
+	battle_reports.setup(raid_battle, world_control, city_map)
+
 
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
