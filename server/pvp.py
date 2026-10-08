@@ -97,6 +97,14 @@ def _snapshot(store, fid):
     side_a = war["faction_a"] == fid
     opponent_id = war["faction_b"] if side_a else war["faction_a"]
     opponent = store.execute("SELECT name,tag FROM factions WHERE id=?", (opponent_id,)).fetchone()
+    identities = {}
+    for team_id in (fid, opponent_id):
+        row = store.execute("""SELECT f.id,f.name,f.tag,
+            COALESCE(i.emblem,'shield') AS emblem,
+            COALESCE(i.banner,'obsidian') AS banner
+            FROM factions f LEFT JOIN faction_identity i ON i.faction_id=f.id
+            WHERE f.id=?""", (team_id,)).fetchone()
+        identities[team_id] = dict(row)
     rounds = war["rounds_a"] if side_a else war["rounds_b"]
     defense = ("watchful","fortified","mobile")[rounds % 3] if war["status"] == "active" and rounds < 6 else ""
     attacks = store.execute(
@@ -122,7 +130,8 @@ def _snapshot(store, fid):
             "VICTORY" if war["winner_id"] == fid else "DEFEAT"
         ) if war["status"] == "complete" else "",
         "defense":defense
-    },"attacks":[dict(r) for r in attacks],
+    },"our_identity":identities[fid],"opponent_identity":identities[opponent_id],
+       "attacks":[dict(r) for r in attacks],
        "contributions":[dict(r) for r in members],
        "ledger":[dict(r) for r in ledger]}
 
