@@ -73,6 +73,7 @@ const WAR_OBJECTIVE_DEFS := {
 		"summary":"Generate 300 combined war contribution."
 	}
 }
+const WAR_HISTORY_LIMIT := 10
 const WAR_REWARD_POOLS := {
 	"BRONZE":4000,
 	"SILVER":8000,
@@ -141,6 +142,7 @@ var daily_tasks: Dictionary = {
 var gift_charges := 0
 var active_rally: Dictionary = {}
 var active_war: Dictionary = {}
+var war_history: Array[Dictionary] = []
 var war_preparation: Dictionary = {
 	"captain_id":"",
 	"defense":"fortified",
@@ -309,6 +311,7 @@ func _reset_faction_activity() -> void:
 	gift_charges = 0
 	active_rally.clear()
 	active_war.clear()
+	war_history.clear()
 	pending_invites.clear()
 	season_points = 0
 	season_wins = 0
@@ -1283,8 +1286,71 @@ func _complete_war() -> void:
 		active_war["reward_tier"] = "BRONZE"
 	season_points += awarded_points
 	active_war["reward_split"] = _build_war_reward_split(String(active_war.get("reward_tier", "BRONZE")))
+	_archive_war_debrief()
 	war_reward_claimed = false
 	war_completed.emit(won, awarded_points)
+
+
+func _archive_war_debrief() -> void:
+	var contributions = active_war.get("member_contributions", {})
+	var mvp_id := ""
+	var mvp_name := "No participants"
+	var mvp_points := 0
+	if contributions is Dictionary:
+		for member in members:
+			var member_id := String(member.get("id", ""))
+			var points := maxi(0, int(contributions.get(member_id, 0)))
+			if points > mvp_points:
+				mvp_id = member_id
+				mvp_name = String(member.get("name", "Member"))
+				mvp_points = points
+	var objectives = active_war.get("objectives", {})
+	var achieved := PackedStringArray()
+	if objectives is Dictionary:
+		for objective_id in ["counter_network", "round_control", "mobilize"]:
+			if objectives.has(objective_id) and objectives[objective_id] is Dictionary:
+				if bool(objectives[objective_id].get("completed", false)):
+					achieved.append(String(objectives[objective_id].get("name", objective_id)))
+	var record := {
+		"opponent":String(active_war.get("opponent_name", "Opponent")).left(50),
+		"result":String(active_war.get("result", "DEFEAT")),
+		"tier":String(active_war.get("reward_tier", "BRONZE")),
+		"our_score":maxi(0, int(active_war.get("our_score", 0))),
+		"their_score":maxi(0, int(active_war.get("their_score", 0))),
+		"objectives":achieved,
+		"mvp_name":mvp_name.left(40),
+		"mvp_points":mvp_points,
+		"local_share":maxi(0, int(active_war.get("reward_split", {}).get(local_member_id, 0))),
+		"timestamp":Time.get_unix_time_from_system()
+	}
+	war_history.push_front(record)
+	while war_history.size() > WAR_HISTORY_LIMIT:
+		war_history.pop_back()
+
+
+func get_war_debrief_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	for i in range(war_history.size()):
+		var record: Dictionary = war_history[i]
+		var objectives = record.get("objectives", PackedStringArray())
+		var achieved := ", ".join(objectives) if objectives is PackedStringArray else "Objectives recorded"
+		if achieved.is_empty():
+			achieved = "No shared objectives completed"
+		lines.append("#%d %s • %s %d–%d • %s\nMVP: %s (%d) • Your share: $%s\n%s" % [
+			i + 1,
+			String(record.get("opponent", "Opponent")),
+			String(record.get("result", "DEFEAT")),
+			int(record.get("our_score", 0)),
+			int(record.get("their_score", 0)),
+			String(record.get("tier", "BRONZE")),
+			String(record.get("mvp_name", "No participants")),
+			int(record.get("mvp_points", 0)),
+			_format_number(int(record.get("local_share", 0))),
+			achieved
+		])
+	if lines.is_empty():
+		lines.append("No completed Faction Wars yet.")
+	return lines
 
 
 func _build_war_reward_split(tier: String) -> Dictionary:
@@ -1461,6 +1527,7 @@ func get_save_data() -> Dictionary:
 		"gift_charges": gift_charges,
 		"active_rally": active_rally.duplicate(true),
 		"active_war": active_war.duplicate(true),
+		"war_history": war_history.duplicate(true),
 		"war_reward_claimed": war_reward_claimed,
 		"season_period": season_period,
 		"season_points": season_points,
@@ -1535,6 +1602,37 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 		active_rally["seconds_remaining"] = maxf(0.0, float(active_rally.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
 		if float(active_rally["seconds_remaining"]) <= 0.0:
 			active_rally.clear()
+
+	war_history.clear()
+	var saved_history = data.get("war_history", [])
+	if saved_history is Array:
+		for raw_record in saved_history:
+			if not (raw_record is Dictionary):
+				continue
+			var record: Dictionary = raw_record
+			if String(record.get("result", "")) not in ["VICTORY", "DEFEAT"]:
+				continue
+			var safe_objectives := PackedStringArray()
+			var raw_objectives = record.get("objectives", [])
+			if raw_objectives is Array or raw_objectives is PackedStringArray:
+				for item in raw_objectives:
+					if safe_objectives.size() >= 3:
+						break
+					safe_objectives.append(String(item).left(40))
+			war_history.append({
+				"opponent":String(record.get("opponent", "Opponent")).left(50),
+				"result":String(record.get("result", "DEFEAT")),
+				"tier":String(record.get("tier", "BRONZE")),
+				"our_score":maxi(0, int(record.get("our_score", 0))),
+				"their_score":maxi(0, int(record.get("their_score", 0))),
+				"objectives":safe_objectives,
+				"mvp_name":String(record.get("mvp_name", "No participants")).left(40),
+				"mvp_points":maxi(0, int(record.get("mvp_points", 0))),
+				"local_share":maxi(0, int(record.get("local_share", 0))),
+				"timestamp":maxf(0.0, float(record.get("timestamp", 0.0)))
+			})
+			if war_history.size() >= WAR_HISTORY_LIMIT:
+				break
 
 	var saved_war = data.get("active_war", {})
 	active_war = saved_war.duplicate(true) if saved_war is Dictionary else {}
