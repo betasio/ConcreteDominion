@@ -76,6 +76,14 @@ func _ready() -> void:
 				hub._select_hub_section(section)
 				if hub.hub_section != section:
 					_fail("Faction Hub failed to select %s" % section)
+		var navigation_summary = hub.get_node_or_null("Root/Panel/Margin/Scroll/VBox/HubSummary")
+		if not (navigation_summary is Label):
+			_fail("Faction Hub status summary is missing.")
+		var overview = hub.get_node_or_null("Root/Panel/Margin/Scroll/VBox/HubSubtitle")
+		if not (overview is Label):
+			_fail("Faction Hub cinematic header is missing.")
+		if hub.panel.size.x > hub.get_viewport().get_visible_rect().size.x + 2.0:
+			_fail("Faction Hub panel extends beyond the viewport.")
 		hub._select_hub_section("Identity")
 		if not hub.get_node("Root/Panel/Margin/Scroll/VBox/FactionCard").visible:
 			_fail("Faction Hub Identity view did not show its illustrated card.")
