@@ -63,6 +63,18 @@ func accept_invitation(invitation_id: String) -> bool:
 		"/v1/invitations/%s/accept" % invitation_id, {}, true)
 
 
+func get_war() -> bool:
+	return _request("war", HTTPClient.METHOD_GET, "/v1/war", {}, true)
+
+
+func start_war() -> bool:
+	return _request("start_war", HTTPClient.METHOD_POST, "/v1/war/start", {}, true)
+
+
+func attack_war(strategy: String) -> bool:
+	return _request("war_attack", HTTPClient.METHOD_POST, "/v1/war/attack", {"strategy":strategy}, true)
+
+
 func _request(action: String, method: int, path: String, body: Dictionary, authenticated: bool) -> bool:
 	if _busy:
 		connection_failed.emit(action, "Another API request is running")
