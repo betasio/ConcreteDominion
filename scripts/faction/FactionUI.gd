@@ -35,8 +35,12 @@ var missions: MissionTracker
 @onready var matchmaking_label: Label = $Root/Panel/Margin/Scroll/VBox/Matchmaking
 @onready var war_label: Label = $Root/Panel/Margin/Scroll/VBox/War
 @onready var war_rules_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRules
+@onready var war_strategy_label: Label = $Root/Panel/Margin/Scroll/VBox/WarStrategy
+@onready var muscle_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Muscle
+@onready var convoy_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Convoy
+@onready var intel_button: Button = $Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Intel
+@onready var war_attack_report_label: Label = $Root/Panel/Margin/Scroll/VBox/WarAttackReport
 @onready var start_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar
-@onready var war_attack_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/WarAttack
 @onready var claim_war_reward_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward
 @onready var clear_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClearWar
 @onready var leave_button: Button = $Root/Panel/Margin/Scroll/VBox/Leave
@@ -71,7 +75,9 @@ func setup(
 	clear_rally_button.pressed.connect(_clear_rally)
 	capture_territory_button.pressed.connect(_capture_territory)
 	start_war_button.pressed.connect(_start_war)
-	war_attack_button.pressed.connect(_war_attack)
+	muscle_button.pressed.connect(func(): _war_attack("muscle"))
+	convoy_button.pressed.connect(func(): _war_attack("convoy"))
+	intel_button.pressed.connect(func(): _war_attack("intel"))
 	claim_war_reward_button.pressed.connect(_claim_war_reward)
 	clear_war_button.pressed.connect(_clear_war)
 	leave_button.pressed.connect(_leave)
@@ -169,8 +175,8 @@ func _start_war() -> void:
 	_refresh()
 
 
-func _war_attack() -> void:
-	faction.perform_prototype_war_attack()
+func _war_attack(strategy_id: String) -> void:
+	faction.perform_war_attack(strategy_id)
 	_refresh()
 
 
@@ -218,6 +224,9 @@ func _refresh() -> void:
 		matchmaking_label,
 		war_label,
 		war_rules_label,
+		war_strategy_label,
+		$Root/Panel/Margin/Scroll/VBox/WarPlanButtons,
+		war_attack_report_label,
 		$Root/Panel/Margin/Scroll/VBox/WarButtons,
 		$Root/Panel/Margin/Scroll/VBox/WarRewardButtons,
 		leave_button
@@ -301,12 +310,24 @@ func _refresh() -> void:
 
 	war_label.text = "FACTION WAR\n%s" % faction.get_war_summary()
 	war_rules_label.text = "WAR RULES\n" + "\n".join(faction.get_war_rules_lines())
+	war_strategy_label.text = "WAR STRATEGY\nEnemy stance: %s\n%s" % [
+		faction.get_current_war_defense().to_upper() if not faction.active_war.is_empty() else "—",
+		"\n".join(faction.get_war_strategy_lines())
+	]
+	var attack_history := faction.get_war_attack_history_lines()
+	war_attack_report_label.text = "WAR ATTACK REPORT\n%s%s" % [
+		faction.get_last_war_attack_summary(),
+		"\n" + "\n".join(attack_history) if not attack_history.is_empty() else ""
+	]
 	start_war_button.disabled = not faction.can_start_war() or not faction.active_war.is_empty()
-	war_attack_button.disabled = (
-		faction.active_war.is_empty()
-		or String(faction.active_war.get("status", "")) != "active"
-		or int(faction.active_war.get("attacks_remaining", 0)) <= 0
+	var can_attack := (
+		not faction.active_war.is_empty()
+		and String(faction.active_war.get("status", "")) == "active"
+		and int(faction.active_war.get("attacks_remaining", 0)) > 0
 	)
+	muscle_button.disabled = not can_attack
+	convoy_button.disabled = not can_attack
+	intel_button.disabled = not can_attack
 	claim_war_reward_button.disabled = not faction.can_claim_war_reward()
 	clear_war_button.disabled = (
 		faction.active_war.is_empty()
