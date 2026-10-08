@@ -418,11 +418,20 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
-	for child in get_children():
-		child.free()
+	var exit_code := 0 if failures.is_empty() else 1
 	if failures.is_empty():
 		print("[SMOKE] PASS — core scenes and systems loaded.")
-		get_tree().quit(0)
 	else:
 		print("[SMOKE] FAIL — %d issue(s)." % failures.size())
-		get_tree().quit(1)
+
+	for child in get_children():
+		child.queue_free()
+
+	get_tree().process_frame.connect(
+		func():
+			get_tree().process_frame.connect(
+				func(): get_tree().quit(exit_code),
+				CONNECT_ONE_SHOT
+			),
+		CONNECT_ONE_SHOT
+	)
