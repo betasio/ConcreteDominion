@@ -24,7 +24,6 @@ extends Node
 @onready var synergy_raid: SynergyRaid = $SynergyRaid
 @onready var combat_loadout: CombatLoadout = $CombatLoadout
 @onready var raid_battle: RaidBattle = $RaidBattle
-@onready var battle_reports: BattleReportManager = $BattleReportManager
 @onready var world_control: WorldControlManager = $WorldControlManager
 @onready var resource_production: ResourceProductionManager = $ResourceProductionManager
 @onready var localized_text: LocalizedText = $LocalizedText
@@ -149,12 +148,6 @@ func _ready() -> void:
 
 	battle_reports.setup(raid_battle, world_control, city_map)
 
-	battle_reports.setup(
-		raid_battle,
-		world_control,
-		endgame,
-		city_map
-	)
 
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
