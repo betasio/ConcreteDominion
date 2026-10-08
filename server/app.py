@@ -16,7 +16,7 @@ SCHEMA = """
 PRAGMA foreign_keys=ON;
 CREATE TABLE IF NOT EXISTS players (
   id TEXT PRIMARY KEY, display_name TEXT NOT NULL,
-  token_hash TEXT NOT NULL UNIQUE, faction_id TEXT
+  token_hash TEXT NOT NULL UNIQUE, recovery_hash TEXT, faction_id TEXT
 );
 CREATE TABLE IF NOT EXISTS factions (
   id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE,
@@ -62,6 +62,8 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
         self.db.executescript(pvp.PVP_SCHEMA)
+        if 'recovery_hash' not in {row['name'] for row in self.db.execute('PRAGMA table_info(players)')}:
+            self.db.execute('ALTER TABLE players ADD COLUMN recovery_hash TEXT')
         # Existing development databases predate the PvP timeout timestamp.
         columns = {row["name"] for row in self.db.execute("PRAGMA table_info(pvp_matches)")}
         if "created_at" not in columns:
@@ -85,10 +87,26 @@ class Store:
             if not 2 <= len(name) <= 32:
                 raise ApiError(400, "Display name must contain 2–32 characters")
             player_id, session = secrets.token_hex(12), secrets.token_urlsafe(32)
+            recovery_key = secrets.token_urlsafe(32)
             with self.db:
-                self.execute("INSERT INTO players(id,display_name,token_hash) VALUES(?,?,?)",
-                             (player_id,name,hashlib.sha256(session.encode()).hexdigest()))
-            return 201, {"player_id":player_id,"session_token":session}
+                self.execute("INSERT INTO players(id,display_name,token_hash,recovery_hash) VALUES(?,?,?,?)",
+                             (player_id,name,hashlib.sha256(session.encode()).hexdigest(),hashlib.sha256(recovery_key.encode()).hexdigest()))
+            return 201, {"player_id":player_id,"session_token":session,"recovery_key":recovery_key}
+        if method == "POST" and path == "/v1/recover":
+            player_id = data.get("player_id")
+            recovery_key = data.get("recovery_key")
+            if not isinstance(player_id,str) or not isinstance(recovery_key,str):
+                raise ApiError(400,"Player ID and recovery key required")
+            key_hash = hashlib.sha256(recovery_key.encode()).hexdigest()
+            account = self.execute("SELECT id FROM players WHERE id=? AND recovery_hash=?", (player_id,key_hash)).fetchone()
+            if account is None:
+                raise ApiError(401,"Invalid recovery credentials")
+            new_session, new_recovery = secrets.token_urlsafe(32),secrets.token_urlsafe(32)
+            with self.db:
+                self.execute("UPDATE players SET token_hash=?,recovery_hash=? WHERE id=?",
+                    (hashlib.sha256(new_session.encode()).hexdigest(),
+                     hashlib.sha256(new_recovery.encode()).hexdigest(),player_id))
+            return 200, {"player_id":player_id,"session_token":new_session,"recovery_key":new_recovery}
         if not token:
             raise ApiError(401, "Bearer token required")
         actor = self.player(token)
