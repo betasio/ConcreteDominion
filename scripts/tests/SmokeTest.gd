@@ -439,6 +439,10 @@ func _ready() -> void:
 			_fail("Online seasonal leaderboard refresh is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/SeasonStandings") == null:
 			_fail("Online seasonal leaderboard display is missing.")
+		if not (game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPMatchup/OurCard") is FactionIdentityCard):
+			_fail("Our Faction PvP identity card is missing.")
+		if not (game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPMatchup/OpponentCard") is FactionIdentityCard):
+			_fail("Opponent Faction PvP identity card is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/QueuePvP") == null:
 			_fail("Online Faction PvP queue is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/CancelPvP") == null:
