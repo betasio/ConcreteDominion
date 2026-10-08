@@ -422,6 +422,8 @@ func _ready() -> void:
 			_fail("Online Faction War attack controls are missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/QueuePvP") == null:
 			_fail("Online Faction PvP queue is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/CancelPvP") == null:
+			_fail("Online Faction PvP queue cancellation is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel") == null:
 			_fail("Online Faction PvP attack controls are missing.")
 
