@@ -13,7 +13,11 @@ python3 -m server.app --db ./server/data.sqlite --host 127.0.0.1 --port 8765
 
 The backend uses SQLite and the Python standard library. Session bearer tokens are generated from a cryptographically secure random source; only SHA-256 hashes are stored. API calls use server-side ownership checks. Currently supported: player creation, Faction creation, view own Faction, leader-created invitations, listing your invitations, accepting invitations, and basic validation/conflict protection. Responses never include other players' session tokens.
 
-Godot adapter: `scripts/faction/OnlineFactionClient.gd`. Instantiate it explicitly in a development scene; it is **not** connected to `FactionManager` yet. Register a user, receive `request_completed("register",201,data)`, and call `set_session(data["session_token"])` in a development controller. **Do not** store that token in the existing plaintext save system.
+Godot adapter: `scripts/faction/OnlineFactionClient.gd`. The game has a separate **Online • Dev** button and screen (`OnlineFactionUI`), connected to this adapter. Run the server locally before opening that screen. Use **Create developer player**, copy the one-time token from the masked session field (the field can be selected/copied), and then refresh your server Faction. You can create a Faction or invite another registered player by their server player ID. On a second game session, paste that player's developer token into **Connect session** and refresh invitations to accept. Sessions remain **memory-only**; the game does not write them into normal saves, so you must keep the token outside the game for future development sessions.
+
+`OnlineFactionUI` is deliberately isolated from the existing `FactionManager`: it shows authoritative server membership, while campaign, offline Faction progress, wars, and resources remain local prototype systems. This is **not a conversion** of existing local Factions.
+
+The default API URL is `http://127.0.0.1:8765`, which works only when Godot and the backend run on the same computer. To connect from a phone or another device, deploy a private **HTTPS** development endpoint and configure the client URL; never expose the built-in Python server directly on the internet.
 
 Example development requests (replace placeholders):
 
