@@ -761,7 +761,7 @@ func get_current_war_defense() -> String:
 	if active_war.is_empty():
 		return ""
 	var cursor := maxi(0, int(active_war.get("attack_cursor", 0)))
-	var opponent_seed := abs(String(active_war.get("opponent_id", "")).hash()) % WAR_DEFENSE_CYCLE.size()
+	var opponent_seed: int = absi(String(active_war.get("opponent_id", "")).hash()) % WAR_DEFENSE_CYCLE.size()
 	return String(WAR_DEFENSE_CYCLE[(opponent_seed + cursor) % WAR_DEFENSE_CYCLE.size()])
 
 
