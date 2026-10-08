@@ -89,7 +89,7 @@ func _show_history_report() -> void:
 
 
 func _show_report(report: Dictionary) -> void:
-	if String(report.get("type", "")) == "operation":
+	if String(report.get("source", "")) == "family_operation":
 		_show_family_operation_report(report)
 	else:
 		_show_raid_report(report)
@@ -159,7 +159,10 @@ func _show_family_operation_report(result: Dictionary) -> void:
 func _rematch_current() -> void:
 	if reports == null:
 		return
-	if reports.rematch(history_index):
+	var report := reports.get_report(history_index)
+	if report.is_empty():
+		return
+	if reports.rematch(report):
 		panel.visible = false
 	else:
 		_refresh_history_controls()
@@ -197,7 +200,8 @@ func _refresh_history_controls() -> void:
 	newer_button.disabled = history_index <= 0
 	older_button.disabled = history_index >= count - 1
 
-	var status := reports.get_rematch_status(history_index)
+	var report := reports.get_report(history_index)
+	var status := reports.can_rematch(report)
 	rematch_button.disabled = not bool(status.get("ok", false))
 	rematch_button.text = "Rematch" if not rematch_button.disabled else String(status.get("reason", "Rematch unavailable"))
 
