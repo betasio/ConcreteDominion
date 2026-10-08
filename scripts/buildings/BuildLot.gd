@@ -1,6 +1,8 @@
 class_name BuildLot
 extends Area2D
 
+const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+
 signal selected(lot: BuildLot)
 signal changed
 
@@ -99,6 +101,12 @@ func _draw() -> void:
 			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 		draw_string(ThemeDB.fallback_font, Vector2(-70, 62), building_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 140, 18, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-34, -100), "LV.%d" % level, HORIZONTAL_ALIGNMENT_CENTER, 68, 15, Color(0.95, 0.78, 0.30))
+		return
+
+	if is_built and not is_constructing:
+		FACILITY_VISUALS.draw_facility(self, building_name, level)
+		if is_selected:
+			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color("#f4d078"), 5.0)
 		return
 
 	var diamond := PackedVector2Array([
