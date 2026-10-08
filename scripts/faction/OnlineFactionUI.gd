@@ -9,6 +9,7 @@ var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
 var season_rankings: Dictionary = {}
 var season_history: Dictionary = {}
+var viewed_identity: Dictionary = {}
 var status_message := "Disconnected"
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -42,6 +43,13 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.pressed.connect(client.get_season_history)
+	$Root/Panel/Margin/Scroll/VBox/ApplyIdentity.pressed.connect(_save_identity)
+	$Root/Panel/Margin/Scroll/VBox/ApplyBadge.pressed.connect(_save_badge)
+	$Root/Panel/Margin/Scroll/VBox/ViewFactionProfile.pressed.connect(func():
+		client.get_faction_profile($Root/Panel/Margin/Scroll/VBox/ProfileLookup.text.strip_edges()))
+	$Root/Panel/Margin/Scroll/VBox/ViewMyProfile.pressed.connect(func():
+		client.get_player_profile(String(online_player.get("player_id", ""))))
+
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.attack_pvp("intel"))
@@ -70,6 +78,20 @@ func _recover_account() -> void:
 	)
 
 
+func _save_identity() -> void:
+	var emblem_options := ["crown", "serpent", "shield", "wolf"]
+	var banner_options := ["obsidian", "crimson", "gold", "steel"]
+	client.set_faction_identity(
+		emblem_options[$Root/Panel/Margin/Scroll/VBox/Emblem.selected],
+		banner_options[$Root/Panel/Margin/Scroll/VBox/Banner.selected]
+	)
+
+
+func _save_badge() -> void:
+	var badges := ["", "CHAMPION", "RUNNER_UP", "PODIUM", "VETERAN"]
+	client.feature_prestige_badge(badges[$Root/Panel/Margin/Scroll/VBox/FeaturedBadge.selected])
+
+
 func _disconnect() -> void:
 	client.clear_session()
 	online_player.clear()
@@ -79,6 +101,7 @@ func _disconnect() -> void:
 	online_pvp.clear()
 	season_rankings.clear()
 	season_history.clear()
+	viewed_identity.clear()
 	status_message = "Disconnected"
 	_refresh()
 
@@ -136,6 +159,12 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			season_rankings = data.duplicate(true)
 		"season_history":
 			season_history = data.duplicate(true)
+		"faction_profile", "player_profile":
+			viewed_identity = data.duplicate(true)
+		"set_faction_identity":
+			status_message = "Faction emblem and banner saved on server."
+		"feature_prestige_badge":
+			status_message = "Earned prestige badge updated."
 		"pvp_queue", "pvp_cancel", "pvp_attack":
 			client.get_pvp()
 		"faction":
@@ -285,3 +314,29 @@ func _refresh() -> void:
 			if prestige_lines.size() >= 16:
 				break
 	$Root/Panel/Margin/Scroll/VBox/PrestigeHistory.text = "\n".join(prestige_lines)
+
+	$Root/Panel/Margin/Scroll/VBox/ApplyIdentity.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/ApplyBadge.disabled = client.session_token.is_empty() or client.is_busy()
+	var identity_lines := PackedStringArray(["COSMETIC PUBLIC PROFILE"])
+	var public_faction = viewed_identity.get("faction", {})
+	if public_faction is Dictionary and not public_faction.is_empty():
+		identity_lines.append("[%s] %s • Emblem: %s • Banner: %s" % [
+			String(public_faction.get("tag", "")),
+			String(public_faction.get("name", "")),
+			String(public_faction.get("emblem", "")),
+			String(public_faction.get("banner", ""))
+		])
+		for award in viewed_identity.get("achievements", []):
+			if award is Dictionary:
+				identity_lines.append("Season %d • %s • Rank #%d" % [
+					int(award.get("season_id", 0)),
+					String(award.get("badge", "")),
+					int(award.get("rank", 0))
+				])
+	var public_player = viewed_identity.get("player", {})
+	if public_player is Dictionary and not public_player.is_empty():
+		identity_lines.append("%s • Featured: %s" % [
+			String(public_player.get("display_name", "")),
+			String(public_player.get("featured_badge", "None"))
+		])
+	$Root/Panel/Margin/Scroll/VBox/IdentityStatus.text = "\n".join(identity_lines)
