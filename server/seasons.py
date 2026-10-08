@@ -26,11 +26,14 @@ def current_season(now=None):
 def _standings(store, start, end):
     rows = store.execute(
         """SELECT f.id AS faction_id, f.name, f.tag,
+        COALESCE(i.emblem,'shield') AS emblem,
+        COALESCE(i.banner,'obsidian') AS banner,
         COALESCE(SUM(l.points),0) AS points,
         COALESCE(SUM(CASE WHEN l.points=100 AND l.reason='pvp_settlement'
           THEN 1 ELSE 0 END),0) AS wins,
         COUNT(l.match_id) AS settled
         FROM factions f
+        LEFT JOIN faction_identity i ON i.faction_id=f.id
         LEFT JOIN pvp_ledger l ON l.faction_id=f.id
           AND l.created_at >= ? AND l.created_at < ?
         GROUP BY f.id
