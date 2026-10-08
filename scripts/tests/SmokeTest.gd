@@ -420,6 +420,10 @@ func _ready() -> void:
 			_fail("Online Faction War refresh is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel") == null:
 			_fail("Online Faction War attack controls are missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshPrestige") == null:
+			_fail("Online prestige history refresh is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PrestigeHistory") == null:
+			_fail("Online historical champion display is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshSeasons") == null:
 			_fail("Online seasonal leaderboard refresh is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/SeasonStandings") == null:
