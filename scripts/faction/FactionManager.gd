@@ -913,7 +913,12 @@ func start_prototype_war() -> bool:
 		"captain_bonus": get_war_captain_bonus(),
 		"defense_stance": String(war_preparation.get("defense", "fortified")),
 		"doctrine": String(war_preparation.get("doctrine", "disciplined")),
-		"readiness": get_war_readiness_score()
+		"readiness": get_war_readiness_score(),
+		"objectives": _create_war_objectives(),
+		"member_contributions": _create_war_member_contributions(),
+		"objective_score_bonus": 0,
+		"completed_objectives": 0,
+		"reward_split": {}
 	}
 	war_reward_claimed = false
 	war_started.emit(String(opponent["name"]))
@@ -943,14 +948,15 @@ func get_last_war_attack_summary() -> String:
 	var last = active_war.get("last_attack", {})
 	if not (last is Dictionary) or last.is_empty():
 		return "Enemy stance: %s • choose a counter-plan." % get_current_war_defense().to_upper()
-	return "%s vs %s • %s • Defense %s • %d–%d pts%s" % [
+	return "%s vs %s • %s • Defense %s • %d–%d pts%s%s" % [
 		String(last.get("strategy_name", "Attack")),
 		String(last.get("enemy_defense", "")).to_upper(),
 		"COUNTER HIT" if bool(last.get("countered", false)) else "NO COUNTER",
 		"HELD" if bool(last.get("defense_countered", false)) else "BREACHED",
 		int(last.get("our_points", 0)),
 		int(last.get("their_points", 0)),
-		" • ROUND WON" if bool(last.get("victory", false)) else " • ROUND LOST"
+		" • ROUND WON" if bool(last.get("victory", false)) else " • ROUND LOST",
+		" • +%d OBJECTIVE SCORE" % int(last.get("objective_bonus", 0)) if int(last.get("objective_bonus", 0)) > 0 else ""
 	]
 
 
@@ -1194,10 +1200,19 @@ func perform_war_attack(strategy_id: String) -> Dictionary:
 		"readiness":int(active_war.get("readiness", 50)),
 		"our_points":our_points,
 		"their_points":their_points,
-		"victory":our_points > their_points
+		"victory":our_points > their_points,
+		"objective_bonus":0,
+		"support_contribution":0
 	}
 
-	active_war["our_score"] = int(active_war.get("our_score", 0)) + our_points
+	var local_war_contribution := 80 + (25 if countered else 0) + (15 if bool(result["victory"]) else 0)
+	_add_war_member_contribution(local_member_id, local_war_contribution)
+	var support_contribution := _simulate_war_member_support(int(active_war.get("attack_cursor", 0)))
+	result["support_contribution"] = support_contribution
+	var objective_bonus := _update_war_objectives(result, local_war_contribution, support_contribution)
+	result["objective_bonus"] = objective_bonus
+
+	active_war["our_score"] = int(active_war.get("our_score", 0)) + our_points + objective_bonus
 	active_war["their_score"] = int(active_war.get("their_score", 0)) + their_points
 	active_war["attacks_remaining"] = attacks - 1
 	active_war["attack_cursor"] = int(active_war.get("attack_cursor", 0)) + 1
