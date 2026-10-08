@@ -35,6 +35,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/StartWar.pressed.connect(client.start_war)
 	$Root/Panel/Margin/Scroll/VBox/RefreshWar.pressed.connect(client.get_war)
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.pressed.connect(client.queue_pvp)
+	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
@@ -105,7 +106,7 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_war = data.duplicate(true)
 		"pvp":
 			online_pvp = data.duplicate(true)
-		"pvp_queue", "pvp_attack":
+		"pvp_queue", "pvp_cancel", "pvp_attack":
 			client.get_pvp()
 		"faction":
 			online_faction = data.duplicate(true)
@@ -195,4 +196,5 @@ func _refresh() -> void:
 	]:
 		button.disabled = not pvp_active or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/CancelPvP.disabled = not bool(online_pvp.get("queued", false)) or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
