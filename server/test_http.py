@@ -1,5 +1,6 @@
 """HTTP framing regression checks against the actual threaded development server."""
 import http.client
+from concurrent.futures import ThreadPoolExecutor
 import json
 import tempfile
 import threading
@@ -56,6 +57,22 @@ class HttpFramingTests(unittest.TestCase):
     def test_rejects_oversized_body_before_parsing(self):
         status, _ = self.request([("Content-Length", "16385")])
         self.assertEqual(status, 413)
+
+    def test_simultaneous_recovery_allows_only_one_rotation(self):
+        original = self.store.call("POST", "/v1/players",
+                                   {"display_name": "Recovery Leader"}, "")[1]
+        body = json.dumps({"player_id": original["player_id"],
+                           "recovery_key": original["recovery_key"]}).encode()
+        headers = [("Content-Length", str(len(body)))]
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(lambda _: self.request(headers, body, "/v1/recover"), range(2)))
+        self.assertEqual(sorted(status for status, _ in results), [200, 401])
+        rotated = next(payload for status, payload in results if status == 200)
+        with self.store.lock:
+            self.assertEqual(self.store.call("GET", "/v1/me", {}, rotated["session_token"])[0], 200)
+            with self.assertRaises(Exception) as old:
+                self.store.call("GET", "/v1/me", {}, original["session_token"])
+            self.assertEqual(old.exception.status, 401)
 
     def test_valid_player_creation_still_works(self):
         body = json.dumps({"display_name": "Test Leader"}).encode()
