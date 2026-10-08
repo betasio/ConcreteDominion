@@ -292,7 +292,7 @@ func _ready() -> void:
 			_fail("Battle report history cap is invalid.")
 		if not raid_battle.battle_resolved.is_connected(battle_reports._on_raid_resolved):
 			_fail("Raid results are not wired into battle history.")
-		if world_control != null and not world_control.operation_resolved.is_connected(battle_reports._on_family_operation_resolved):
+		if world_control != null and not world_control.operation_resolved.is_connected(battle_reports._on_operation_resolved):
 			_fail("Rival Family operations are not wired into battle history.")
 	if operation_results == null:
 		_fail("Premium operation report UI is missing.")
