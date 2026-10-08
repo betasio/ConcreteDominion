@@ -236,6 +236,74 @@ layout_mode = 2
 text = "Connect and refresh to view historical champions."
 autowrap_mode = 2
 
+[node name="IdentityTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "ONLINE IDENTITY • COSMETIC ONLY"
+
+[node name="Emblem" type="OptionButton" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+item_count = 4
+popup/item_0/text = "crown"
+popup/item_0/id = 0
+popup/item_1/text = "serpent"
+popup/item_1/id = 1
+popup/item_2/text = "shield"
+popup/item_2/id = 2
+popup/item_3/text = "wolf"
+popup/item_3/id = 3
+
+[node name="Banner" type="OptionButton" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+item_count = 4
+popup/item_0/text = "obsidian"
+popup/item_0/id = 0
+popup/item_1/text = "crimson"
+popup/item_1/id = 1
+popup/item_2/text = "gold"
+popup/item_2/id = 2
+popup/item_3/text = "steel"
+popup/item_3/id = 3
+
+[node name="ApplyIdentity" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Save Faction emblem and banner (leader)"
+
+[node name="FeaturedBadge" type="OptionButton" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+item_count = 5
+popup/item_0/text = "None"
+popup/item_0/id = 0
+popup/item_1/text = "CHAMPION"
+popup/item_1/id = 1
+popup/item_2/text = "RUNNER_UP"
+popup/item_2/id = 2
+popup/item_3/text = "PODIUM"
+popup/item_3/id = 3
+popup/item_4/text = "VETERAN"
+popup/item_4/id = 4
+
+[node name="ApplyBadge" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Feature earned prestige badge"
+
+[node name="ProfileLookup" type="LineEdit" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+placeholder_text = "Public Faction ID to view"
+
+[node name="ViewFactionProfile" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "View public Faction profile"
+
+[node name="ViewMyProfile" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "View my player profile"
+
+[node name="IdentityStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+text = "No public profile loaded."
+autowrap_mode = 2
+
 [node name="Status" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
