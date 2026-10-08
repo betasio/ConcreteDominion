@@ -334,7 +334,7 @@ func _refresh() -> void:
 	var rival_prestige = online_pvp.get("opponent_rivalry_prestige", {})
 	our_card.set_rivalry_prestige(own_prestige if own_prestige is Dictionary else {})
 	rival_card.set_rivalry_prestige(rival_prestige if rival_prestige is Dictionary else {})
-	$Root/Panel/Margin/Scroll/VBox/PvPMatchup.visible = pvp_data is Dictionary and not pvp_data.is_empty()
+	$Root/Panel/Margin/Scroll/VBox/PvPMatchup.visible = hub_section == "Wars" and pvp_data is Dictionary and not pvp_data.is_empty()
 	$Root/Panel/Margin/Scroll/VBox/PvPStatus.text = "\n".join(pvp_lines)
 	var pvp_active := pvp_data is Dictionary and String(pvp_data.get("status", "")) == "active" and int(pvp_data.get("our_rounds", 0)) < 6
 	for button in [
