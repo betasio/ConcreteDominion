@@ -27,6 +27,18 @@ offset_bottom = 240.0
 grow_horizontal = 2
 text = "Battle Reports"
 
+[node name="Shortcut" type="Button" parent="Root"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 428.0
+offset_right = -24.0
+offset_bottom = 474.0
+grow_horizontal = 0
+text = "Battle Reports"
+
 [node name="Panel" type="PanelContainer" parent="Root"]
 visible = false
 layout_mode = 1
