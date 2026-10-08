@@ -35,6 +35,19 @@ CREATE TABLE IF NOT EXISTS invitations (
   FOREIGN KEY(faction_id) REFERENCES factions(id)
 );
 CREATE INDEX IF NOT EXISTS invitations_target ON invitations(target_player,status);
+CREATE TABLE IF NOT EXISTS wars (
+ id TEXT PRIMARY KEY, faction_id TEXT NOT NULL, opponent_name TEXT NOT NULL,
+ status TEXT NOT NULL, our_score INTEGER NOT NULL DEFAULT 0,
+ their_score INTEGER NOT NULL DEFAULT 0, rounds INTEGER NOT NULL DEFAULT 0,
+ result TEXT NOT NULL DEFAULT '',
+ FOREIGN KEY(faction_id) REFERENCES factions(id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS one_active_war ON wars(faction_id) WHERE status='active';
+CREATE TABLE IF NOT EXISTS war_attacks (
+ id INTEGER PRIMARY KEY AUTOINCREMENT, war_id TEXT NOT NULL, player_id TEXT NOT NULL,
+ strategy TEXT NOT NULL, defense TEXT NOT NULL, our_points INTEGER NOT NULL,
+ enemy_points INTEGER NOT NULL
+);
 """
 
 class ApiError(Exception):
@@ -145,6 +158,54 @@ class Store:
                 self.execute("UPDATE invitations SET status='declined' WHERE target_player=? AND status='pending'",
                              (actor["id"],))
             return 200, {"faction_id":invitation["faction_id"]}
+        if path == "/v1/war" and method == "GET":
+            if not actor["faction_id"]:
+                raise ApiError(403, "Faction membership required")
+            war = self.execute("SELECT * FROM wars WHERE faction_id=? ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, rowid DESC LIMIT 1", (actor["faction_id"],)).fetchone()
+            if war is None:
+                return 200, {"war":None,"attacks":[],"contributions":[]}
+            attacks = self.execute("SELECT a.player_id,p.display_name,a.strategy,a.defense,a.our_points,a.enemy_points FROM war_attacks a JOIN players p ON p.id=a.player_id WHERE a.war_id=? ORDER BY a.id", (war["id"],)).fetchall()
+            contributions = self.execute("SELECT p.id AS player_id,p.display_name,COUNT(a.id) AS attacks,COALESCE(SUM(a.our_points),0) AS contribution FROM memberships m JOIN players p ON p.id=m.player_id LEFT JOIN war_attacks a ON a.player_id=p.id AND a.war_id=? WHERE m.faction_id=? GROUP BY p.id ORDER BY contribution DESC", (war["id"],actor["faction_id"])).fetchall()
+            defense = ("watchful","fortified","mobile")[war["rounds"] % 3] if war["status"] == "active" else ""
+            return 200, {"war":dict(war),"defense":defense,"attacks":[dict(a) for a in attacks],"contributions":[dict(x) for x in contributions]}
+        if path == "/v1/war/start" and method == "POST":
+            if not actor["faction_id"]:
+                raise ApiError(403,"Faction membership required")
+            role = self.execute("SELECT role FROM memberships WHERE player_id=?", (actor["id"],)).fetchone()
+            if role is None or role["role"] != "leader":
+                raise ApiError(403,"Only leaders can start wars")
+            if self.execute("SELECT id FROM wars WHERE faction_id=? AND status='active'", (actor["faction_id"],)).fetchone():
+                raise ApiError(409,"War already active")
+            war_id = secrets.token_hex(12)
+            with self.db:
+                self.execute("INSERT INTO wars(id,faction_id,opponent_name,status) VALUES(?,?,'Iron Serpents','active')", (war_id,actor["faction_id"]))
+            return 201, {"war_id":war_id,"status":"active"}
+        if path == "/v1/war/attack" and method == "POST":
+            if not actor["faction_id"]:
+                raise ApiError(403,"Faction membership required")
+            strategy = data.get("strategy")
+            if strategy not in ("muscle","convoy","intel"):
+                raise ApiError(400,"Unknown strategy")
+            war = self.execute("SELECT * FROM wars WHERE faction_id=? AND status='active'", (actor["faction_id"],)).fetchone()
+            if war is None:
+                raise ApiError(409,"No active war")
+            own_attacks = self.execute("SELECT COUNT(*) FROM war_attacks WHERE war_id=? AND player_id=?", (war["id"],actor["id"])).fetchone()[0]
+            if own_attacks >= 2:
+                raise ApiError(409,"Member attack limit reached")
+            if war["rounds"] >= 6:
+                raise ApiError(409,"War complete")
+            defense = ("watchful","fortified","mobile")[war["rounds"] % 3]
+            counter = {"muscle":"watchful","convoy":"fortified","intel":"mobile"}[strategy]
+            our = 100 + (40 if counter == defense else -10)
+            enemy = 105 + (war["rounds"] % 2) * 9
+            total_our, total_enemy = war["our_score"] + our, war["their_score"] + enemy
+            rounds = war["rounds"] + 1
+            status = "complete" if rounds == 6 else "active"
+            result = ("VICTORY" if total_our > total_enemy else "DEFEAT") if status == "complete" else ""
+            with self.db:
+                self.execute("INSERT INTO war_attacks(war_id,player_id,strategy,defense,our_points,enemy_points) VALUES(?,?,?,?,?,?)", (war["id"],actor["id"],strategy,defense,our,enemy))
+                self.execute("UPDATE wars SET our_score=?,their_score=?,rounds=?,status=?,result=? WHERE id=?", (total_our,total_enemy,rounds,status,result,war["id"]))
+            return 200, {"war_id":war["id"],"round":rounds,"strategy":strategy,"defense":defense,"our_points":our,"enemy_points":enemy,"countered":counter==defense,"status":status,"result":result}
         raise ApiError(404, "Unknown endpoint")
 
 
