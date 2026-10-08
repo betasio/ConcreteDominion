@@ -8,6 +8,7 @@ var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
 var season_rankings: Dictionary = {}
+var season_history: Dictionary = {}
 var status_message := "Disconnected"
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -40,6 +41,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
+	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.pressed.connect(client.get_season_history)
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.attack_pvp("intel"))
@@ -76,6 +78,7 @@ func _disconnect() -> void:
 	online_war.clear()
 	online_pvp.clear()
 	season_rankings.clear()
+	season_history.clear()
 	status_message = "Disconnected"
 	_refresh()
 
@@ -131,6 +134,8 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_pvp = data.duplicate(true)
 		"season_rankings":
 			season_rankings = data.duplicate(true)
+		"season_history":
+			season_history = data.duplicate(true)
 		"pvp_queue", "pvp_cancel", "pvp_attack":
 			client.get_pvp()
 		"faction":
@@ -248,3 +253,35 @@ func _refresh() -> void:
 	else:
 		ranking_lines.append("Connect and refresh to view server rankings.")
 	$Root/Panel/Margin/Scroll/VBox/SeasonStandings.text = "\n".join(ranking_lines)
+
+	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.disabled = client.session_token.is_empty() or client.is_busy()
+	var prestige_lines := PackedStringArray()
+	prestige_lines.append("COSMETIC ONLY • Server-verified completed seasons")
+	var awards = season_history.get("your_awards", [])
+	if awards is Array and not awards.is_empty():
+		prestige_lines.append("YOUR FACTION BADGES")
+		for award in awards:
+			if not (award is Dictionary):
+				continue
+			prestige_lines.append("Season %d • #%d • %s (%d points)" % [
+				int(award.get("season_id", 0)),
+				int(award.get("rank", 0)),
+				String(award.get("badge", "VETERAN")),
+				int(award.get("points", 0))
+			])
+	else:
+		prestige_lines.append("No completed-season badge yet.")
+	var champions = season_history.get("champions", [])
+	if champions is Array and not champions.is_empty():
+		prestige_lines.append("HALL OF FAME")
+		for champion in champions:
+			if not (champion is Dictionary):
+				continue
+			prestige_lines.append("Season %d • [%s] %s" % [
+				int(champion.get("season_id", 0)),
+				String(champion.get("faction_tag", "")),
+				String(champion.get("faction_name", ""))
+			])
+			if prestige_lines.size() >= 16:
+				break
+	$Root/Panel/Margin/Scroll/VBox/PrestigeHistory.text = "\n".join(prestige_lines)
