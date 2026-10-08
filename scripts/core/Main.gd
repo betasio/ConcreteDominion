@@ -14,6 +14,7 @@ extends Node
 @onready var alliance_social: AllianceSocial = $AllianceSocial
 @onready var faction_manager: FactionManager = $FactionManager
 @onready var endgame: EndgameManager = $EndgameManager
+@onready var battle_reports: BattleReportManager = $BattleReportManager
 @onready var troop_roster: TroopRoster = $TroopRoster
 @onready var hospital_queue: HospitalQueue = $HospitalQueue
 @onready var construction_queue: ConstructionQueue = $ConstructionQueue
@@ -145,6 +146,13 @@ func _ready() -> void:
 		progression
 	)
 
+	battle_reports.setup(
+		raid_battle,
+		world_control,
+		endgame,
+		city_map
+	)
+
 	raid_battle.battle_started.connect(city_map.launch_convoy_to)
 	raid_battle.battle_resolved.connect(_on_raid_resolved_feedback)
 	raid_battle.battle_resolved.connect(alliance_manager.award_raid_result)
@@ -163,6 +171,7 @@ func _ready() -> void:
 		alliance_social,
 		faction_manager,
 		endgame,
+		battle_reports,
 		troop_roster,
 		hospital_queue,
 		construction_queue,
@@ -200,7 +209,7 @@ func _ready() -> void:
 	profile_ui.setup(player_profile, mailbox, progression, localized_text, endgame)
 	faction_ui.setup(faction_manager, economy, mission_tracker)
 	endgame_ui.setup(endgame, faction_manager)
-	operation_result_ui.setup(raid_battle, world_control, endgame, presentation_catalog)
+	operation_result_ui.setup(raid_battle, world_control, endgame, presentation_catalog, battle_reports)
 	event_ui.setup(event_manager, localized_text)
 	combat_strategy_ui.setup(combat_loadout, loot_inventory, city_map, localized_text)
 	store_ui.setup(store_manager, localized_text)
