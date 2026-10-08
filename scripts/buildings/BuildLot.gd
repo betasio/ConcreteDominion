@@ -166,7 +166,7 @@ func _draw() -> void:
 	if is_selected:
 		draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 
-	var label := building_name if is_built else ("BUILDING..." if is_constructing else "BUILD LOT")
+	var label := building_name if is_built else ("BUILDING %s" % building_name if is_constructing else "BUILD %s" % building_name)
 	draw_string(ThemeDB.fallback_font, Vector2(-70, 62), label.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 140, 18, Color(0.95, 0.91, 0.78))
 
 
