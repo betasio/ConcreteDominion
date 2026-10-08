@@ -155,6 +155,41 @@ class FactionApiTests(unittest.TestCase):
         self.assertEqual(self.api.call("GET","/v1/pvp",{},c)[1]["match"]["status"],"complete")
         self.assertEqual(len(self.api.call("GET","/v1/pvp",{},c)[1]["ledger"]),2)
 
+    def test_queue_cancel_and_expiry(self):
+        from server import pvp
+        leader = self.register("Queue Leader")
+        member = self.register("Queue Member")
+        rival = self.register("Other Leader")
+        lt, mt, rt = (x["session_token"] for x in (leader, member, rival))
+        self.api.call("POST","/v1/factions",{"name":"Cancel Crew","tag":"CAN"},lt)
+        self.api.call("POST","/v1/factions",{"name":"Rival Crew","tag":"RIV"},rt)
+        _, invitation = self.api.call("POST","/v1/invitations",{"player_id":member["player_id"]},lt)
+        self.api.call("POST",f"/v1/invitations/{invitation['invitation_id']}/accept",{},mt)
+        self.api.call("POST","/v1/pvp/queue",{},lt)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("POST","/v1/pvp/cancel",{},mt)
+        self.assertEqual(denied.exception.status,403)
+        self.assertFalse(self.api.call("POST","/v1/pvp/cancel",{},lt)[1]["queued"])
+        with self.assertRaises(ApiError):
+            self.api.call("POST","/v1/pvp/cancel",{},lt)
+        self.api.call("POST","/v1/pvp/queue",{},lt)
+        self.api.execute("UPDATE pvp_queue SET queued_at=0")
+        self.api.db.commit()
+        self.assertFalse(self.api.call("GET","/v1/pvp",{},lt)[1]["queued"])
+        self.api.call("POST","/v1/pvp/queue",{},lt)
+        self.api.call("POST","/v1/pvp/queue",{},rt)
+        state = self.api.call("GET","/v1/pvp",{},lt)[1]
+        match_id = state["match"]["id"]
+        with self.assertRaises(ApiError):
+            self.api.call("POST","/v1/pvp/cancel",{},lt)
+        self.api.execute("UPDATE pvp_matches SET created_at=0 WHERE id=?", (match_id,))
+        self.api.db.commit()
+        ended = self.api.call("GET","/v1/pvp",{},rt)[1]
+        self.assertEqual(ended["match"]["status"],"complete")
+        self.assertEqual(sorted(x["points"] for x in ended["ledger"]),[0,0])
+        self.assertEqual({x["reason"] for x in ended["ledger"]},{"pvp_timeout"})
+        self.assertEqual(len(self.api.call("GET","/v1/pvp",{},lt)[1]["ledger"]),2)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
