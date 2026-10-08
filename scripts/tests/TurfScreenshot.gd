@@ -19,6 +19,10 @@ func _capture() -> void:
 		get_tree().quit(1)
 		return
 	city.set_view_mode(&"base")
+	# First capture shows the playable interface without the first-run modal.
+	var tutorial_ui := game.get_node_or_null("TutorialUI") as CanvasLayer
+	if tutorial_ui != null:
+		tutorial_ui.visible = false
 	# Allow presentation initialization, resource upload and camera smoothing.
 	for i in range(24):
 		await get_tree().process_frame
@@ -36,4 +40,17 @@ func _capture() -> void:
 		get_tree().quit(1)
 		return
 	print("[TURF SCREENSHOT] Saved: %s" % output)
+	# A second image without HUD exposes lot/building overlap and city art.
+	for child in game.get_children():
+		if child is CanvasLayer:
+			(child as CanvasLayer).visible = false
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var city_image: Image = get_viewport().get_texture().get_image()
+	var city_output := "res://build/previews/turf_map_only.png"
+	if city_image == null or city_image.is_empty() or city_image.save_png(city_output) != OK:
+		push_error("Could not save unobstructed turf image.")
+		get_tree().quit(1)
+		return
+	print("[TURF SCREENSHOT] Saved: %s" % city_output)
 	get_tree().quit(0)
