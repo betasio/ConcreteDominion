@@ -980,6 +980,30 @@ func get_war_attack_history_lines() -> PackedStringArray:
 	return lines
 
 
+func _create_war_objectives() -> Dictionary:
+	var objectives := {}
+	for objective_id in WAR_OBJECTIVE_DEFS.keys():
+		var definition: Dictionary = WAR_OBJECTIVE_DEFS[objective_id]
+		objectives[objective_id] = {
+			"name":String(definition.get("name", "Objective")),
+			"goal":maxi(1, int(definition.get("goal", 1))),
+			"progress":0,
+			"completed":false,
+			"score_bonus":maxi(0, int(definition.get("score_bonus", 0))),
+			"summary":String(definition.get("summary", ""))
+		}
+	return objectives
+
+
+func _create_war_member_contributions() -> Dictionary:
+	var contributions := {}
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		if not member_id.is_empty():
+			contributions[member_id] = 0
+	return contributions
+
+
 func get_war_objective_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
 	if active_war.is_empty():
@@ -1182,9 +1206,9 @@ func perform_war_attack(strategy_id: String) -> Dictionary:
 		"watchful":
 			defense_modifier = 9
 	their_points += defense_modifier + int(doctrine.get("incoming_modifier", 0))
-	var enemy_attack := ["muscle", "convoy", "intel"][int(active_war.get("attack_cursor", 0)) % 3]
+	var enemy_attack: String = String(["muscle", "convoy", "intel"][int(active_war.get("attack_cursor", 0)) % 3])
 	var our_defense := String(active_war.get("defense_stance", "fortified"))
-	var defense_countered := String(WAR_DEFENSE_COUNTERS.get(our_defense, "")) == enemy_attack
+	var defense_countered: bool = String(WAR_DEFENSE_COUNTERS.get(our_defense, "")) == enemy_attack
 	if defense_countered:
 		their_points = maxi(1, their_points - 28)
 
