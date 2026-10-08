@@ -20,6 +20,7 @@ func _draw() -> void:
 		Vector2i(16, 13)
 	]
 	_draw_compound_routes()
+	_draw_pavement_detail()
 	_draw_landscaping()
 	for cell in properties:
 		_draw_pad(city_map.iso_to_screen(cell), cell == Vector2i(10, 10))
@@ -115,3 +116,32 @@ func _draw_landscaping() -> void:
 		var light_position: Vector2 = city_map.iso_to_screen(cell)
 		draw_circle(light_position, 16.0, Color(0.93, 0.71, 0.37, 0.09))
 		draw_circle(light_position, 3.0, Color("#efc985"))
+
+
+func _draw_pavement_detail() -> void:
+	# Deterministic curb stones, drainage and lane markers.
+	# Everything stays below the gameplay structures and is non-interactive.
+	for cell in [Vector2i(9, 10), Vector2i(11, 10), Vector2i(12, 10),
+			Vector2i(10, 9), Vector2i(10, 11), Vector2i(10, 12),
+			Vector2i(12, 13), Vector2i(9, 13)]:
+		var center: Vector2 = city_map.iso_to_screen(cell)
+		var start: Vector2 = center + Vector2(-19, -10)
+		var end: Vector2 = center + Vector2(19, 9)
+		draw_line(start, end, Color("#b7a17c", 0.38), 1.8)
+		draw_line(start + Vector2(0, 4), end + Vector2(0, 4),
+				Color("#141e29", 0.72), 1.8)
+	for cell in [Vector2i(8, 10), Vector2i(12, 11), Vector2i(10, 14)]:
+		var p: Vector2 = city_map.iso_to_screen(cell)
+		draw_colored_polygon(PackedVector2Array([
+			p + Vector2(-21, -7), p + Vector2(3, -18),
+			p + Vector2(29, -6), p + Vector2(4, 6)
+		]), Color("#18242d"))
+		for line_index in range(3):
+			var shift: float = float(line_index) * 8.0
+			draw_line(p + Vector2(-15 + shift, -7),
+					p + Vector2(-8 + shift, -3), Color("#87949b", 0.49), 1.5)
+	# HQ driveway inlaid edging highlights the main entrance.
+	var a: Vector2 = city_map.iso_to_screen(Vector2i(8, 10))
+	var b: Vector2 = city_map.iso_to_screen(Vector2i(10, 10))
+	draw_line(a + Vector2(-7, 6), b + Vector2(-7, 18), Color("#ceaa6c", 0.70), 2.2)
+	draw_line(a + Vector2(7, 20), b + Vector2(7, 32), Color("#ceaa6c", 0.70), 2.2)
