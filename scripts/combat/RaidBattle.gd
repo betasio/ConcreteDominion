@@ -237,8 +237,6 @@ func _resolve_active_battle() -> void:
 		"reward_splits": reward_splits,
 		"contributions": contributions.duplicate(true),
 		"participants": (active_battle.get("participants", []) as Array).duplicate(true),
-		"local_drivers": int(active_battle.get("local_drivers", 0)),
-		"local_spies": int(active_battle.get("local_spies", 0)),
 		"loot": awarded_loot,
 		"local_drivers": int(active_battle.get("local_drivers", 0)),
 		"local_spies": int(active_battle.get("local_spies", 0)),
