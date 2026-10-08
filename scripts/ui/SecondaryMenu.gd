@@ -26,14 +26,22 @@ func _ready() -> void:
 	menu_button = Button.new()
 	menu_button.text = "MORE  ☰"
 	menu_button.custom_minimum_size = Vector2(128, 46)
-	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	menu_button.position = Vector2(-144, 250)
+	menu_button.anchor_left = 1.0
+	menu_button.anchor_right = 1.0
+	menu_button.offset_left = -146.0
+	menu_button.offset_right = -16.0
+	menu_button.offset_top = 250.0
+	menu_button.offset_bottom = 298.0
 	root.add_child(menu_button)
 
 	list_panel = PanelContainer.new()
 	list_panel.visible = false
-	list_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	list_panel.position = Vector2(-238, 300)
+	list_panel.anchor_left = 1.0
+	list_panel.anchor_right = 1.0
+	list_panel.offset_left = -238.0
+	list_panel.offset_right = -16.0
+	list_panel.offset_top = 302.0
+	list_panel.offset_bottom = 554.0
 	root.add_child(list_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 6)
@@ -58,3 +66,17 @@ func _ready() -> void:
 	menu_button.pressed.connect(func() -> void:
 		list_panel.visible = not list_panel.visible
 	)
+	get_viewport().size_changed.connect(_fit_launcher_to_viewport)
+	_fit_launcher_to_viewport()
+
+
+func _fit_launcher_to_viewport() -> void:
+	# Keep the popover within shorter landscape Android viewports.
+	if menu_button == null or list_panel == null:
+		return
+	var height := get_viewport().get_visible_rect().size.y
+	var top := minf(250.0, maxf(104.0, height - 320.0))
+	menu_button.offset_top = top
+	menu_button.offset_bottom = top + 48.0
+	list_panel.offset_top = top + 52.0
+	list_panel.offset_bottom = minf(height - 16.0, top + 310.0)
