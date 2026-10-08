@@ -245,6 +245,7 @@ func _test_operation_report_grade_rules() -> void:
 		_fail("Operation report close-defeat grade is invalid.")
 	if report._grade_from_ratio(0.50, false) != "D":
 		_fail("Operation report defeat grade is invalid.")
+	report.free()
 
 
 func _fail(message: String) -> void:
