@@ -147,6 +147,10 @@ func respond_to_challenge(challenge_id: String, action: String) -> bool:
 		"/v1/pvp/challenges/%s/%s" % [challenge_id, action], {}, true)
 
 
+func get_rivalry_trophies() -> bool:
+	return _request("rivalry_trophies", HTTPClient.METHOD_GET, "/v1/pvp/trophies", {}, true)
+
+
 func get_pvp_history() -> bool:
 	return _request("pvp_history", HTTPClient.METHOD_GET, "/v1/pvp/history", {}, true)
 
