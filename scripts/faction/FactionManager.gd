@@ -53,6 +53,37 @@ const WAR_STRATEGIES := {
 	}
 }
 const WAR_DEFENSE_CYCLE := ["watchful", "fortified", "mobile"]
+const WAR_DOCTRINES := {
+	"disciplined": {
+		"name":"Disciplined",
+		"attack_multiplier":1.00,
+		"counter_bonus_multiplier":1.20,
+		"mismatch_multiplier":1.00,
+		"incoming_modifier":0,
+		"summary":"Stronger counter hits. Best when your officers read the enemy correctly."
+	},
+	"aggressive": {
+		"name":"Aggressive",
+		"attack_multiplier":1.08,
+		"counter_bonus_multiplier":1.00,
+		"mismatch_multiplier":1.00,
+		"incoming_modifier":8,
+		"summary":"Higher attack score, but the opponent scores harder in return."
+	},
+	"adaptive": {
+		"name":"Adaptive",
+		"attack_multiplier":1.00,
+		"counter_bonus_multiplier":1.00,
+		"mismatch_multiplier":0.45,
+		"incoming_modifier":0,
+		"summary":"Cuts the penalty for a missed counter. Safer when the read is uncertain."
+	}
+}
+const WAR_DEFENSE_COUNTERS := {
+	"watchful":"intel",
+	"fortified":"muscle",
+	"mobile":"convoy"
+}
 
 var economy: PlayerEconomy
 var loot: LootInventory
@@ -85,6 +116,11 @@ var daily_tasks: Dictionary = {
 var gift_charges := 0
 var active_rally: Dictionary = {}
 var active_war: Dictionary = {}
+var war_preparation: Dictionary = {
+	"captain_id":"",
+	"defense":"fortified",
+	"doctrine":"disciplined"
+}
 
 var season_period := -1
 var season_points := 0
@@ -300,6 +336,103 @@ func can_start_rally() -> bool:
 
 func can_start_war() -> bool:
 	return has_faction() and get_local_role() in [ROLE_LEADER, ROLE_UNDERBOSS]
+
+
+func _find_member(member_id: String) -> Dictionary:
+	for member in members:
+		if String(member.get("id", "")) == member_id:
+			return member
+	return {}
+
+
+func _ensure_war_preparation() -> void:
+	if not WAR_DOCTRINES.has(String(war_preparation.get("doctrine", ""))):
+		war_preparation["doctrine"] = "disciplined"
+	if String(war_preparation.get("defense", "")) not in WAR_DEFENSE_CYCLE:
+		war_preparation["defense"] = "fortified"
+	var captain_id := String(war_preparation.get("captain_id", ""))
+	if captain_id.is_empty() or _find_member(captain_id).is_empty():
+		war_preparation["captain_id"] = local_member_id if not _find_member(local_member_id).is_empty() else (String(members[0].get("id", "")) if not members.is_empty() else "")
+
+
+func cycle_war_captain() -> bool:
+	if not has_faction() or members.is_empty() or not active_war.is_empty():
+		return false
+	_ensure_war_preparation()
+	var current := String(war_preparation.get("captain_id", ""))
+	var current_index := -1
+	for i in range(members.size()):
+		if String(members[i].get("id", "")) == current:
+			current_index = i
+			break
+	war_preparation["captain_id"] = String(members[(current_index + 1) % members.size()].get("id", ""))
+	changed.emit()
+	return true
+
+
+func cycle_war_defense() -> bool:
+	if not has_faction() or not active_war.is_empty():
+		return false
+	_ensure_war_preparation()
+	var current := String(war_preparation.get("defense", "fortified"))
+	var index := WAR_DEFENSE_CYCLE.find(current)
+	war_preparation["defense"] = String(WAR_DEFENSE_CYCLE[(maxi(0, index) + 1) % WAR_DEFENSE_CYCLE.size()])
+	changed.emit()
+	return true
+
+
+func cycle_war_doctrine() -> bool:
+	if not has_faction() or not active_war.is_empty():
+		return false
+	_ensure_war_preparation()
+	var ids := ["disciplined", "aggressive", "adaptive"]
+	var current := String(war_preparation.get("doctrine", "disciplined"))
+	var index := ids.find(current)
+	war_preparation["doctrine"] = ids[(maxi(0, index) + 1) % ids.size()]
+	changed.emit()
+	return true
+
+
+func get_war_captain_bonus(captain_id: String = "") -> int:
+	var id := captain_id if not captain_id.is_empty() else String(war_preparation.get("captain_id", ""))
+	var captain := _find_member(id)
+	if captain.is_empty():
+		return 0
+	var power_bonus := mini(12, maxi(0, int(captain.get("power", 0))) / 2000)
+	var contribution_bonus := mini(8, maxi(0, int(captain.get("contribution", 0))) / 75)
+	var online_bonus := 4 if bool(captain.get("online", false)) else 0
+	return power_bonus + contribution_bonus + online_bonus
+
+
+func get_war_readiness_score() -> int:
+	_ensure_war_preparation()
+	var score := 50
+	score += mini(15, int(research.get("raid_coordination", 0)) * 3)
+	score += mini(10, get_owned_territory_count() * 4)
+	score += mini(25, get_war_captain_bonus())
+	return clampi(score, 0, 100)
+
+
+func get_war_preparation_summary() -> String:
+	_ensure_war_preparation()
+	var captain := _find_member(String(war_preparation.get("captain_id", "")))
+	var captain_name := String(captain.get("name", "Unassigned"))
+	var doctrine_id := String(war_preparation.get("doctrine", "disciplined"))
+	var doctrine: Dictionary = WAR_DOCTRINES.get(doctrine_id, WAR_DOCTRINES["disciplined"])
+	return "READINESS %d/100 • Captain %s (+%d) • %s doctrine • %s defense" % [
+		get_war_readiness_score(),
+		captain_name,
+		get_war_captain_bonus(),
+		String(doctrine.get("name", doctrine_id)).to_upper(),
+		String(war_preparation.get("defense", "fortified")).to_upper()
+	]
+
+
+func get_war_doctrine_summary() -> String:
+	_ensure_war_preparation()
+	var doctrine_id := String(war_preparation.get("doctrine", "disciplined"))
+	var doctrine: Dictionary = WAR_DOCTRINES.get(doctrine_id, WAR_DOCTRINES["disciplined"])
+	return "%s — %s" % [String(doctrine.get("name", doctrine_id)), String(doctrine.get("summary", ""))]
 
 
 func get_permissions_summary() -> String:
@@ -736,6 +869,7 @@ func start_prototype_war() -> bool:
 	if candidates.is_empty():
 		return false
 	var opponent: Dictionary = candidates[0]
+	_ensure_war_preparation()
 	active_war = {
 		"opponent_id": String(opponent["id"]),
 		"opponent_name": String(opponent["name"]),
@@ -749,7 +883,12 @@ func start_prototype_war() -> bool:
 		"reward_tier": "",
 		"attack_cursor": 0,
 		"attack_history": [],
-		"last_attack": {}
+		"last_attack": {},
+		"captain_id": String(war_preparation.get("captain_id", "")),
+		"captain_bonus": get_war_captain_bonus(),
+		"defense_stance": String(war_preparation.get("defense", "fortified")),
+		"doctrine": String(war_preparation.get("doctrine", "disciplined")),
+		"readiness": get_war_readiness_score()
 	}
 	war_reward_claimed = false
 	war_started.emit(String(opponent["name"]))
@@ -779,10 +918,11 @@ func get_last_war_attack_summary() -> String:
 	var last = active_war.get("last_attack", {})
 	if not (last is Dictionary) or last.is_empty():
 		return "Enemy stance: %s • choose a counter-plan." % get_current_war_defense().to_upper()
-	return "%s vs %s • %s • %d–%d pts%s" % [
+	return "%s vs %s • %s • Defense %s • %d–%d pts%s" % [
 		String(last.get("strategy_name", "Attack")),
 		String(last.get("enemy_defense", "")).to_upper(),
 		"COUNTER HIT" if bool(last.get("countered", false)) else "NO COUNTER",
+		"HELD" if bool(last.get("defense_countered", false)) else "BREACHED",
 		int(last.get("our_points", 0)),
 		int(last.get("their_points", 0)),
 		" • ROUND WON" if bool(last.get("victory", false)) else " • ROUND LOST"
@@ -804,7 +944,7 @@ func get_war_attack_history_lines() -> PackedStringArray:
 			String(attack.get("enemy_defense", "")).to_upper(),
 			int(attack.get("our_points", 0)),
 			int(attack.get("their_points", 0)),
-			" • COUNTER" if bool(attack.get("countered", false)) else ""
+			(" • ATTACK COUNTER" if bool(attack.get("countered", false)) else "") + (" • DEFENSE COUNTER" if bool(attack.get("defense_countered", false)) else "")
 		])
 	return lines
 
@@ -825,15 +965,19 @@ func perform_war_attack(strategy_id: String) -> Dictionary:
 			break
 
 	var strategy: Dictionary = WAR_STRATEGIES[strategy_id]
+	var doctrine_id := String(active_war.get("doctrine", "disciplined"))
+	var doctrine: Dictionary = WAR_DOCTRINES.get(doctrine_id, WAR_DOCTRINES["disciplined"])
 	var enemy_defense := get_current_war_defense()
 	var countered := enemy_defense == String(strategy.get("counter", ""))
 	var territory_bonus := get_owned_territory_count() * 10
-	var base_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5) + territory_bonus
-	var our_points := roundi(float(base_points) * float(strategy.get("base_multiplier", 1.0)))
+	var readiness_bonus := maxi(0, int(active_war.get("readiness", 50)) - 50) / 5
+	var captain_bonus := int(active_war.get("captain_bonus", 0))
+	var base_points := 100 + faction_level * 15 + int(research["raid_coordination"]) * 20 + mini(100, contribution / 5) + territory_bonus + readiness_bonus + captain_bonus
+	var our_points := roundi(float(base_points) * float(strategy.get("base_multiplier", 1.0)) * float(doctrine.get("attack_multiplier", 1.0)))
 	if countered:
-		our_points += int(strategy.get("counter_bonus", 0))
+		our_points += roundi(float(strategy.get("counter_bonus", 0)) * float(doctrine.get("counter_bonus_multiplier", 1.0)))
 	else:
-		our_points = maxi(1, our_points - int(strategy.get("mismatch_penalty", 0)))
+		our_points = maxi(1, our_points - roundi(float(strategy.get("mismatch_penalty", 0)) * float(doctrine.get("mismatch_multiplier", 1.0))))
 
 	var their_points := 95 + faction_level * 10 + int(active_war.get("opponent_rating", 0)) / 100
 	var defense_modifier := 0
@@ -844,13 +988,23 @@ func perform_war_attack(strategy_id: String) -> Dictionary:
 			defense_modifier = 6
 		"watchful":
 			defense_modifier = 9
-	their_points += defense_modifier
+	their_points += defense_modifier + int(doctrine.get("incoming_modifier", 0))
+	var enemy_attack := ["muscle", "convoy", "intel"][int(active_war.get("attack_cursor", 0)) % 3]
+	var our_defense := String(active_war.get("defense_stance", "fortified"))
+	var defense_countered := String(WAR_DEFENSE_COUNTERS.get(our_defense, "")) == enemy_attack
+	if defense_countered:
+		their_points = maxi(1, their_points - 28)
 
 	var result := {
 		"strategy_id":strategy_id,
 		"strategy_name":String(strategy.get("name", strategy_id)),
 		"enemy_defense":enemy_defense,
 		"countered":countered,
+		"defense_countered":defense_countered,
+		"enemy_attack":enemy_attack,
+		"doctrine":doctrine_id,
+		"captain_bonus":captain_bonus,
+		"readiness":int(active_war.get("readiness", 50)),
 		"our_points":our_points,
 		"their_points":their_points,
 		"victory":our_points > their_points
@@ -947,12 +1101,13 @@ func get_war_summary() -> String:
 	var extra := ""
 	if status == "complete":
 		extra = " • %s • %s reward" % [String(active_war.get("result", "")), String(active_war.get("reward_tier", "BRONZE"))]
-	return "%s • %s • Score %d–%d • Attacks %d • %s%s" % [
+	return "%s • %s • Score %d–%d • Attacks %d • Readiness %d • %s%s" % [
 		String(active_war.get("opponent_name", "Opponent")),
 		status.to_upper(),
 		int(active_war.get("our_score", 0)),
 		int(active_war.get("their_score", 0)),
 		int(active_war.get("attacks_remaining", 0)),
+		int(active_war.get("readiness", 50)),
 		_format_time(float(active_war.get("seconds_remaining", 0.0))),
 		extra
 	]
@@ -1044,6 +1199,7 @@ func get_save_data() -> Dictionary:
 		"season_points": season_points,
 		"season_wins": season_wins,
 		"pending_invites": pending_invites.duplicate(true),
+		"war_preparation": war_preparation.duplicate(true),
 		"faction_territory": faction_territory.duplicate(true)
 	}
 
@@ -1086,6 +1242,13 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 					int(daily_tasks[task_id]["goal"])
 				)
 
+	var saved_preparation = data.get("war_preparation", {})
+	if saved_preparation is Dictionary:
+		war_preparation["captain_id"] = String(saved_preparation.get("captain_id", war_preparation["captain_id"]))
+		war_preparation["defense"] = String(saved_preparation.get("defense", war_preparation["defense"]))
+		war_preparation["doctrine"] = String(saved_preparation.get("doctrine", war_preparation["doctrine"]))
+	_ensure_war_preparation()
+
 	var saved_invites = data.get("pending_invites", [])
 	pending_invites.clear()
 	if saved_invites is Array:
@@ -1115,6 +1278,16 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			active_war["attack_history"] = []
 		if not active_war.has("last_attack") or not (active_war["last_attack"] is Dictionary):
 			active_war["last_attack"] = {}
+		if not active_war.has("captain_id"):
+			active_war["captain_id"] = String(war_preparation.get("captain_id", ""))
+		if not active_war.has("captain_bonus"):
+			active_war["captain_bonus"] = get_war_captain_bonus(String(active_war["captain_id"]))
+		if not active_war.has("defense_stance") or String(active_war["defense_stance"]) not in WAR_DEFENSE_CYCLE:
+			active_war["defense_stance"] = String(war_preparation.get("defense", "fortified"))
+		if not active_war.has("doctrine") or not WAR_DOCTRINES.has(String(active_war["doctrine"])):
+			active_war["doctrine"] = String(war_preparation.get("doctrine", "disciplined"))
+		if not active_war.has("readiness"):
+			active_war["readiness"] = get_war_readiness_score()
 	if not active_war.is_empty() and String(active_war.get("status", "active")) == "active":
 		active_war["seconds_remaining"] = maxf(0.0, float(active_war.get("seconds_remaining", 0.0)) - maxf(0.0, offline_seconds))
 		if float(active_war["seconds_remaining"]) <= 0.0:
