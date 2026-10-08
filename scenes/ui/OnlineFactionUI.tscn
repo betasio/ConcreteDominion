@@ -208,6 +208,20 @@ layout_mode = 2
 text = "No PvP match"
 autowrap_mode = 2
 
+[node name="SeasonTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "ONLINE PvP SEASON • SERVER RANKINGS"
+
+[node name="RefreshSeasons" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh seasonal leaderboard"
+
+[node name="SeasonStandings" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+text = "Connect to refresh server standings."
+autowrap_mode = 2
+
 [node name="Status" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
