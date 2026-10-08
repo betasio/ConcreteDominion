@@ -12,6 +12,7 @@ func _ready() -> void:
 	_check_resource("res://scenes/ui/SettingsDiagnosticsUI.tscn")
 	_check_resource("res://scenes/ui/CombatStrategyUI.tscn")
 	_check_resource("res://scenes/ui/EndgameUI.tscn")
+	_check_resource("res://scenes/ui/OnlineFactionUI.tscn")
 	_check_resource("res://scenes/ui/OperationResultUI.tscn")
 	_check_resource("res://scenes/ui/WorldControlUI.tscn")
 	_check_resource("res://scenes/tests/DataValidation.tscn")
@@ -404,6 +405,17 @@ func _ready() -> void:
 		_fail("TurfOverlay script is not active.")
 	elif city.lot_c == null or city.lot_d == null:
 		_fail("Resource-production build lots are missing.")
+
+	var online_ui := game.get_node_or_null("OnlineFactionUI") as OnlineFactionUI
+	if online_ui == null or online_ui.client == null:
+		_fail("Online Faction developer UI/client is missing.")
+	else:
+		if not online_ui.client.session_token.is_empty():
+			_fail("Online Faction session must not auto-load from plaintext saves.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/Refresh") == null:
+			_fail("Online Faction server-sync button is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/Accept") == null:
+			_fail("Online invitation accept button is missing.")
 
 	game.queue_free()
 	await get_tree().process_frame
