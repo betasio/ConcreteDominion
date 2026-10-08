@@ -155,6 +155,42 @@ layout_mode = 2
 text = "No online war loaded."
 autowrap_mode = 2
 
+[node name="PvPHeader" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "FACTION VS FACTION • DEVELOPER TEST"
+
+[node name="QueuePvP" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Queue Faction (leader)"
+
+[node name="RefreshPvP" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh PvP"
+
+[node name="PvPPlans" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+
+[node name="PvPMuscle" type="Button" parent="Root/Panel/Margin/Scroll/VBox/PvPPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Muscle"
+
+[node name="PvPConvoy" type="Button" parent="Root/Panel/Margin/Scroll/VBox/PvPPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Convoy"
+
+[node name="PvPIntel" type="Button" parent="Root/Panel/Margin/Scroll/VBox/PvPPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Intel"
+
+[node name="PvPStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 125)
+layout_mode = 2
+text = "No PvP match"
+autowrap_mode = 2
+
 [node name="Status" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
