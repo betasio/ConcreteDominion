@@ -254,6 +254,13 @@ func _refresh() -> void:
 		pvp_lines.append("Searching for another queued Faction. Refresh to check.")
 	else:
 		pvp_lines.append("No PvP match yet. Both Faction leaders must queue.")
+	var our_card := $Root/Panel/Margin/Scroll/VBox/PvPMatchup/OurCard as FactionIdentityCard
+	var rival_card := $Root/Panel/Margin/Scroll/VBox/PvPMatchup/OpponentCard as FactionIdentityCard
+	var own_identity = online_pvp.get("our_identity", {})
+	var rival_identity = online_pvp.get("opponent_identity", {})
+	our_card.set_identity(own_identity if own_identity is Dictionary else {})
+	rival_card.set_identity(rival_identity if rival_identity is Dictionary else {})
+	$Root/Panel/Margin/Scroll/VBox/PvPMatchup.visible = pvp_data is Dictionary and not pvp_data.is_empty()
 	$Root/Panel/Margin/Scroll/VBox/PvPStatus.text = "\n".join(pvp_lines)
 	var pvp_active := pvp_data is Dictionary and String(pvp_data.get("status", "")) == "active" and int(pvp_data.get("our_rounds", 0)) < 6
 	for button in [
@@ -278,10 +285,12 @@ func _refresh() -> void:
 		for entry in season_rankings.get("leaderboard", []):
 			if not (entry is Dictionary):
 				continue
-			ranking_lines.append("#%d [%s] %s • %d points • %d wins" % [
+			ranking_lines.append("#%d [%s] %s • %s / %s • %d points • %d wins" % [
 				int(entry.get("rank", 0)),
 				String(entry.get("tag", "")),
 				String(entry.get("name", "")),
+				String(entry.get("emblem", "shield")).to_upper(),
+				String(entry.get("banner", "obsidian")).to_upper(),
 				int(entry.get("points", 0)),
 				int(entry.get("wins", 0))
 			])
