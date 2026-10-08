@@ -223,6 +223,37 @@ layout_mode = 2
 text = "WAR RULES"
 autowrap_mode = 2
 
+[node name="WarStrategy" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+text = "WAR STRATEGY"
+autowrap_mode = 2
+
+[node name="WarPlanButtons" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Muscle" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarPlanButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Muscle"
+
+[node name="Convoy" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarPlanButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Convoy"
+
+[node name="Intel" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarPlanButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Intel"
+
+[node name="WarAttackReport" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+text = "WAR ATTACK REPORT"
+autowrap_mode = 2
+
 [node name="WarButtons" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
@@ -231,11 +262,6 @@ theme_override_constants/separation = 8
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Start Prototype War"
-
-[node name="WarAttack" type="Button" parent="Root/Panel/Margin/Scroll/VBox/WarButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Run War Attack"
 
 [node name="WarRewardButtons" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
