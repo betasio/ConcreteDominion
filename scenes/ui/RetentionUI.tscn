@@ -25,14 +25,16 @@ text = "Rewards • Day 1"
 
 [node name="TutorialBanner" type="PanelContainer" parent="Root"]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = -145.0
-offset_right = -24.0
-offset_bottom = -96.0
-grow_horizontal = 2
+offset_left = -705.0
+offset_top = -105.0
+offset_right = -155.0
+offset_bottom = -61.0
+grow_horizontal = 0
 grow_vertical = 0
 
 [node name="Label" type="Label" parent="Root/TutorialBanner"]
