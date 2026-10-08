@@ -25,7 +25,7 @@ offset_top = 194.0
 offset_right = 490.0
 offset_bottom = 238.0
 grow_horizontal = 2
-text = "Online • Dev"
+text = "Faction Hub"
 
 [node name="Panel" type="PanelContainer" parent="Root"]
 visible = false
@@ -59,8 +59,51 @@ theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
-text = "ONLINE FACTION • DEVELOPER PREVIEW"
+text = "FACTION HUB • ONLINE PREVIEW"
 theme_override_font_sizes/font_size = 22
+
+[node name="HubNav1" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="HubIdentity" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Identity"
+
+[node name="HubWars" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Wars"
+
+[node name="HubRivals" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Rivals"
+
+[node name="HubNav2" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="HubRankings" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Rankings"
+
+[node name="HubPrestige" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Prestige"
+
+[node name="HubAccount" type="Button" parent="Root/Panel/Margin/Scroll/VBox/HubNav2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Account"
+
+[node name="HubHeading" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "FACTION IDENTITY"
+theme_override_font_sizes/font_size = 18
 
 [node name="Warning" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
