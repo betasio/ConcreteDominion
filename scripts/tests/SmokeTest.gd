@@ -281,6 +281,7 @@ func _ready() -> void:
 	if game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/Prestige") == null or game.get_node_or_null("EndgameUI/Root/Panel/Margin/Scroll/VBox/EquipPrestige") == null:
 		_fail("Dominion prestige presentation is missing.")
 
+	var raid_battle := game.get_node_or_null("RaidBattle") as RaidBattle
 	var operation_results := game.get_node_or_null("OperationResultUI") as OperationResultUI
 	if operation_results == null:
 		_fail("Premium operation report UI is missing.")
