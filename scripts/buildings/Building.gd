@@ -76,7 +76,10 @@ func _draw() -> void:
 		var art_width := 208.0 if building_type == &"safehouse" else 172.0
 		var art_height := 186.0 if building_type == &"safehouse" else 154.0
 		var scale_factor := minf(art_width / maxf(1.0, size.x), art_height / maxf(1.0, size.y))
-		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -42), size * scale_factor), false)
+		# Anchor the illustration by its footprint so roofs rise above the lot
+		# rather than drifting when different source aspect ratios are imported.
+		var rendered_size := size * scale_factor
+		draw_texture_rect(art_texture, Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size), false)
 		if is_constructing:
 			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
 		if is_selected:
