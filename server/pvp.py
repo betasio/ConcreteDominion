@@ -121,6 +121,7 @@ def _snapshot(store, fid):
     ledger = store.execute(
         "SELECT faction_id,points,reason FROM pvp_ledger WHERE match_id=?", (war["id"],)
     ).fetchall()
+    from server.rivalries import trophy_case
     return {"queued":queue,"match":{
         "id":war["id"],"status":war["status"],"opponent_name":opponent["name"],
         "opponent_tag":opponent["tag"],"our_score":war["score_a"] if side_a else war["score_b"],
@@ -131,6 +132,8 @@ def _snapshot(store, fid):
         ) if war["status"] == "complete" else "",
         "defense":defense
     },"our_identity":identities[fid],"opponent_identity":identities[opponent_id],
+       "our_rivalry_prestige":trophy_case(store,fid),
+       "opponent_rivalry_prestige":trophy_case(store,opponent_id),
        "attacks":[dict(r) for r in attacks],
        "contributions":[dict(r) for r in members],
        "ledger":[dict(r) for r in ledger]}
