@@ -9,7 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from server import pvp, seasons, profiles, rivalries
+from server import pvp, seasons, profiles, rivalries, challenges
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCHEMA = """
@@ -64,6 +64,7 @@ class Store:
         self.db.executescript(pvp.PVP_SCHEMA)
         self.db.executescript(seasons.ARCHIVE_SCHEMA)
         self.db.executescript(profiles.PROFILE_SCHEMA)
+        self.db.executescript(challenges.CHALLENGE_SCHEMA)
         if "created_at" not in {r["name"] for r in self.db.execute("PRAGMA table_info(pvp_ledger)")}:
             self.db.execute("ALTER TABLE pvp_ledger ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
             self.db.execute("UPDATE pvp_ledger SET created_at=unixepoch() WHERE created_at=0")
@@ -248,6 +249,9 @@ class Store:
             if not actor["faction_id"]:
                 raise ApiError(403, "Faction membership required")
             return 200, seasons.leaderboard(self, actor["faction_id"])
+        challenge_result = challenges.route(self, method, path, data, actor)
+        if challenge_result is not None:
+            return challenge_result
         profile_result = profiles.route(self, method, path, data, actor)
         if profile_result is not None:
             return profile_result
