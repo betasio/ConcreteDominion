@@ -19,6 +19,7 @@ func _draw() -> void:
 		Vector2i(10, 13), Vector2i(13, 13), Vector2i(7, 13),
 		Vector2i(16, 13)
 	]
+	_draw_compound_routes()
 	for cell in properties:
 		_draw_pad(city_map.iso_to_screen(cell), cell == Vector2i(10, 10))
 	# Distinct property boundaries and shared driveways frame the compound.
@@ -48,3 +49,46 @@ func _draw_pad(pos: Vector2, headquarters: bool) -> void:
 func _draw_bollard(pos: Vector2) -> void:
 	draw_line(pos, pos + Vector2(0, -16), Color("#43505a"), 4.0)
 	draw_circle(pos + Vector2(0, -16), 3.0, Color("#e8ba72"))
+
+
+func _draw_compound_routes() -> void:
+	# Short paved internal links create a connected compound, not a grid of pads.
+	# Render below property foundations and all selectable buildings.
+	var routes: Array[PackedVector2Array] = [
+		PackedVector2Array([
+			city_map.iso_to_screen(Vector2i(10, 10)),
+			city_map.iso_to_screen(Vector2i(13, 10)),
+			city_map.iso_to_screen(Vector2i(13, 13))
+		]),
+		PackedVector2Array([
+			city_map.iso_to_screen(Vector2i(10, 10)),
+			city_map.iso_to_screen(Vector2i(10, 13)),
+			city_map.iso_to_screen(Vector2i(7, 13))
+		]),
+		PackedVector2Array([
+			city_map.iso_to_screen(Vector2i(10, 10)),
+			city_map.iso_to_screen(Vector2i(10, 7))
+		])
+	]
+	for points in routes:
+		draw_polyline(points, Color("#b19a70", 0.76), 25.0, true)
+		draw_polyline(points, Color("#25323e"), 20.0, true)
+		draw_polyline(points, Color("#69747a", 0.50), 1.5, true)
+
+	# Separate stone wall segments form an open perimeter; the west gate
+	# remains unobstructed and the compound stays reachable visually.
+	var perimeter: Array[Vector2i] = [
+		Vector2i(6, 8), Vector2i(7, 7), Vector2i(8, 6),
+		Vector2i(14, 6), Vector2i(16, 8), Vector2i(18, 10),
+		Vector2i(17, 15), Vector2i(15, 17), Vector2i(9, 17),
+		Vector2i(6, 15)
+	]
+	var outline := PackedVector2Array()
+	for cell in perimeter:
+		outline.append(city_map.iso_to_screen(cell))
+	draw_polyline(outline, Color("#384853", 0.82), 7.0, true)
+	draw_polyline(outline, Color("#d0ae72", 0.64), 2.0, true)
+	for index in range(0, outline.size(), 2):
+		var p: Vector2 = outline[index]
+		draw_line(p, p + Vector2(0, -14), Color("#43505d"), 5.0)
+		draw_circle(p + Vector2(0, -15), 3.0, Color("#ebc47e"))
