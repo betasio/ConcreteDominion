@@ -5,6 +5,10 @@ standings, and non-spendable season ledger points are computed by the server.
 """
 import json
 import secrets
+import time
+
+QUEUE_TTL_SECONDS = 900
+MATCH_TTL_SECONDS = 86400
 
 PVP_SCHEMA = """
 CREATE TABLE IF NOT EXISTS pvp_queue (
@@ -19,6 +23,7 @@ CREATE TABLE IF NOT EXISTS pvp_matches (
  score_a INTEGER NOT NULL DEFAULT 0, score_b INTEGER NOT NULL DEFAULT 0,
  rounds_a INTEGER NOT NULL DEFAULT 0, rounds_b INTEGER NOT NULL DEFAULT 0,
  winner_id TEXT NOT NULL DEFAULT '',
+ created_at INTEGER NOT NULL DEFAULT (unixepoch()),
  FOREIGN KEY(faction_a) REFERENCES factions(id),
  FOREIGN KEY(faction_b) REFERENCES factions(id)
 );
@@ -39,6 +44,23 @@ CREATE TABLE IF NOT EXISTS pvp_ledger (
 CREATE INDEX IF NOT EXISTS pvp_match_a ON pvp_matches(faction_a,status);
 CREATE INDEX IF NOT EXISTS pvp_match_b ON pvp_matches(faction_b,status);
 """
+
+
+def _expire(store):
+    now = int(time.time())
+    with store.db:
+        store.execute("DELETE FROM pvp_queue WHERE queued_at < ?", (now - QUEUE_TTL_SECONDS,))
+        expired = store.execute(
+            "SELECT id,faction_a,faction_b FROM pvp_matches WHERE status='active' AND created_at < ?",
+            (now - MATCH_TTL_SECONDS,)
+        ).fetchall()
+        for match in expired:
+            store.execute("UPDATE pvp_matches SET status='complete',winner_id='' WHERE id=?", (match["id"],))
+            for fid in (match["faction_a"],match["faction_b"]):
+                store.execute(
+                    "INSERT OR IGNORE INTO pvp_ledger(match_id,faction_id,points,reason) VALUES(?,?,0,'pvp_timeout')",
+                    (match["id"],fid)
+                )
 
 
 def _member_faction(store, actor):
@@ -106,9 +128,10 @@ def _snapshot(store, fid):
 
 def route(store, method, path, data, actor):
     from server.app import ApiError
-    if path not in ("/v1/pvp", "/v1/pvp/queue", "/v1/pvp/attack"):
+    if path not in ("/v1/pvp", "/v1/pvp/queue", "/v1/pvp/attack", "/v1/pvp/cancel"):
         return None
     fid = _member_faction(store, actor)
+    _expire(store)
     if method == "GET" and path == "/v1/pvp":
         return 200, _snapshot(store,fid)
 
@@ -138,6 +161,17 @@ def route(store, method, path, data, actor):
                     "INSERT INTO pvp_matches(id,faction_a,faction_b,status) VALUES(?,?,?,'active')",
                     (match_id,oid,fid)
                 )
+        return 200, _snapshot(store,fid)
+
+    if method == "POST" and path == "/v1/pvp/cancel":
+        role = store.execute("SELECT role FROM memberships WHERE player_id=? AND faction_id=?",
+                             (actor["id"],fid)).fetchone()
+        if role is None or role["role"] != "leader":
+            raise ApiError(403, "Only Faction leaders may cancel queue")
+        with store.db:
+            deleted = store.execute("DELETE FROM pvp_queue WHERE faction_id=?", (fid,)).rowcount
+        if not deleted:
+            raise ApiError(409, "Faction is not queued; active matches cannot be cancelled")
         return 200, _snapshot(store,fid)
 
     if method == "POST" and path == "/v1/pvp/attack":
