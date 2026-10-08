@@ -5,7 +5,10 @@ var raid_battle: RaidBattle
 var world_control: WorldControlManager
 var endgame: EndgameManager
 var presentation: PresentationCatalog
+var history: BattleReportManager
+var history_index := 0
 
+@onready var reports_button: Button = $Root/Reports
 @onready var panel: PanelContainer = $Root/Panel
 @onready var title: Label = $Root/Panel/Margin/VBox/Title
 @onready var art: TextureRect = $Root/Panel/Margin/VBox/Art
@@ -13,7 +16,12 @@ var presentation: PresentationCatalog
 @onready var grade: Label = $Root/Panel/Margin/VBox/Grade
 @onready var combat: Label = $Root/Panel/Margin/VBox/Combat
 @onready var rewards: Label = $Root/Panel/Margin/VBox/Rewards
+@onready var advice: Label = $Root/Panel/Margin/VBox/Advice
 @onready var progress: Label = $Root/Panel/Margin/VBox/Progress
+@onready var newer_button: Button = $Root/Panel/Margin/VBox/HistoryNav/Newer
+@onready var history_status: Label = $Root/Panel/Margin/VBox/HistoryNav/Status
+@onready var older_button: Button = $Root/Panel/Margin/VBox/HistoryNav/Older
+@onready var rematch_button: Button = $Root/Panel/Margin/VBox/Rematch
 @onready var close_button: Button = $Root/Panel/Margin/VBox/Close
 
 
@@ -21,17 +29,70 @@ func setup(
 	battle: RaidBattle,
 	control: WorldControlManager,
 	endgame_manager: EndgameManager,
-	presentation_catalog: PresentationCatalog
+	presentation_catalog: PresentationCatalog,
+	report_history: BattleReportManager
 ) -> void:
 	raid_battle = battle
 	world_control = control
 	endgame = endgame_manager
 	presentation = presentation_catalog
+	history = report_history
 
-	raid_battle.battle_resolved.connect(_show_raid_report)
-	world_control.operation_resolved.connect(_show_family_operation_report)
+	history.report_recorded.connect(_on_report_recorded)
+	history.changed.connect(_refresh_history_controls)
+	history.rematch_started.connect(_on_rematch_started)
+	history.rematch_blocked.connect(_on_rematch_blocked)
+	reports_button.pressed.connect(_open_history)
+	newer_button.pressed.connect(_show_newer)
+	older_button.pressed.connect(_show_older)
+	rematch_button.pressed.connect(_rematch_current)
 	close_button.pressed.connect(_close)
 	panel.visible = false
+	_refresh_history_controls()
+
+
+func _on_report_recorded(_report: Dictionary) -> void:
+	history_index = 0
+	_show_history_report()
+
+
+func _open_history() -> void:
+	if history == null or history.get_report_count() <= 0:
+		return
+	history_index = clampi(history_index, 0, history.get_report_count() - 1)
+	_show_history_report()
+
+
+func _show_newer() -> void:
+	if history == null:
+		return
+	history_index = maxi(0, history_index - 1)
+	_show_history_report()
+
+
+func _show_older() -> void:
+	if history == null:
+		return
+	history_index = mini(history.get_report_count() - 1, history_index + 1)
+	_show_history_report()
+
+
+func _show_history_report() -> void:
+	if history == null:
+		return
+	var report := history.get_report(history_index)
+	if report.is_empty():
+		return
+	_show_report(report)
+
+
+func _show_report(report: Dictionary) -> void:
+	if String(report.get("source", "")) == "family_operation":
+		_show_family_operation_report(report)
+	else:
+		_show_raid_report(report)
+	advice.text = "TACTICAL READ\n%s" % history.get_advice(report) if history != null else "TACTICAL READ\nReview the result before the next hit."
+	_refresh_history_controls()
 
 
 func _show_raid_report(result: Dictionary) -> void:
@@ -89,6 +150,55 @@ func _show_family_operation_report(result: Dictionary) -> void:
 	progress.text = _get_dominion_progress_line(target_id, victory)
 	_apply_art(target_id, boss)
 	_present()
+
+
+func _rematch_current() -> void:
+	if history == null:
+		return
+	var report := history.get_report(history_index)
+	if report.is_empty():
+		return
+	if history.rematch(report):
+		panel.visible = false
+	else:
+		_refresh_history_controls()
+
+
+func _on_rematch_started(_report: Dictionary) -> void:
+	panel.visible = false
+
+
+func _on_rematch_blocked(reason: String) -> void:
+	rematch_button.text = reason
+	rematch_button.disabled = true
+
+
+func _refresh_history_controls() -> void:
+	if history == null:
+		reports_button.text = "Battle Reports"
+		reports_button.disabled = true
+		return
+
+	var count := history.get_report_count()
+	reports_button.text = "Battle Reports (%d)" % count
+	reports_button.disabled = count <= 0
+	if count <= 0:
+		history_status.text = "No Reports"
+		newer_button.disabled = true
+		older_button.disabled = true
+		rematch_button.disabled = true
+		rematch_button.text = "Rematch"
+		return
+
+	history_index = clampi(history_index, 0, count - 1)
+	history_status.text = "Report %d/%d" % [history_index + 1, count]
+	newer_button.disabled = history_index <= 0
+	older_button.disabled = history_index >= count - 1
+
+	var report := history.get_report(history_index)
+	var check := history.can_rematch(report)
+	rematch_button.disabled = not bool(check.get("ok", false))
+	rematch_button.text = "Rematch" if not rematch_button.disabled else String(check.get("reason", "Rematch unavailable"))
 
 
 func _get_raid_reward_line(result: Dictionary) -> String:
