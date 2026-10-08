@@ -14,6 +14,26 @@ var season_rankings: Dictionary = {}
 var season_history: Dictionary = {}
 var viewed_identity: Dictionary = {}
 var status_message := "Disconnected"
+var hub_section := "Identity"
+const HUB_GROUPS := {
+	"Account": ["Warning", "DisplayName", "Register", "SessionToken", "UseSession",
+		"ClearSession", "RecoveryPlayer", "RecoveryKey", "RecoverAccount",
+		"FactionName", "FactionTag", "CreateFaction", "TargetPlayer", "Invite",
+		"Invitations", "Accept", "Refresh"],
+	"Wars": ["WarTitle", "StartWar", "RefreshWar", "AttackPlans", "WarStatus",
+		"PvPMatchup", "PvPHeader", "QueuePvP", "CancelPvP", "RefreshPvP",
+		"PvPPlans", "PvPStatus"],
+	"Rivals": ["ChallengeTitle", "RivalFactionId", "SendChallenge",
+		"RefreshChallenges", "AcceptChallenge", "DeclineChallenge",
+		"CancelChallenge", "ChallengeStatus", "RefreshTrophies",
+		"TrophyStatus", "RivalryTitle", "RefreshRivalries", "RivalryStatus"],
+	"Rankings": ["SeasonTitle", "RefreshSeasons", "SeasonStandings"],
+	"Prestige": ["PrestigeTitle", "RefreshPrestige", "PrestigeHistory"],
+	"Identity": ["FactionCard", "IdentityTitle", "Emblem", "Banner",
+		"ApplyIdentity", "FeaturedBadge", "ApplyBadge", "ProfileLookup",
+		"ViewFactionProfile", "ViewMyProfile", "IdentityStatus"]
+}
+
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var status_label: Label = $Root/Panel/Margin/Scroll/VBox/Status
@@ -25,6 +45,9 @@ func _ready() -> void:
 	add_child(client)
 	client.request_completed.connect(_on_completed)
 	client.connection_failed.connect(_on_failed)
+	for section in HUB_GROUPS.keys():
+		var tab := $Root/Panel/Margin/Scroll/VBox.get_node("Hub%s" % section) as Button
+		tab.pressed.connect(_select_hub_section.bind(section))
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Close.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Register.pressed.connect(func():
@@ -69,7 +92,22 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle.pressed.connect(func(): client.attack_war("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy.pressed.connect(func(): client.attack_war("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel.pressed.connect(func(): client.attack_war("intel"))
+	_select_hub_section("Identity")
 	_refresh()
+
+
+func _select_hub_section(section: String) -> void:
+	if not HUB_GROUPS.has(section):
+		return
+	hub_section = section
+	var content := $Root/Panel/Margin/Scroll/VBox
+	for key in HUB_GROUPS.keys():
+		for control_name in HUB_GROUPS[key]:
+			content.get_node(control_name).visible = key == section
+		var tab := content.get_node("Hub%s" % key) as Button
+		tab.button_pressed = key == section
+	content.get_node("HubHeading").text = section.to_upper()
+	$Root/Panel/Margin/Scroll.scroll_vertical = 0
 
 
 func _toggle() -> void:
