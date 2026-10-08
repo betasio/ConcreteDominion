@@ -424,8 +424,25 @@ func _ready() -> void:
 			_fail("Online Faction PvP queue is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/CancelPvP") == null:
 			_fail("Online Faction PvP queue cancellation is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RecoverAccount") == null:
+			_fail("Developer account recovery controls are missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel") == null:
 			_fail("Online Faction PvP attack controls are missing.")
+
+	var test_client := OnlineFactionClient.new()
+	add_child(test_client)
+	test_client.set_session("smoke-test-receipt-isolation")
+	test_client._retry_id = "abcdefabcdefabcdefabcdefabcdefab"
+	test_client._retry_strategy = "convoy"
+	test_client._save_retry_receipt()
+	var second_client := OnlineFactionClient.new()
+	add_child(second_client)
+	second_client.set_session("smoke-test-receipt-isolation")
+	if second_client._retry_id != test_client._retry_id or second_client._retry_strategy != "convoy":
+		_fail("PvP pending receipt did not persist across client recreation.")
+	second_client._clear_retry_receipt()
+	test_client.queue_free()
+	second_client.queue_free()
 
 	game.queue_free()
 	await get_tree().process_frame
