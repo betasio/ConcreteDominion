@@ -7,6 +7,7 @@ var online_faction: Dictionary = {}
 var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
+var season_rankings: Dictionary = {}
 var status_message := "Disconnected"
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -38,6 +39,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.pressed.connect(client.queue_pvp)
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
+	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.attack_pvp("intel"))
@@ -73,6 +75,7 @@ func _disconnect() -> void:
 	invites.clear()
 	online_war.clear()
 	online_pvp.clear()
+	season_rankings.clear()
 	status_message = "Disconnected"
 	_refresh()
 
@@ -126,6 +129,8 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_war = data.duplicate(true)
 		"pvp":
 			online_pvp = data.duplicate(true)
+		"season_rankings":
+			season_rankings = data.duplicate(true)
 		"pvp_queue", "pvp_cancel", "pvp_attack":
 			client.get_pvp()
 		"faction":
@@ -218,3 +223,28 @@ func _refresh() -> void:
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.disabled = not bool(online_pvp.get("queued", false)) or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.disabled = client.session_token.is_empty() or client.is_busy()
+	var season_info = season_rankings.get("season", {})
+	var ranking_lines := PackedStringArray()
+	if season_info is Dictionary and not season_info.is_empty():
+		ranking_lines.append("Season %d • UTC cycle (%d–%d)" % [
+			int(season_info.get("id", 0)),
+			int(season_info.get("starts_at", 0)),
+			int(season_info.get("ends_at", 0))
+		])
+		ranking_lines.append("Your rank: %s • Preview points only" % str(season_rankings.get("your_rank", "Unranked")))
+		for entry in season_rankings.get("leaderboard", []):
+			if not (entry is Dictionary):
+				continue
+			ranking_lines.append("#%d [%s] %s • %d points • %d wins" % [
+				int(entry.get("rank", 0)),
+				String(entry.get("tag", "")),
+				String(entry.get("name", "")),
+				int(entry.get("points", 0)),
+				int(entry.get("wins", 0))
+			])
+			if ranking_lines.size() >= 12:
+				break
+	else:
+		ranking_lines.append("Connect and refresh to view server rankings.")
+	$Root/Panel/Margin/Scroll/VBox/SeasonStandings.text = "\n".join(ranking_lines)
