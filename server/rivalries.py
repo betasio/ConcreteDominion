@@ -45,3 +45,43 @@ def rivalry_history(store, faction_id, limit=20):
         row[result_key] += 1
     return {"matches":history,"rivals":sorted(rivals.values(),key=lambda x:(-x["played"],x["name"],x["opponent_id"])),
             "limit":limit,"authoritative":True,"cosmetic_only":True}
+
+
+def trophy_case(store, faction_id):
+    """Compute all-time prestige from settled battles, never from client claims."""
+    rows = store.execute(
+        """SELECT m.id,m.faction_a,m.faction_b,m.winner_id,m.created_at,
+                  l.reason,c.id AS challenge_id
+           FROM pvp_matches m
+           JOIN pvp_ledger l ON l.match_id=m.id AND l.faction_id=?
+           LEFT JOIN pvp_challenges c ON c.match_id=m.id AND c.status='accepted'
+           WHERE m.status='complete' AND (m.faction_a=? OR m.faction_b=?)
+           ORDER BY m.created_at ASC,m.rowid ASC""",
+        (faction_id,faction_id,faction_id)
+    ).fetchall()
+    current=0
+    best=0
+    trophies=[]
+    results={"wins":0,"losses":0,"draws":0,"timeouts":0}
+    for m in rows:
+        if m["reason"]=="pvp_timeout":
+            outcome="timeouts"
+        elif not m["winner_id"]:
+            outcome="draws"
+        elif m["winner_id"]==faction_id:
+            outcome="wins"
+        else:
+            outcome="losses"
+        results[outcome]+=1
+        current=current+1 if outcome=="wins" else 0
+        best=max(best,current)
+        if outcome=="wins" and m["challenge_id"]:
+            opponent_id=m["faction_b"] if m["faction_a"]==faction_id else m["faction_a"]
+            opponent=store.execute("SELECT name,tag FROM factions WHERE id=?",(opponent_id,)).fetchone()
+            trophies.append({"match_id":m["id"],"challenge_id":m["challenge_id"],
+                             "opponent_id":opponent_id,"opponent_name":opponent["name"],
+                             "opponent_tag":opponent["tag"],"trophy":"RIVAL_CONQUEROR"})
+    return {"record":results,"current_win_streak":current,"best_win_streak":best,
+            "rematch_trophies":list(reversed(trophies))[:30],
+            "total_rematch_trophies":len(trophies),
+            "cosmetic_only":True,"authoritative":True}
