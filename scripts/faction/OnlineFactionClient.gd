@@ -44,6 +44,11 @@ func register_player(display_name: String) -> bool:
 	return _request("register", HTTPClient.METHOD_POST, "/v1/players", {"display_name": display_name}, false)
 
 
+func recover_account(player_id: String, recovery_key: String) -> bool:
+	return _request("recover", HTTPClient.METHOD_POST, "/v1/recover",
+		{"player_id":player_id.strip_edges(), "recovery_key":recovery_key.strip_edges()}, false)
+
+
 func get_me() -> bool:
 	return _request("me", HTTPClient.METHOD_GET, "/v1/me", {}, true)
 
