@@ -417,6 +417,8 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	for child in get_children():
+		child.free()
 	if failures.is_empty():
 		print("[SMOKE] PASS — core scenes and systems loaded.")
 		get_tree().quit(0)
