@@ -1,4 +1,4 @@
-[gd_scene load_steps=55 format=3]
+[gd_scene load_steps=56 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -53,6 +53,7 @@
 [ext_resource type="Script" path="res://scripts/endgame/EndgameManager.gd" id="51_endgame"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EndgameUI.tscn" id="52_endgame_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/OperationResultUI.tscn" id="53_operation_result_ui"]
+[ext_resource type="Script" path="res://scripts/combat/BattleReportManager.gd" id="54_battle_reports"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -107,6 +108,9 @@ script = ExtResource("49_faction_manager")
 
 [node name="EndgameManager" type="Node" parent="."]
 script = ExtResource("51_endgame")
+
+[node name="BattleReportManager" type="Node" parent="."]
+script = ExtResource("54_battle_reports")
 
 
 [node name="TroopRoster" type="Node" parent="."]
