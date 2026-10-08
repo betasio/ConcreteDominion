@@ -127,6 +127,10 @@ func get_season_rankings() -> bool:
 	return _request("season_rankings", HTTPClient.METHOD_GET, "/v1/seasons/leaderboard", {}, true)
 
 
+func get_pvp_history() -> bool:
+	return _request("pvp_history", HTTPClient.METHOD_GET, "/v1/pvp/history", {}, true)
+
+
 func get_pvp() -> bool:
 	return _request("pvp", HTTPClient.METHOD_GET, "/v1/pvp", {}, true)
 
