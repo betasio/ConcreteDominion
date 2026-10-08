@@ -93,23 +93,40 @@ func set_view_mode(mode: StringName) -> void:
 	if mode != &"base" and mode != &"world":
 		return
 
+	var previous_mode: StringName = view_mode
 	view_mode = mode
 	_clear_selection()
+	var destination := safehouse.position + Vector2(0, 60) if mode == &"base" else Vector2(0, 140)
+	var destination_zoom := Vector2.ONE if mode == &"base" else Vector2(0.72, 0.72)
+	# Preserve immediate initialization and save restoration; animate user switches.
+	var animate_camera: bool = is_inside_tree() and previous_mode != mode
+	if camera.has_meta("view_tween"):
+		var old_tween: Tween = camera.get_meta("view_tween") as Tween
+		if old_tween != null and old_tween.is_valid():
+			old_tween.kill()
 
 	if view_mode == &"base":
 		buildings_layer.visible = true
 		raid_targets_layer.visible = false
 		convoy_layer.visible = false
 		effects_layer.visible = false
-		camera.position = safehouse.position + Vector2(0, 60)
-		camera.zoom = Vector2(1.0, 1.0)
+		# Camera is moved after visibility changes.
 	else:
 		buildings_layer.visible = false
 		raid_targets_layer.visible = true
 		convoy_layer.visible = true
 		effects_layer.visible = true
-		camera.position = Vector2(0, 140)
-		camera.zoom = Vector2(0.72, 0.72)
+		# Camera is moved after visibility changes.
+
+	if animate_camera:
+		var camera_tween := create_tween().set_parallel(true)
+		camera_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		camera_tween.tween_property(camera, "position", destination, 0.48)
+		camera_tween.tween_property(camera, "zoom", destination_zoom, 0.48)
+		camera.set_meta("view_tween", camera_tween)
+	else:
+		camera.position = destination
+		camera.zoom = destination_zoom
 
 	view_mode_changed.emit(view_mode)
 
