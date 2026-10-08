@@ -420,6 +420,13 @@ func _ready() -> void:
 			_fail("Online Faction War refresh is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel") == null:
 			_fail("Online Faction War attack controls are missing.")
+		var identity_card = game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/FactionCard")
+		if not (identity_card is FactionIdentityCard):
+			_fail("Illustrated Faction identity profile card is missing.")
+		else:
+			identity_card.set_identity({"name":"Smoke Syndicate","tag":"SMK","emblem":"wolf","banner":"crimson"}, "CHAMPION", 2)
+			if identity_card.emblem != "wolf" or identity_card.prestige != "CHAMPION":
+				_fail("Faction identity card did not accept valid cosmetic data.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/ApplyIdentity") == null:
 			_fail("Online Faction identity controls are missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/ViewFactionProfile") == null:
