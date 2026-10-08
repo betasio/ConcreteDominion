@@ -53,6 +53,7 @@
 [ext_resource type="Script" path="res://scripts/endgame/EndgameManager.gd" id="51_endgame"]
 [ext_resource type="PackedScene" path="res://scenes/ui/EndgameUI.tscn" id="52_endgame_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/OperationResultUI.tscn" id="53_operation_result_ui"]
+[ext_resource type="Script" path="res://scripts/reports/BattleReportManager.gd" id="54_report_manager"]
 [ext_resource type="Script" path="res://scripts/combat/BattleReportManager.gd" id="54_battle_reports"]
 
 [node name="Main" type="Node"]
@@ -108,6 +109,9 @@ script = ExtResource("49_faction_manager")
 
 [node name="EndgameManager" type="Node" parent="."]
 script = ExtResource("51_endgame")
+
+[node name="BattleReportManager" type="Node" parent="."]
+script = ExtResource("54_report_manager")
 
 [node name="BattleReportManager" type="Node" parent="."]
 script = ExtResource("54_battle_reports")
