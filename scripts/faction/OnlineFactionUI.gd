@@ -6,6 +6,7 @@ var online_player: Dictionary = {}
 var online_faction: Dictionary = {}
 var invites: Array = []
 var online_war: Dictionary = {}
+var online_pvp: Dictionary = {}
 var status_message := "Disconnected"
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -33,6 +34,11 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/Refresh.pressed.connect(client.get_faction)
 	$Root/Panel/Margin/Scroll/VBox/StartWar.pressed.connect(client.start_war)
 	$Root/Panel/Margin/Scroll/VBox/RefreshWar.pressed.connect(client.get_war)
+	$Root/Panel/Margin/Scroll/VBox/QueuePvP.pressed.connect(client.queue_pvp)
+	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.attack_pvp("intel"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle.pressed.connect(func(): client.attack_war("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy.pressed.connect(func(): client.attack_war("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel.pressed.connect(func(): client.attack_war("intel"))
@@ -57,6 +63,7 @@ func _disconnect() -> void:
 	online_faction.clear()
 	invites.clear()
 	online_war.clear()
+	online_pvp.clear()
 	status_message = "Disconnected"
 	_refresh()
 
@@ -96,6 +103,10 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			client.get_war()
 		"war":
 			online_war = data.duplicate(true)
+		"pvp":
+			online_pvp = data.duplicate(true)
+		"pvp_queue", "pvp_attack":
+			client.get_pvp()
 		"faction":
 			online_faction = data.duplicate(true)
 		"invitations":
@@ -147,3 +158,41 @@ func _refresh() -> void:
 		button.disabled = not active or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/StartWar.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshWar.disabled = client.session_token.is_empty() or client.is_busy()
+	var pvp_data = online_pvp.get("match", {})
+	var pvp_lines := PackedStringArray()
+	if pvp_data is Dictionary and not pvp_data.is_empty():
+		pvp_lines.append("VS [%s] %s • %s" % [
+			String(pvp_data.get("opponent_tag", "")),
+			String(pvp_data.get("opponent_name", "")),
+			String(pvp_data.get("status", ""))
+		])
+		pvp_lines.append("Score %d–%d • Rounds %d/6 vs %d/6" % [
+			int(pvp_data.get("our_score", 0)),
+			int(pvp_data.get("enemy_score", 0)),
+			int(pvp_data.get("our_rounds", 0)),
+			int(pvp_data.get("enemy_rounds", 0))
+		])
+		pvp_lines.append("Enemy stance: %s • Result: %s" % [
+			String(pvp_data.get("defense", "—")),
+			String(pvp_data.get("result", "Pending"))
+		])
+		for ledger_entry in online_pvp.get("ledger", []):
+			if ledger_entry is Dictionary:
+				pvp_lines.append("Server ledger: %s • %d points" % [
+					String(ledger_entry.get("faction_id", "")).left(8),
+					int(ledger_entry.get("points", 0))
+				])
+	elif bool(online_pvp.get("queued", false)):
+		pvp_lines.append("Searching for another queued Faction. Refresh to check.")
+	else:
+		pvp_lines.append("No PvP match yet. Both Faction leaders must queue.")
+	$Root/Panel/Margin/Scroll/VBox/PvPStatus.text = "\n".join(pvp_lines)
+	var pvp_active := pvp_data is Dictionary and String(pvp_data.get("status", "")) == "active" and int(pvp_data.get("our_rounds", 0)) < 6
+	for button in [
+		$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle,
+		$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy,
+		$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel
+	]:
+		button.disabled = not pvp_active or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/QueuePvP.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
