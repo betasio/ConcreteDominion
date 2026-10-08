@@ -64,7 +64,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 33:
+	if save == null or SaveManager.SAVE_VERSION < 34:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -202,6 +202,10 @@ func _ready() -> void:
 			_fail("Faction War reward/season rules are incomplete.")
 		if FactionManager.WAR_STRATEGIES.size() != 3 or FactionManager.WAR_DEFENSE_CYCLE.size() != 3:
 			_fail("Faction War strategic counter system is incomplete.")
+		if FactionManager.WAR_DOCTRINES.size() != 3 or FactionManager.WAR_DEFENSE_COUNTERS.size() != 3:
+			_fail("Faction War preparation doctrine/defense system is incomplete.")
+		if faction_manager.get_war_readiness_score() < 0 or faction_manager.get_war_readiness_score() > 100:
+			_fail("Faction War readiness score is invalid.")
 		if faction_manager.get_matchmaking_rating() < 0:
 			_fail("Faction matchmaking rating is invalid.")
 		if faction_manager.get_territory_cash_multiplier() < 1.0:
@@ -226,6 +230,10 @@ func _ready() -> void:
 		_fail("Faction rally UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar") == null:
 		_fail("Faction War UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Captain") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Doctrine") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPrepButtons/Defense") == null:
+		_fail("Faction War preparation controls are missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPreparation") == null:
+		_fail("Faction War readiness presentation is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Muscle") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Convoy") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Intel") == null:
 		_fail("Faction War strategic attack controls are missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarAttackReport") == null:
