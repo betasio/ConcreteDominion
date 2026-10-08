@@ -38,6 +38,7 @@ extends Node
 @onready var retention_ui: RetentionUI = $RetentionUI
 @onready var profile_ui: ProfileUI = $ProfileUI
 @onready var faction_ui: FactionUI = $FactionUI
+@onready var online_faction_ui: OnlineFactionUI = $OnlineFactionUI
 @onready var endgame_ui: EndgameUI = $EndgameUI
 @onready var operation_result_ui: OperationResultUI = $OperationResultUI
 @onready var event_ui: EventUI = $EventUI
@@ -223,6 +224,7 @@ func _ready() -> void:
 		retention_ui.get_node("Root") as Control,
 		profile_ui.get_node("Root") as Control,
 		faction_ui.get_node("Root") as Control,
+		online_faction_ui.get_node("Root") as Control,
 		endgame_ui.get_node("Root") as Control,
 		operation_result_ui.get_node("Root") as Control,
 		event_ui.get_node("Root") as Control,
