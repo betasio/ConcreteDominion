@@ -237,6 +237,10 @@ class Store:
                 self.execute("INSERT INTO war_attacks(war_id,player_id,strategy,defense,our_points,enemy_points) VALUES(?,?,?,?,?,?)", (war["id"],actor["id"],strategy,defense,our,enemy))
                 self.execute("UPDATE wars SET our_score=?,their_score=?,rounds=?,status=?,result=? WHERE id=?", (total_our,total_enemy,rounds,status,result,war["id"]))
             return 200, {"war_id":war["id"],"round":rounds,"strategy":strategy,"defense":defense,"our_points":our,"enemy_points":enemy,"countered":counter==defense,"status":status,"result":result}
+        if method == "GET" and path == "/v1/pvp/trophies":
+            if not actor["faction_id"]:
+                raise ApiError(403,"Faction membership required")
+            return 200, rivalries.trophy_case(self,actor["faction_id"])
         if method == "GET" and path == "/v1/pvp/history":
             if not actor["faction_id"]:
                 raise ApiError(403,"Faction membership required")
