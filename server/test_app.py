@@ -254,6 +254,45 @@ class FactionApiTests(unittest.TestCase):
         self.assertEqual(following["leaderboard"][0]["points"],0)
         self.assertEqual(following["season"]["id"],season["id"]+1)
 
+    def test_season_prestige_finalizes_once_and_survives_restart(self):
+        from server import seasons
+        a = self.register("Season Champion")
+        b = self.register("Season Runner")
+        self.api.call("POST","/v1/factions",{"name":"Gold Vanguard","tag":"GV"},a["session_token"])
+        self.api.call("POST","/v1/factions",{"name":"Silver Vanguard","tag":"SV"},b["session_token"])
+        fa = self.api.call("GET","/v1/me",{},a["session_token"])[1]["faction_id"]
+        fb = self.api.call("GET","/v1/me",{},b["session_token"])[1]["faction_id"]
+        previous = seasons.current_season()["id"]-1
+        stamp = previous*seasons.SEASON_SECONDS + 120
+        for mid in ("historical1","historical2"):
+            self.api.execute(
+                "INSERT INTO pvp_matches(id,faction_a,faction_b,status) VALUES(?,?,?,'complete')",
+                (mid,fa,fb)
+            )
+        self.api.execute(
+            "INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('historical1',?,100,'pvp_settlement',?)",
+            (fa,stamp)
+        )
+        self.api.execute(
+            "INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('historical1',?,25,'pvp_settlement',?)",
+            (fb,stamp)
+        )
+        self.api.db.commit()
+        _, result = self.api.call("GET","/v1/seasons/history",{},a["session_token"])
+        self.assertEqual(result["champions"][0]["badge"],"CHAMPION")
+        self.assertEqual(result["your_awards"][0]["points"],100)
+        self.assertFalse(result["redeemable"])
+        seasons.finalize_expired(self.api)
+        self.assertEqual(self.api.execute("SELECT COUNT(*) FROM season_awards").fetchone()[0],2)
+        self.api.db.close()
+        self.api = Store(self.path)
+        again = self.api.call("GET","/v1/seasons/history",{},b["session_token"])[1]
+        self.assertEqual(again["your_awards"][0]["badge"],"RUNNER_UP")
+        self.assertEqual(again["champions"][0]["faction_name"],"Gold Vanguard")
+        with self.assertRaises(ApiError) as blocked:
+            self.api.call("GET","/v1/seasons/history",{},self.register("No Faction")["session_token"])
+        self.assertEqual(blocked.exception.status,403)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
