@@ -64,6 +64,24 @@ func _ready() -> void:
 		if game.get_node_or_null(path) == null:
 			_fail("Missing Main node: %s" % path)
 
+	var hub := game.get_node_or_null("OnlineFactionUI") as OnlineFactionUI
+	if hub == null:
+		_fail("Player-facing Faction Hub is missing.")
+	else:
+		for section in ["Identity", "Wars", "Rivals", "Rankings", "Prestige", "Account"]:
+			var tab = hub.get_node_or_null("Root/Panel/Margin/Scroll/VBox/Hub%s" % section)
+			if not (tab is Button):
+				_fail("Faction Hub tab missing: %s" % section)
+			else:
+				hub._select_hub_section(section)
+				if hub.hub_section != section:
+					_fail("Faction Hub failed to select %s" % section)
+		hub._select_hub_section("Identity")
+		if not hub.get_node("Root/Panel/Margin/Scroll/VBox/FactionCard").visible:
+			_fail("Faction Hub Identity view did not show its illustrated card.")
+		if hub.get_node("Root/Panel/Margin/Scroll/VBox/RecoveryKey").visible:
+			_fail("Developer recovery credentials leaked into player-facing Identity tab.")
+
 	var save := game.get_node_or_null("SaveManager") as SaveManager
 	if save == null or SaveManager.SAVE_VERSION < 35:
 		_fail("Save schema is not production-ready.")
