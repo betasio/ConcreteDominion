@@ -47,6 +47,7 @@ var missions: MissionTracker
 @onready var war_objectives_label: Label = $Root/Panel/Margin/Scroll/VBox/WarObjectives
 @onready var war_participation_label: Label = $Root/Panel/Margin/Scroll/VBox/WarParticipation
 @onready var war_reward_split_label: Label = $Root/Panel/Margin/Scroll/VBox/WarRewardSplit
+@onready var war_debrief_label: Label = $Root/Panel/Margin/Scroll/VBox/WarDebrief
 @onready var start_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar
 @onready var claim_war_reward_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClaimWarReward
 @onready var clear_war_button: Button = $Root/Panel/Margin/Scroll/VBox/WarRewardButtons/ClearWar
@@ -260,6 +261,7 @@ func _refresh() -> void:
 		war_objectives_label,
 		war_participation_label,
 		war_reward_split_label,
+		war_debrief_label,
 		$Root/Panel/Margin/Scroll/VBox/WarButtons,
 		$Root/Panel/Margin/Scroll/VBox/WarRewardButtons,
 		leave_button
@@ -369,6 +371,7 @@ func _refresh() -> void:
 	var participation_lines := faction.get_war_participation_lines()
 	war_participation_label.text = "WAR PARTICIPATION\n%s" % ("\n".join(participation_lines) if not participation_lines.is_empty() else "Participation begins when the war starts.")
 	war_reward_split_label.text = "PARTICIPATION REWARD\n%s" % "\n".join(faction.get_war_reward_split_lines())
+	war_debrief_label.text = "WAR ROOM • LAST 10 COMPLETED WARS\n%s" % "\n\n".join(faction.get_war_debrief_lines())
 	start_war_button.disabled = not faction.can_start_war() or not faction.active_war.is_empty()
 	var can_attack := (
 		not faction.active_war.is_empty()
