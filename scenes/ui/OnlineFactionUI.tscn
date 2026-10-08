@@ -87,6 +87,19 @@ text = "Connect session"
 layout_mode = 2
 text = "Disconnect"
 
+[node name="RecoveryPlayer" type="LineEdit" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+placeholder_text = "Player ID for account recovery"
+
+[node name="RecoveryKey" type="LineEdit" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+secret = true
+placeholder_text = "One-time recovery key (copy for safekeeping)"
+
+[node name="RecoverAccount" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Recover development account"
+
 [node name="FactionName" type="LineEdit" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 placeholder_text = "Faction name"
