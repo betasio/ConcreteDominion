@@ -98,12 +98,14 @@ func apply_to_city(city_map: Node) -> void:
 
 	for building in [city_map.safehouse, city_map.hospital, city_map.barracks]:
 		if building != null:
-			building.art_texture = get_texture(String(building.building_type))
+			var premium_path: String = "res://assets/premium/buildings/%s.png" % String(building.building_type)
+			building.art_texture = load(premium_path) as Texture2D if ResourceLoader.exists(premium_path, "Texture2D") else get_texture(String(building.building_type))
 			building.queue_redraw()
 
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		if lot != null:
-			lot.art_texture = get_texture(lot.building_name)
+			var premium_path: String = "res://assets/premium/buildings/%s.png" % String(lot.building_name).to_snake_case()
+			lot.art_texture = load(premium_path) as Texture2D if ResourceLoader.exists(premium_path, "Texture2D") else get_texture(lot.building_name)
 			lot.queue_redraw()
 
 	var target_texture := get_texture("raid_target")
