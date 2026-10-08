@@ -279,6 +279,24 @@ layout_mode = 2
 text = "WAR ATTACK REPORT"
 autowrap_mode = 2
 
+[node name="WarObjectives" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 102)
+layout_mode = 2
+text = "SHARED WAR OBJECTIVES"
+autowrap_mode = 2
+
+[node name="WarParticipation" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 108)
+layout_mode = 2
+text = "WAR PARTICIPATION"
+autowrap_mode = 2
+
+[node name="WarRewardSplit" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 92)
+layout_mode = 2
+text = "PARTICIPATION REWARD SPLIT"
+autowrap_mode = 2
+
 [node name="WarButtons" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
