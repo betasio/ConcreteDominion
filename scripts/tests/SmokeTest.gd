@@ -64,7 +64,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 34:
+	if save == null or SaveManager.SAVE_VERSION < 35:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -244,6 +244,8 @@ func _ready() -> void:
 		_fail("Faction War shared objective presentation is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarParticipation") == null:
 		_fail("Faction War member participation presentation is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarDebrief") == null:
+		_fail("Faction War debrief history panel is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarRewardSplit") == null:
 		_fail("Faction War participation reward split presentation is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/MemberAdmin/Invite") == null:
