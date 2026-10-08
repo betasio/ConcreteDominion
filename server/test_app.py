@@ -220,6 +220,35 @@ class FactionApiTests(unittest.TestCase):
             {"player_id":player["player_id"],"recovery_key":recovered["recovery_key"]},"")
         self.assertNotEqual(again["session_token"],recovered["session_token"])
 
+    def test_season_leaderboard_rollover_and_no_double_count(self):
+        from server import seasons
+        a = self.register("Season Alpha")
+        b = self.register("Season Bravo")
+        self.api.call("POST","/v1/factions",{"name":"Season Alpha Clan","tag":"SAC"},a["session_token"])
+        self.api.call("POST","/v1/factions",{"name":"Season Bravo Clan","tag":"SBC"},b["session_token"])
+        fid_a = self.api.call("GET","/v1/me",{},a["session_token"])[1]["faction_id"]
+        fid_b = self.api.call("GET","/v1/me",{},b["session_token"])[1]["faction_id"]
+        season = seasons.current_season()
+        start = season["starts_at"]
+        self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('a1',?,100,'pvp_settlement',?)", (fid_a,start+10))
+        self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('b1',?,25,'pvp_settlement',?)", (fid_b,start+10))
+        self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('a0',?,50,'pvp_settlement',?)", (fid_a,start-10))
+        self.api.db.commit()
+        first = seasons.leaderboard(self.api,fid_a,start+20)
+        self.assertEqual(first["leaderboard"][0]["points"],100)
+        self.assertEqual(first["leaderboard"][0]["wins"],1)
+        self.assertEqual(first["your_rank"],1)
+        self.assertFalse(first["redeemable"])
+        self.assertEqual(self.api.call("GET","/v1/seasons/leaderboard",{},a["session_token"])[0],200)
+        with self.assertRaises(ApiError) as blocked:
+            self.api.call("GET","/v1/seasons/leaderboard",{},self.register("No Clan")["session_token"])
+        self.assertEqual(blocked.exception.status,403)
+        with self.assertRaises(Exception):
+            self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('a1',?,100,'pvp_settlement',?)", (fid_a,start+10))
+        following = seasons.leaderboard(self.api,fid_a,start+seasons.SEASON_SECONDS+20)
+        self.assertEqual(following["leaderboard"][0]["points"],0)
+        self.assertEqual(following["season"]["id"],season["id"]+1)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
