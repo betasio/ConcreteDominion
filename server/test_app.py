@@ -155,6 +155,10 @@ class FactionApiTests(unittest.TestCase):
         self.assertEqual(self.api.call("GET","/v1/pvp",{},c)[1]["match"]["status"],"complete")
         self.assertEqual(len(self.api.call("GET","/v1/pvp",{},c)[1]["ledger"]),2)
 
+    def test_match_timestamp_schema(self):
+        columns = {row["name"] for row in self.api.execute("PRAGMA table_info(pvp_matches)")}
+        self.assertIn("created_at", columns)
+
     def test_queue_cancel_and_expiry(self):
         from server import pvp
         leader = self.register("Queue Leader")
