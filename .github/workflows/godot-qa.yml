@@ -80,6 +80,21 @@ jobs:
           godot --headless --path . res://scenes/tests/GameplayRegressionAudit.tscn 2>&1 | tee godot-regression.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-regression.log
 
+      - name: Capture real turf screenshot
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb
+          mkdir -p build/previews
+          xvfb-run -a godot --path . --rendering-driver opengl3 res://scenes/tests/TurfScreenshot.tscn
+          test -s build/previews/turf_actual.png
+
+      - name: Upload real turf screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-turf-screenshot
+          path: build/previews/turf_actual.png
+          if-no-files-found: error
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
