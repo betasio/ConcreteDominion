@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS pvp_attacks (
 CREATE TABLE IF NOT EXISTS pvp_ledger (
  match_id TEXT NOT NULL, faction_id TEXT NOT NULL,
  points INTEGER NOT NULL, reason TEXT NOT NULL,
+ created_at INTEGER NOT NULL DEFAULT (unixepoch()),
  PRIMARY KEY(match_id,faction_id),
  FOREIGN KEY(match_id) REFERENCES pvp_matches(id)
 );
@@ -58,7 +59,7 @@ def _expire(store):
             store.execute("UPDATE pvp_matches SET status='complete',winner_id='' WHERE id=?", (match["id"],))
             for fid in (match["faction_a"],match["faction_b"]):
                 store.execute(
-                    "INSERT OR IGNORE INTO pvp_ledger(match_id,faction_id,points,reason) VALUES(?,?,0,'pvp_timeout')",
+                    "INSERT OR IGNORE INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES(?,?,0,'pvp_timeout',unixepoch())",
                     (match["id"],fid)
                 )
 
@@ -227,7 +228,7 @@ def route(store, method, path, data, actor):
                 for candidate in (final["faction_a"],final["faction_b"]):
                     earned = 100 if candidate == winner else (50 if not winner else 25)
                     store.execute(
-                        "INSERT INTO pvp_ledger(match_id,faction_id,points,reason) VALUES(?,?,?,'pvp_settlement')",
+                        "INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES(?,?,?,'pvp_settlement',unixepoch())",
                         (war["id"],candidate,earned)
                     )
         return 200, {"replayed":False,"match_id":war["id"],"points":points,
