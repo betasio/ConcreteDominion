@@ -204,6 +204,8 @@ func _ready() -> void:
 			_fail("Faction War strategic counter system is incomplete.")
 		if FactionManager.WAR_DOCTRINES.size() != 3 or FactionManager.WAR_DEFENSE_COUNTERS.size() != 3:
 			_fail("Faction War preparation doctrine/defense system is incomplete.")
+		if FactionManager.WAR_OBJECTIVE_DEFS.size() != 3 or FactionManager.WAR_REWARD_POOLS.size() != 3:
+			_fail("Faction War shared objective/reward split system is incomplete.")
 		if faction_manager.get_war_readiness_score() < 0 or faction_manager.get_war_readiness_score() > 100:
 			_fail("Faction War readiness score is invalid.")
 		if faction_manager.get_matchmaking_rating() < 0:
@@ -238,6 +240,12 @@ func _ready() -> void:
 		_fail("Faction War strategic attack controls are missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarAttackReport") == null:
 		_fail("Faction War attack report presentation is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarObjectives") == null:
+		_fail("Faction War shared objective presentation is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarParticipation") == null:
+		_fail("Faction War member participation presentation is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarRewardSplit") == null:
+		_fail("Faction War participation reward split presentation is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/MemberAdmin/Invite") == null:
 		_fail("Faction member administration UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CaptureTerritory") == null:
