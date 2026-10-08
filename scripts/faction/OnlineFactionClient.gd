@@ -22,11 +22,17 @@ func _ready() -> void:
 
 func set_session(token: String) -> void:
 	# Keep bearer tokens in memory only; never write to the unencrypted game save.
-	session_token = token.strip_edges()
+	var next_token := token.strip_edges()
+	if next_token != session_token:
+		_retry_id = ""
+		_retry_strategy = ""
+	session_token = next_token
 
 
 func clear_session() -> void:
 	session_token = ""
+	_retry_id = ""
+	_retry_strategy = ""
 
 
 func is_busy() -> bool:
