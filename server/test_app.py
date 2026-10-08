@@ -111,6 +111,14 @@ class FactionApiTests(unittest.TestCase):
         self.assertTrue(self.api.call("POST","/v1/pvp/queue",{},a)[1]["queued"])
         match = self.api.call("POST","/v1/pvp/queue",{},c)[1]["match"]
         self.assertEqual(match["status"],"active")
+        self.api.call("POST","/v1/profiles/faction",{"emblem":"wolf","banner":"crimson"},a)
+        self.api.call("POST","/v1/profiles/faction",{"emblem":"crown","banner":"gold"},c)
+        matchup_a = self.api.call("GET","/v1/pvp",{},a)[1]
+        matchup_b = self.api.call("GET","/v1/pvp",{},c)[1]
+        self.assertEqual(matchup_a["our_identity"]["emblem"],"wolf")
+        self.assertEqual(matchup_a["opponent_identity"]["emblem"],"crown")
+        self.assertEqual(matchup_b["our_identity"]["banner"],"gold")
+        self.assertEqual(matchup_b["opponent_identity"]["banner"],"crimson")
         self.assertEqual(self.api.call("GET","/v1/pvp",{},a)[1]["match"]["id"],
                          self.api.call("GET","/v1/pvp",{},d)[1]["match"]["id"])
         with self.assertRaises(ApiError) as unauthorized:
@@ -241,6 +249,13 @@ class FactionApiTests(unittest.TestCase):
         self.api.db.commit()
         first = seasons.leaderboard(self.api,fid_a,start+20)
         self.assertEqual(first["leaderboard"][0]["points"],100)
+        self.assertEqual(first["leaderboard"][0]["emblem"],"shield")
+        self.assertEqual(first["leaderboard"][0]["banner"],"obsidian")
+        self.api.call("POST","/v1/profiles/faction",
+                      {"emblem":"serpent","banner":"steel"},a["session_token"])
+        updated = seasons.leaderboard(self.api,fid_a,start+20)
+        self.assertEqual(updated["leaderboard"][0]["emblem"],"serpent")
+        self.assertEqual(updated["leaderboard"][0]["banner"],"steel")
         self.assertEqual(first["leaderboard"][0]["wins"],1)
         self.assertEqual(first["your_rank"],1)
         self.assertFalse(first["redeemable"])
