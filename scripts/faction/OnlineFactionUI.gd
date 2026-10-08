@@ -292,6 +292,10 @@ func _refresh() -> void:
 	var rival_identity = online_pvp.get("opponent_identity", {})
 	our_card.set_identity(own_identity if own_identity is Dictionary else {})
 	rival_card.set_identity(rival_identity if rival_identity is Dictionary else {})
+	var own_prestige = online_pvp.get("our_rivalry_prestige", {})
+	var rival_prestige = online_pvp.get("opponent_rivalry_prestige", {})
+	our_card.set_rivalry_prestige(own_prestige if own_prestige is Dictionary else {})
+	rival_card.set_rivalry_prestige(rival_prestige if rival_prestige is Dictionary else {})
 	$Root/Panel/Margin/Scroll/VBox/PvPMatchup.visible = pvp_data is Dictionary and not pvp_data.is_empty()
 	$Root/Panel/Margin/Scroll/VBox/PvPStatus.text = "\n".join(pvp_lines)
 	var pvp_active := pvp_data is Dictionary and String(pvp_data.get("status", "")) == "active" and int(pvp_data.get("our_rounds", 0)) < 6
@@ -457,6 +461,13 @@ func _refresh() -> void:
 			String(public_faction.get("emblem", "")),
 			String(public_faction.get("banner", ""))
 		])
+		var prestige_data = viewed_identity.get("rivalry_prestige", {})
+		if prestige_data is Dictionary:
+			identity_lines.append("Rival Conqueror: %d • Win streak: %d • Best: %d" % [
+				int(prestige_data.get("total_rematch_trophies", 0)),
+				int(prestige_data.get("current_win_streak", 0)),
+				int(prestige_data.get("best_win_streak", 0))
+			])
 		for award in viewed_identity.get("achievements", []):
 			if award is Dictionary:
 				identity_lines.append("Season %d • %s • Rank #%d" % [
@@ -497,3 +508,5 @@ func _update_identity_card() -> void:
 		displayed["banner"] = ["obsidian", "crimson", "gold", "steel"][
 			maxi(0, $Root/Panel/Margin/Scroll/VBox/Banner.selected)]
 	card.set_identity(displayed, badge, awards)
+	var rivalry_data = viewed_identity.get("rivalry_prestige", {})
+	card.set_rivalry_prestige(rivalry_data if rivalry_data is Dictionary else {})
