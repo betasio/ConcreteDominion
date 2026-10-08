@@ -5,10 +5,13 @@ var raid_battle: RaidBattle
 var world_control: WorldControlManager
 var endgame: EndgameManager
 var presentation: PresentationCatalog
+var reports: BattleReportManager
+var history_index := 0
 var history: BattleReportManager
 var history_index := 0
 
 @onready var reports_button: Button = $Root/Reports
+@onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
 @onready var title: Label = $Root/Panel/Margin/VBox/Title
 @onready var art: TextureRect = $Root/Panel/Margin/VBox/Art
@@ -46,8 +49,15 @@ func setup(
 	newer_button.pressed.connect(_show_newer)
 	older_button.pressed.connect(_show_older)
 	rematch_button.pressed.connect(_rematch_current)
+	reports.report_added.connect(_on_report_added)
+	shortcut.pressed.connect(_open_history)
+	previous_button.pressed.connect(_previous_report)
+	next_button.pressed.connect(_next_report)
+	history_button.pressed.connect(_open_history)
+	rematch_button.pressed.connect(_rematch_current)
 	close_button.pressed.connect(_close)
 	panel.visible = false
+	_refresh_history_controls()
 	_refresh_history_controls()
 
 
@@ -117,6 +127,8 @@ func _show_raid_report(result: Dictionary) -> void:
 	]
 	rewards.text = "REWARDS\n%s" % _get_raid_reward_line(result)
 	progress.text = _get_rival_progress_line(target_id)
+	advice.text = "TACTICAL READ\n%s" % _get_live_raid_advice(result)
+	history_index = 0
 	_apply_art(target_id, true)
 	_present()
 
@@ -148,6 +160,8 @@ func _show_family_operation_report(result: Dictionary) -> void:
 	]
 	rewards.text = "REWARDS\n%s" % _get_operation_reward_line(result)
 	progress.text = _get_dominion_progress_line(target_id, victory)
+	advice.text = "TACTICAL READ\n%s" % _get_live_operation_advice(result)
+	history_index = 0
 	_apply_art(target_id, boss)
 	_present()
 
@@ -277,6 +291,118 @@ func _apply_art(target_id: String, boss_focus: bool) -> void:
 			art.texture = presentation.get_texture("raid_target")
 
 
+func _get_live_raid_advice(result: Dictionary) -> String:
+	if reports == null:
+		return ""
+	return reports._build_raid_advice(result)
+
+
+func _get_live_operation_advice(result: Dictionary) -> String:
+	if reports == null:
+		return ""
+	return reports._build_operation_advice(result)
+
+
+func _on_report_added(_report: Dictionary) -> void:
+	history_index = 0
+	_refresh_history_controls()
+
+
+func _open_history() -> void:
+	if reports == null or reports.get_report_count() <= 0:
+		return
+	history_index = clampi(history_index, 0, reports.get_report_count() - 1)
+	_show_history_report(reports.get_report(history_index))
+
+
+func _previous_report() -> void:
+	if reports == null or reports.get_report_count() <= 0:
+		return
+	history_index = mini(reports.get_report_count() - 1, history_index + 1)
+	_show_history_report(reports.get_report(history_index))
+
+
+func _next_report() -> void:
+	if reports == null or reports.get_report_count() <= 0:
+		return
+	history_index = maxi(0, history_index - 1)
+	_show_history_report(reports.get_report(history_index))
+
+
+func _show_history_report(report: Dictionary) -> void:
+	if report.is_empty():
+		return
+	var victory := bool(report.get("victory", false))
+	var report_type := String(report.get("type", "operation"))
+	var target_id := String(report.get("target_id", ""))
+	title.text = "BATTLE REPORT • %s" % ("WIN" if victory else "LOSS")
+	identity.text = "%s\n%s" % [
+		String(report.get("title", "Operation")).to_upper(),
+		String(report.get("family", "")).to_upper()
+	]
+	grade.text = "GRADE • %s" % String(report.get("grade", "D"))
+	if report_type == "raid":
+		combat.text = "Damage %.0f / %.0f HP\nPlan: %s • Counter %s" % [
+			float(report.get("damage", 0.0)),
+			float(report.get("target_hp", 0.0)),
+			String(report.get("preset", "Balanced")),
+			"MATCHED" if bool(report.get("weakness_matched", false)) else "MISSED"
+		]
+		rewards.text = "REWARDS\n$%s Cash • %d XP%s" % [
+			_format_number(int(report.get("cash_reward", 0))),
+			int(report.get("xp_reward", 0)),
+			_format_loot_suffix(report.get("loot", {}))
+		]
+	else:
+		combat.text = "%s power %.0f / %.0f required\n%s%s" % [
+			String(report.get("role", "Enforcer")),
+			float(report.get("player_power", 0.0)),
+			float(report.get("required_power", 0.0)),
+			String(report.get("encounter_type", "roadblock")).replace("_", " ").capitalize(),
+			" • BOSS REMATCH" if bool(report.get("dominion_boss", false)) else ""
+		]
+		rewards.text = "REWARDS\n$%s Cash%s" % [
+			_format_number(int(report.get("cash_reward", 0))),
+			_format_loot_suffix(report.get("loot", {}))
+		]
+	progress.text = "REPORT HISTORY\nSaved operation #%d of %d" % [history_index + 1, reports.get_report_count()]
+	advice.text = "TACTICAL READ\n%s" % String(report.get("advice", "Review the operation before retrying."))
+	_apply_art(target_id, bool(report.get("dominion_boss", false)) or report_type == "raid")
+	_present()
+
+
+func _format_loot_suffix(raw_loot) -> String:
+	if not raw_loot is Dictionary or raw_loot.is_empty():
+		return ""
+	var pieces := PackedStringArray()
+	for item_name in raw_loot.keys():
+		pieces.append("%s x%d" % [String(item_name), int(raw_loot[item_name])])
+	return " • " + " • ".join(pieces)
+
+
+func _rematch_current() -> void:
+	if reports == null:
+		return
+	if reports.rematch(history_index):
+		panel.visible = false
+	_refresh_history_controls()
+
+
+func _refresh_history_controls() -> void:
+	var count := reports.get_report_count() if reports != null else 0
+	shortcut.text = "Battle Reports • %d" % count
+	shortcut.disabled = count <= 0
+	previous_button.disabled = count <= 1 or history_index >= count - 1
+	next_button.disabled = count <= 1 or history_index <= 0
+	history_button.disabled = count <= 0
+	rematch_button.disabled = count <= 0 or not reports.can_rematch(history_index)
+	if count > 0:
+		var report := reports.get_report(history_index)
+		rematch_button.text = "Revenge" if not bool(report.get("victory", false)) else "Rematch"
+	else:
+		rematch_button.text = "Rematch"
+
+
 func _grade_from_ratio(ratio: float, victory: bool) -> String:
 	if not victory:
 		return "C" if ratio >= 0.85 else "D"
@@ -288,12 +414,14 @@ func _grade_from_ratio(ratio: float, victory: bool) -> String:
 
 
 func _present() -> void:
+	_refresh_history_controls()
 	panel.visible = true
 	close_button.grab_focus.call_deferred()
 
 
 func _close() -> void:
 	panel.visible = false
+	_refresh_history_controls()
 
 
 func _format_number(value: int) -> String:
