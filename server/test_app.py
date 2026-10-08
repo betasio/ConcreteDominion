@@ -1,4 +1,5 @@
 import os
+import uuid
 import tempfile
 import unittest
 from server.app import Store, ApiError
@@ -90,6 +91,69 @@ class FactionApiTests(unittest.TestCase):
         self.api.db.close()
         self.api = Store(self.path)
         self.assertEqual(self.api.call("GET","/v1/war",{},mt)[1]["war"]["our_score"],840)
+
+    def test_pvp_two_factions_settlement_and_replay(self):
+        tokens = []
+        ids = []
+        for name in ("Alpha Leader","Alpha Wing","Bravo Leader","Bravo Wing","Spectator"):
+            player = self.register(name)
+            ids.append(player["player_id"])
+            tokens.append(player["session_token"])
+        a,b,c,d,outsider = tokens
+        self.api.call("POST","/v1/factions",{"name":"Alpha Syndicate","tag":"AAA"},a)
+        self.api.call("POST","/v1/factions",{"name":"Bravo Syndicate","tag":"BBB"},c)
+        for leader,member_id,member_token in ((a,ids[1],b),(c,ids[3],d)):
+            _, invitation = self.api.call("POST","/v1/invitations",{"player_id":member_id},leader)
+            self.api.call("POST",f"/v1/invitations/{invitation['invitation_id']}/accept",{},member_token)
+        with self.assertRaises(ApiError) as forbidden:
+            self.api.call("POST","/v1/pvp/queue",{},b)
+        self.assertEqual(forbidden.exception.status,403)
+        self.assertTrue(self.api.call("POST","/v1/pvp/queue",{},a)[1]["queued"])
+        match = self.api.call("POST","/v1/pvp/queue",{},c)[1]["match"]
+        self.assertEqual(match["status"],"active")
+        self.assertEqual(self.api.call("GET","/v1/pvp",{},a)[1]["match"]["id"],
+                         self.api.call("GET","/v1/pvp",{},d)[1]["match"]["id"])
+        with self.assertRaises(ApiError) as unauthorized:
+            self.api.call("GET","/v1/pvp",{},outsider)
+        self.assertEqual(unauthorized.exception.status,403)
+        with self.assertRaises(ApiError) as invalid:
+            self.api.call("POST","/v1/pvp/attack",{"strategy":"muscle","request_id":"bad"},a)
+        self.assertEqual(invalid.exception.status,400)
+        for team in ((a,b),(c,d)):
+            for round_no in range(6):
+                token = team[round_no%2]
+                defense = self.api.call("GET","/v1/pvp",{},token)[1]["match"]["defense"]
+                strategy = {"watchful":"muscle","fortified":"convoy","mobile":"intel"}[defense]
+                request = {"strategy":strategy,"request_id":uuid.uuid4().hex,"points":1000000}
+                status, result = self.api.call("POST","/v1/pvp/attack",request,token)
+                self.assertEqual(status,200)
+                self.assertEqual(result["points"],140)
+                self.assertFalse(result["replayed"])
+                before = self.api.call("GET","/v1/pvp",{},token)[1]["match"]["our_score"]
+                status, replay = self.api.call("POST","/v1/pvp/attack",request,token)
+                self.assertEqual(status,200)
+                self.assertTrue(replay["replayed"])
+                self.assertEqual(self.api.call("GET","/v1/pvp",{},token)[1]["match"]["our_score"],before)
+                with self.assertRaises(ApiError) as mismatched:
+                    self.api.call("POST","/v1/pvp/attack",
+                                  {"strategy":"muscle" if strategy!="muscle" else "intel",
+                                   "request_id":request["request_id"]},token)
+                self.assertEqual(mismatched.exception.status,409)
+        state = self.api.call("GET","/v1/pvp",{},a)[1]
+        self.assertEqual(state["match"]["status"],"complete")
+        self.assertEqual(state["match"]["result"],"DRAW")
+        self.assertEqual(state["match"]["our_score"],840)
+        self.assertEqual(len(state["ledger"]),2)
+        self.assertEqual(sorted(x["points"] for x in state["ledger"]),[50,50])
+        self.assertEqual(len(state["attacks"]),12)
+        with self.assertRaises(ApiError) as exhausted:
+            self.api.call("POST","/v1/pvp/attack",
+                          {"strategy":"muscle","request_id":uuid.uuid4().hex},a)
+        self.assertEqual(exhausted.exception.status,409)
+        self.api.db.close()
+        self.api = Store(self.path)
+        self.assertEqual(self.api.call("GET","/v1/pvp",{},c)[1]["match"]["status"],"complete")
+        self.assertEqual(len(self.api.call("GET","/v1/pvp",{},c)[1]["ledger"]),2)
 
     def test_permissions_and_names(self):
         p = self.register("Alpha")
