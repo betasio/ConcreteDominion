@@ -15,6 +15,7 @@ func _ready() -> void:
 	_test_battle_report_history_invariants()
 	_test_faction_war_strategy_counters()
 	_test_faction_war_preparation_snapshot()
+	_test_faction_war_objective_and_split_invariants()
 	_finish()
 
 
@@ -362,6 +363,59 @@ func _test_faction_war_preparation_snapshot() -> void:
 			_fail("Faction War doctrine changed after war start.")
 		if String(faction.active_war.get("doctrine", "")) != before_doctrine:
 			_fail("Active Faction War doctrine mutated after preparation lock.")
+	faction.queue_free()
+
+
+func _test_faction_war_objective_and_split_invariants() -> void:
+	var faction := FactionManager.new()
+	add_child(faction)
+	faction.faction_id = "test"
+	faction.faction_name = "Test"
+	faction.faction_tag = "TEST"
+	faction.faction_level = 4
+	faction.members = [
+		{"id":"boss","name":"Boss","role":FactionManager.ROLE_LEADER,"power":12000,"contribution":500,"online":true},
+		{"id":"local_player","name":"You","role":FactionManager.ROLE_UNDERBOSS,"power":7000,"contribution":150,"online":true},
+		{"id":"officer","name":"Nova","role":FactionManager.ROLE_OFFICER,"power":9000,"contribution":250,"online":true}
+	]
+	faction.research["raid_coordination"] = 3
+	faction.war_preparation = {"captain_id":"boss","defense":"watchful","doctrine":"disciplined"}
+	if not faction.start_prototype_war():
+		_fail("Faction War objective fixture could not start.")
+		faction.queue_free()
+		return
+
+	if faction.get_war_objective_lines().size() != 3:
+		_fail("Faction War did not initialize all shared objectives.")
+	if faction.get_war_participation_lines().size() != faction.members.size():
+		_fail("Faction War did not initialize member participation rows.")
+
+	for _round in range(3):
+		if String(faction.active_war.get("status", "")) != "active":
+			break
+		var defense := faction.get_current_war_defense()
+		var strategy_id := "muscle"
+		for candidate in ["muscle","convoy","intel"]:
+			if String(FactionManager.WAR_STRATEGIES[candidate].get("counter", "")) == defense:
+				strategy_id = candidate
+				break
+		faction.perform_war_attack(strategy_id)
+
+	if String(faction.active_war.get("status", "")) != "complete":
+		_fail("Faction War did not complete after three attacks.")
+	var split = faction.active_war.get("reward_split", {})
+	if not (split is Dictionary) or split.is_empty():
+		_fail("Faction War participation reward split was not generated.")
+	else:
+		var distributed := 0
+		for value in split.values():
+			distributed += int(value)
+		var tier := String(faction.active_war.get("reward_tier", "BRONZE"))
+		var expected_pool := int(FactionManager.WAR_REWARD_POOLS.get(tier, 0))
+		if distributed != expected_pool:
+			_fail("Faction War participation reward split did not conserve its pool.")
+	if int(faction.active_war.get("completed_objectives", 0)) <= 0:
+		_fail("Faction War shared objectives did not progress from strategic attacks.")
 	faction.queue_free()
 
 
