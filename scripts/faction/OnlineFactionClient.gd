@@ -75,6 +75,25 @@ func attack_war(strategy: String) -> bool:
 	return _request("war_attack", HTTPClient.METHOD_POST, "/v1/war/attack", {"strategy":strategy}, true)
 
 
+func get_pvp() -> bool:
+	return _request("pvp", HTTPClient.METHOD_GET, "/v1/pvp", {}, true)
+
+
+func queue_pvp() -> bool:
+	return _request("pvp_queue", HTTPClient.METHOD_POST, "/v1/pvp/queue", {}, true)
+
+
+func attack_pvp(strategy: String) -> bool:
+	# Unique request receipt lets server return the original score on retry.
+	return _request("pvp_attack", HTTPClient.METHOD_POST, "/v1/pvp/attack",
+		{"strategy":strategy, "request_id":_new_request_id()}, true)
+
+
+func _new_request_id() -> String:
+	# Use the engine's cryptographic randomness; never depend on game simulation RNG.
+	return Crypto.new().generate_random_bytes(16).hex_encode()
+
+
 func _request(action: String, method: int, path: String, body: Dictionary, authenticated: bool) -> bool:
 	if _busy:
 		connection_failed.emit(action, "Another API request is running")
