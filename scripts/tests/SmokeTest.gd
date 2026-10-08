@@ -416,6 +416,10 @@ func _ready() -> void:
 			_fail("Online Faction server-sync button is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/Accept") == null:
 			_fail("Online invitation accept button is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshWar") == null:
+			_fail("Online Faction War refresh is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel") == null:
+			_fail("Online Faction War attack controls are missing.")
 
 	game.queue_free()
 	await get_tree().process_frame
