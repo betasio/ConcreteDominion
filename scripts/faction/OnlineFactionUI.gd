@@ -8,6 +8,7 @@ var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
 var pvp_history: Dictionary = {}
+var trophy_case: Dictionary = {}
 var rival_challenges: Array = []
 var season_rankings: Dictionary = {}
 var season_history: Dictionary = {}
@@ -44,6 +45,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
 	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.pressed.connect(client.get_pvp_history)
+	$Root/Panel/Margin/Scroll/VBox/RefreshTrophies.pressed.connect(client.get_rivalry_trophies)
 	$Root/Panel/Margin/Scroll/VBox/SendChallenge.pressed.connect(func():
 		client.send_rival_challenge($Root/Panel/Margin/Scroll/VBox/RivalFactionId.text.strip_edges()))
 	$Root/Panel/Margin/Scroll/VBox/RefreshChallenges.pressed.connect(client.get_challenges)
@@ -111,6 +113,7 @@ func _disconnect() -> void:
 	online_war.clear()
 	online_pvp.clear()
 	pvp_history.clear()
+	trophy_case.clear()
 	rival_challenges.clear()
 	season_rankings.clear()
 	season_history.clear()
@@ -179,6 +182,8 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_pvp = data.duplicate(true)
 		"pvp_history":
 			pvp_history = data.duplicate(true)
+		"rivalry_trophies":
+			trophy_case = data.duplicate(true)
 		"challenges":
 			var incoming = data.get("challenges", [])
 			rival_challenges = incoming.duplicate(true) if incoming is Array else []
@@ -300,6 +305,26 @@ func _refresh() -> void:
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.disabled = not bool(online_pvp.get("queued", false)) or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshTrophies.disabled = client.session_token.is_empty() or client.is_busy()
+	var trophy_lines := PackedStringArray(["SERVER-VERIFIED COSMETIC PRESTIGE"])
+	trophy_lines.append("Current win streak: %d • Best: %d" % [
+		int(trophy_case.get("current_win_streak", 0)),
+		int(trophy_case.get("best_win_streak", 0))
+	])
+	trophy_lines.append("Rival Conqueror trophies: %d" % int(trophy_case.get("total_rematch_trophies", 0)))
+	var trophy_records = trophy_case.get("rematch_trophies", [])
+	if trophy_records is Array:
+		for entry in trophy_records:
+			if entry is Dictionary:
+				trophy_lines.append("RIVAL CONQUEROR • [%s] %s • Match %s" % [
+					String(entry.get("opponent_tag", "")),
+					String(entry.get("opponent_name", "")),
+					String(entry.get("match_id", "")).left(8)
+				])
+				if trophy_lines.size() >= 11:
+					break
+	$Root/Panel/Margin/Scroll/VBox/TrophyStatus.text = "\n".join(trophy_lines)
+
 	$Root/Panel/Margin/Scroll/VBox/RefreshChallenges.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/SendChallenge.disabled = client.session_token.is_empty() or client.is_busy()
 	var first_incoming := false
