@@ -57,7 +57,9 @@ def route(store, method, path, data, actor):
             """SELECT season_id,rank,points,badge FROM season_awards
             WHERE faction_id=? ORDER BY season_id DESC LIMIT 20""",(fid,)
         ).fetchall()
-        return 200, {"faction":dict(row),"achievements":[dict(x) for x in achievements],"cosmetic_only":True}
+        from server.rivalries import trophy_case
+        return 200, {"faction":dict(row),"achievements":[dict(x) for x in achievements],
+                     "rivalry_prestige":trophy_case(store,fid),"cosmetic_only":True}
     if method == "GET" and path.startswith("/v1/profiles/player/"):
         pid = path[len("/v1/profiles/player/"):]
         row = store.execute("""SELECT p.id,p.display_name,p.faction_id,
