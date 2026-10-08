@@ -1,6 +1,8 @@
 class_name Building
 extends Area2D
 
+const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+
 signal selected(building: Building)
 signal changed
 
@@ -81,6 +83,13 @@ func _draw() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(-72, 62), display_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 144, 18, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)
 		return
+
+	FACILITY_VISUALS.draw_facility(self, String(building_type), level)
+	if is_constructing:
+		draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color("#e3ae47"), 4.0)
+	if is_selected:
+		draw_arc(Vector2(0, -35), 112.0, 0.0, TAU, 48, Color("#f4d078"), 5.0)
+	return
 
 	var footprint := PackedVector2Array([
 		Vector2(0, -58),
