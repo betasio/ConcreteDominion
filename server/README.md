@@ -83,3 +83,9 @@ Endpoints: `POST /v1/profiles/faction` (leader only), `POST /v1/profiles/badge` 
 ## Illustrated online Faction profile cards
 
 The Godot **Online • Dev** identity section includes a scalable vector-drawn Faction card (`FactionIdentityCard.gd`). It depicts the four approved emblems (crown, serpent, shield, wolf), uses the selected server-approved banner palette, and accents saved seasonal prestige. Style selectors provide a local preview before the Faction leader saves the changes. Viewing another Faction loads its server-owned identity and historical prestige. The art is generated locally from Godot drawing commands; no arbitrary user-uploaded images are supported and no offline gameplay rewards are affected.
+
+## PvP War Room and rivalry history
+
+The **Online • Dev → Refresh past matchups and rivals** button reads `GET /v1/pvp/history` as an authenticated Faction member. The server returns the **20 latest completed PvP matches** for your Faction, including each opponent's approved emblem and banner, both final scores, attack counts, result, and match ID. The opponent summary groups those recent matches into head-to-head **wins, losses, draws and timeouts**. A timeout is not a draw or victory. Data is derived from the server's immutable match/settlement records, not client score uploads; the display grants no offline rewards.
+
+This is a recent-history preview: the rivalry aggregates cover only the returned 20 matches, not all lifetime battles, and the opponent's cosmetic identity reflects its current profile. Existing PvP records already in SQLite remain available without migration. The developer panel currently shows a text archive alongside the existing illustrated live-match cards.
