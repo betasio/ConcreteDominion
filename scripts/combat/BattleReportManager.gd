@@ -140,7 +140,15 @@ func _build_family_advice(report: Dictionary) -> String:
 	return "Successful operation. Rivalry increased, so future feud rewards also improved."
 
 
-func can_rematch(report: Dictionary) -> Dictionary:
+func get_rematch_status(index: int) -> Dictionary:
+	return _get_rematch_status_for_report(get_report(index))
+
+
+func can_rematch(index: int) -> bool:
+	return bool(get_rematch_status(index).get("ok", false))
+
+
+func _get_rematch_status_for_report(report: Dictionary) -> Dictionary:
 	if report.is_empty():
 		return {"ok":false,"reason":"No report selected."}
 	if raid_battle == null or world_control == null:
@@ -180,12 +188,13 @@ func can_rematch(report: Dictionary) -> Dictionary:
 	return {"ok":false,"reason":"This report cannot be rematched."}
 
 
-func rematch(report: Dictionary) -> bool:
-	var check := can_rematch(report)
+func rematch(index: int) -> bool:
+	var check := get_rematch_status(index)
 	if not bool(check.get("ok", false)):
 		rematch_blocked.emit(String(check.get("reason", "Rematch unavailable.")))
 		return false
 
+	var report := get_report(index)
 	var source := String(report.get("source", ""))
 	if source == "raid":
 		var target: RaidTarget = city_map.get_raid_target_by_id(String(report.get("target_id", "")))
