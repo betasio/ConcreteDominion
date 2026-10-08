@@ -16,6 +16,7 @@ func _ready() -> void:
 	_test_faction_war_strategy_counters()
 	_test_faction_war_preparation_snapshot()
 	_test_faction_war_objective_and_split_invariants()
+	_test_faction_war_debrief_archive()
 	_finish()
 
 
@@ -416,6 +417,52 @@ func _test_faction_war_objective_and_split_invariants() -> void:
 			_fail("Faction War participation reward split did not conserve its pool.")
 	if int(faction.active_war.get("completed_objectives", 0)) <= 0:
 		_fail("Faction War shared objectives did not progress from strategic attacks.")
+	faction.queue_free()
+
+
+func _test_faction_war_debrief_archive() -> void:
+	var faction := FactionManager.new()
+	add_child(faction)
+	faction.members = [
+		{"id":"local_player","name":"You","role":FactionManager.ROLE_LEADER,"power":5000,"contribution":10,"online":true},
+		{"id":"officer","name":"Nova","role":FactionManager.ROLE_OFFICER,"power":9000,"contribution":100,"online":true}
+	]
+	faction.active_war = {
+		"status":"active","our_score":350,"their_score":150,
+		"opponent_name":"Test Rival","member_contributions":{"local_player":200,"officer":500},
+		"objectives":faction._create_war_objectives()
+	}
+	faction.active_war["objectives"]["counter_network"]["completed"] = true
+	faction._complete_war()
+	if faction.war_history.size() != 1:
+		_fail("War completion did not archive the debrief.")
+	else:
+		var record: Dictionary = faction.war_history[0]
+		if String(record.get("mvp_name", "")) != "Nova":
+			_fail("War MVP was not awarded to the top contributor.")
+		if String(record.get("result", "")) != "VICTORY":
+			_fail("War outcome was lost in archive.")
+		if int(record.get("local_share", -1)) <= 0:
+			_fail("Local participation share was lost in archive.")
+	faction.clear_completed_war()
+	if faction.war_history.size() != 1:
+		_fail("Clearing completed war erased the debrief.")
+	var saved := faction.get_save_data()
+	var restored := FactionManager.new()
+	add_child(restored)
+	restored.load_save_data(saved)
+	if restored.war_history.size() != 1:
+		_fail("War debrief did not survive save/load.")
+	var invalid: Array = []
+	for i in range(15):
+		invalid.append({"result":"VICTORY","opponent":"Rival %d" % i,"our_score":-100,"their_score":i})
+	invalid.append({"result":"INVALID"})
+	restored.load_save_data({"war_history":invalid})
+	if restored.war_history.size() != FactionManager.WAR_HISTORY_LIMIT:
+		_fail("War history cap or invalid-result filtering failed.")
+	if int(restored.war_history[0].get("our_score", -1)) != 0:
+		_fail("Malformed archived war score was not clamped.")
+	restored.queue_free()
 	faction.queue_free()
 
 
