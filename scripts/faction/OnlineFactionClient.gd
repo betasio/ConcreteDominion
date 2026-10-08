@@ -27,6 +27,7 @@ func set_session(token: String) -> void:
 		_retry_id = ""
 		_retry_strategy = ""
 	session_token = next_token
+	_load_retry_receipt()
 
 
 func clear_session() -> void:
@@ -103,8 +104,55 @@ func attack_pvp(strategy: String) -> bool:
 	if _retry_id.is_empty():
 		_retry_id = _new_request_id()
 		_retry_strategy = strategy
+		_save_retry_receipt()
 	return _request("pvp_attack", HTTPClient.METHOD_POST, "/v1/pvp/attack",
 		{"strategy":strategy, "request_id":_retry_id}, true)
+
+
+func _retry_path() -> String:
+	if session_token.is_empty():
+		return ""
+	# The file name is a hash, never the bearer token itself.
+	return "user://online_pvp_%s.json" % session_token.sha256_text()
+
+
+func _save_retry_receipt() -> void:
+	var path := _retry_path()
+	if path.is_empty():
+		return
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify({"request_id":_retry_id, "strategy":_retry_strategy}))
+		file.flush()
+		file.close()
+
+
+func _load_retry_receipt() -> void:
+	_retry_id = ""
+	_retry_strategy = ""
+	var path := _retry_path()
+	if path.is_empty() or not FileAccess.file_exists(path):
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return
+	var raw = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not (raw is Dictionary):
+		return
+	var receipt := String(raw.get("request_id", ""))
+	var strategy := String(raw.get("strategy", ""))
+	if receipt.length() == 32 and receipt.is_valid_hex_number() and strategy in ["muscle","convoy","intel"]:
+		_retry_id = receipt
+		_retry_strategy = strategy
+
+
+func _clear_retry_receipt() -> void:
+	var path := _retry_path()
+	_retry_id = ""
+	_retry_strategy = ""
+	if not path.is_empty() and FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _new_request_id() -> String:
@@ -150,7 +198,6 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 		return
 	# A registration session token is intentionally returned only to the caller.
 	# The caller must decide how to securely persist it; this node does not save it.
-	if action == "pvp_attack":
-		_retry_id = ""
-		_retry_strategy = ""
+	if action == "pvp_attack" and response_code >= 200 and response_code < 500:
+		_clear_retry_receipt()
 	request_completed.emit(action, response_code, parsed)
