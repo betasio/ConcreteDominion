@@ -87,12 +87,13 @@ jobs:
           mkdir -p build/previews
           xvfb-run -a godot --path . --rendering-driver opengl3 res://scenes/tests/TurfScreenshot.tscn
           test -s build/previews/turf_actual.png
+          test -s build/previews/turf_map_only.png
 
       - name: Upload real turf screenshot
         uses: actions/upload-artifact@v4
         with:
           name: concrete-dominion-turf-screenshot
-          path: build/previews/turf_actual.png
+          path: build/previews/turf_*.png
           if-no-files-found: error
 
       - name: Prepare export directories
