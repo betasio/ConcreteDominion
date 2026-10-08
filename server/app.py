@@ -9,6 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
+from server import pvp
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCHEMA = """
@@ -60,6 +61,7 @@ class Store:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
+        self.db.executescript(pvp.PVP_SCHEMA)
         self.db.commit()
 
     def execute(self, query, params=()):
@@ -206,6 +208,9 @@ class Store:
                 self.execute("INSERT INTO war_attacks(war_id,player_id,strategy,defense,our_points,enemy_points) VALUES(?,?,?,?,?,?)", (war["id"],actor["id"],strategy,defense,our,enemy))
                 self.execute("UPDATE wars SET our_score=?,their_score=?,rounds=?,status=?,result=? WHERE id=?", (total_our,total_enemy,rounds,status,result,war["id"]))
             return 200, {"war_id":war["id"],"round":rounds,"strategy":strategy,"defense":defense,"our_points":our,"enemy_points":enemy,"countered":counter==defense,"status":status,"result":result}
+        pvp_result = pvp.route(self, method, path, data, actor)
+        if pvp_result is not None:
+            return pvp_result
         raise ApiError(404, "Unknown endpoint")
 
 
