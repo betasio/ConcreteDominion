@@ -425,6 +425,9 @@ func _ready() -> void:
 			_fail("Illustrated Faction identity profile card is missing.")
 		else:
 			identity_card.set_identity({"name":"Smoke Syndicate","tag":"SMK","emblem":"wolf","banner":"crimson"}, "CHAMPION", 2)
+			identity_card.set_rivalry_prestige({"total_rematch_trophies":2,"current_win_streak":3,"best_win_streak":5})
+			if identity_card.rivalry_trophies != 2 or identity_card.best_streak != 5:
+				_fail("Faction card did not render server rivalry prestige.")
 			if identity_card.emblem != "wolf" or identity_card.prestige != "CHAMPION":
 				_fail("Faction identity card did not accept valid cosmetic data.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/ApplyIdentity") == null:
