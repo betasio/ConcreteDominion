@@ -12,6 +12,7 @@ func _ready() -> void:
 	_test_dominion_season_rollover()
 	_test_faction_season_rollover()
 	_test_operation_report_grade_rules()
+	_test_battle_report_history_invariants()
 	_finish()
 
 
@@ -246,6 +247,39 @@ func _test_operation_report_grade_rules() -> void:
 	if report._grade_from_ratio(0.50, false) != "D":
 		_fail("Operation report defeat grade is invalid.")
 	report.free()
+
+
+func _test_battle_report_history_invariants() -> void:
+	var manager := BattleReportManager.new()
+	add_child(manager)
+	var saved_reports: Array = []
+	for i in range(30):
+		saved_reports.append({
+			"source":"raid" if i % 2 == 0 else "family_operation",
+			"timestamp":-50 if i == 0 else i,
+			"target_name":"Target %d" % i,
+			"victory":i % 3 != 0,
+			"advice":"x".repeat(500)
+		})
+	saved_reports.append({"source":"invalid"})
+	manager.load_save_data({"reports":saved_reports})
+	if manager.get_report_count() != BattleReportManager.MAX_REPORTS:
+		_fail("Battle report history cap was not enforced on load.")
+	var first := manager.get_report(0)
+	if float(first.get("timestamp", -1.0)) < 0.0:
+		_fail("Battle report timestamp sanitization failed.")
+	if String(first.get("advice", "")).length() > 300:
+		_fail("Battle report tactical advice sanitization failed.")
+	var close_loss := {
+		"victory":false,
+		"damage":90.0,
+		"target_hp":100.0,
+		"weakness_matched":false,
+		"weakness_role":"Driver"
+	}
+	if not manager._build_raid_advice(close_loss).contains("Close loss"):
+		_fail("Battle report close-loss advice is missing.")
+	manager.queue_free()
 
 
 func _fail(message: String) -> void:
