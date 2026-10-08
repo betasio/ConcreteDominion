@@ -127,6 +127,26 @@ func get_season_rankings() -> bool:
 	return _request("season_rankings", HTTPClient.METHOD_GET, "/v1/seasons/leaderboard", {}, true)
 
 
+func get_challenges() -> bool:
+	return _request("challenges", HTTPClient.METHOD_GET, "/v1/pvp/challenges", {}, true)
+
+
+func send_rival_challenge(faction_id: String) -> bool:
+	return _request("send_challenge", HTTPClient.METHOD_POST, "/v1/pvp/challenges",
+		{"target_faction_id":faction_id}, true)
+
+
+func respond_to_challenge(challenge_id: String, action: String) -> bool:
+	if challenge_id.length() != 24 or not challenge_id.is_valid_hex_number():
+		connection_failed.emit("respond_challenge", "Invalid challenge ID")
+		return false
+	if not action in ["accept", "decline", "cancel"]:
+		connection_failed.emit("respond_challenge", "Invalid challenge action")
+		return false
+	return _request("respond_challenge", HTTPClient.METHOD_POST,
+		"/v1/pvp/challenges/%s/%s" % [challenge_id, action], {}, true)
+
+
 func get_pvp_history() -> bool:
 	return _request("pvp_history", HTTPClient.METHOD_GET, "/v1/pvp/history", {}, true)
 
