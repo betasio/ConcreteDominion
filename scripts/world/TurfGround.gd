@@ -20,6 +20,7 @@ func _draw() -> void:
 		Vector2i(16, 13)
 	]
 	_draw_compound_routes()
+	_draw_landscaping()
 	for cell in properties:
 		_draw_pad(city_map.iso_to_screen(cell), cell == Vector2i(10, 10))
 	# Distinct property boundaries and shared driveways frame the compound.
@@ -92,3 +93,25 @@ func _draw_compound_routes() -> void:
 		var p: Vector2 = outline[index]
 		draw_line(p, p + Vector2(0, -14), Color("#43505d"), 5.0)
 		draw_circle(p + Vector2(0, -15), 3.0, Color("#ebc47e"))
+
+
+func _draw_landscaping() -> void:
+	# Repeatable, sparse high-end perimeter planting: deliberately outside
+	# the central building slots so labels and interactive areas stay legible.
+	for cell in [Vector2i(6, 8), Vector2i(7, 7), Vector2i(14, 6),
+			Vector2i(17, 9), Vector2i(18, 12), Vector2i(16, 16),
+			Vector2i(9, 17), Vector2i(6, 15)]:
+		var p: Vector2 = city_map.iso_to_screen(cell)
+		draw_colored_polygon(PackedVector2Array([
+			p + Vector2(-21, 0), p + Vector2(0, -11),
+			p + Vector2(21, 0), p + Vector2(0, 11)
+		]), Color("#223b35"))
+		draw_line(p + Vector2(0, -3), p + Vector2(0, -26), Color("#615847"), 4.0)
+		draw_circle(p + Vector2(0, -30), 11.0, Color("#355e52"))
+		draw_circle(p + Vector2(-5, -34), 6.0, Color("#597663"))
+		draw_circle(p + Vector2(10, 2), 3.5, Color("#e5ba72", 0.85))
+	# Two recessed entrance spotlights define the HQ's driveway.
+	for cell in [Vector2i(8, 9), Vector2i(8, 11)]:
+		var light_position: Vector2 = city_map.iso_to_screen(cell)
+		draw_circle(light_position, 16.0, Color(0.93, 0.71, 0.37, 0.09))
+		draw_circle(light_position, 3.0, Color("#efc985"))
