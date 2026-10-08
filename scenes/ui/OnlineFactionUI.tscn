@@ -119,6 +119,42 @@ text = "Accept first invitation"
 layout_mode = 2
 text = "Refresh server Faction"
 
+[node name="WarTitle" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "SERVER WAR • DEVELOPMENT"
+
+[node name="StartWar" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Start server war (leader)"
+
+[node name="RefreshWar" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Refresh shared war"
+
+[node name="AttackPlans" type="HBoxContainer" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+
+[node name="Muscle" type="Button" parent="Root/Panel/Margin/Scroll/VBox/AttackPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Muscle"
+
+[node name="Convoy" type="Button" parent="Root/Panel/Margin/Scroll/VBox/AttackPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Convoy"
+
+[node name="Intel" type="Button" parent="Root/Panel/Margin/Scroll/VBox/AttackPlans"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Intel"
+
+[node name="WarStatus" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
+custom_minimum_size = Vector2(0, 135)
+layout_mode = 2
+text = "No online war loaded."
+autowrap_mode = 2
+
 [node name="Status" type="Label" parent="Root/Panel/Margin/Scroll/VBox"]
 custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
