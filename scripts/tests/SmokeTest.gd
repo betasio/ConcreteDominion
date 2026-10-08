@@ -99,14 +99,14 @@ func _ready() -> void:
 		if not secondary.list_panel.visible:
 			_fail("More menu failed to expand.")
 		var option_count := 0
-		for option in secondary.list_panel.get_child(0).get_children():
+		for option in secondary.list_panel.get_node("MenuScroll/MenuOptions").get_children():
 			if option is Button:
 				option_count += 1
-		if option_count != 5:
-			_fail("More menu does not contain all five feature links.")
+		if option_count != 8:
+			_fail("More menu does not contain all eight feature links.")
 		else:
 			var profile_panel := game.get_node_or_null("ProfileUI/Root/Panel") as PanelContainer
-			var first_option := secondary.list_panel.get_child(0).get_child(0) as Button
+			var first_option := secondary.list_panel.get_node("MenuScroll/MenuOptions").get_child(0) as Button
 			if profile_panel != null and first_option != null:
 				first_option.pressed.emit()
 				if not profile_panel.visible:
