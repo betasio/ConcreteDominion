@@ -118,7 +118,7 @@ func _style_hub_tabs() -> void:
 	var nav := $Root/Panel/Margin/Scroll/VBox
 	for section in HUB_GROUPS.keys():
 		var tab := nav.get_node(_hub_tab_path(section)) as Button
-		var selected := section == hub_section
+		var selected: bool = String(section) == hub_section
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("#655037") if selected else Color("#18212e")
 		style.border_color = Color("#dab981") if selected else Color("#405064")
