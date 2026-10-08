@@ -346,6 +346,44 @@ class FactionApiTests(unittest.TestCase):
         self.api = Store(self.path)
         self.assertEqual(self.api.call("GET",f"/v1/profiles/player/{member['player_id']}",{},st)[1]["player"]["featured_badge"],"CHAMPION")
 
+    def test_rivalry_history_results_timeout_and_access(self):
+        alpha = self.register("Rivalry Alpha")
+        beta = self.register("Rivalry Beta")
+        outsider = self.register("Rivalry Outsider")
+        at,bt,ot = [x["session_token"] for x in (alpha,beta,outsider)]
+        self.api.call("POST","/v1/factions",{"name":"Rivalry North","tag":"NTH"},at)
+        self.api.call("POST","/v1/factions",{"name":"Rivalry South","tag":"STH"},bt)
+        fa = self.api.call("GET","/v1/me",{},at)[1]["faction_id"]
+        fb = self.api.call("GET","/v1/me",{},bt)[1]["faction_id"]
+        self.api.call("POST","/v1/profiles/faction",{"emblem":"wolf","banner":"crimson"},bt)
+        for mid,winner,reason in (("r1",fa,"pvp_settlement"),("r2",fb,"pvp_settlement"),("r3","","pvp_timeout")):
+            self.api.execute(
+                "INSERT INTO pvp_matches(id,faction_a,faction_b,status,score_a,score_b,rounds_a,rounds_b,winner_id) VALUES(?,?,?,'complete',720,650,6,6,?)",
+                (mid,fa,fb,winner)
+            )
+            for fid in (fa,fb):
+                self.api.execute(
+                    "INSERT INTO pvp_ledger(match_id,faction_id,points,reason) VALUES(?,?,?,?)",
+                    (mid,fid,0 if reason=="pvp_timeout" else 25,reason)
+                )
+        self.api.db.commit()
+        results = self.api.call("GET","/v1/pvp/history",{},at)[1]
+        self.assertEqual(len(results["matches"]),3)
+        self.assertEqual({m["result"] for m in results["matches"]},{"VICTORY","DEFEAT","TIMEOUT"})
+        self.assertEqual(results["rivals"][0]["played"],3)
+        self.assertEqual(results["rivals"][0]["wins"],1)
+        self.assertEqual(results["rivals"][0]["losses"],1)
+        self.assertEqual(results["rivals"][0]["timeouts"],1)
+        self.assertEqual(results["rivals"][0]["emblem"],"wolf")
+        self.assertEqual(results["rivals"][0]["banner"],"crimson")
+        self.assertEqual(self.api.call("GET","/v1/pvp/history",{},bt)[1]["rivals"][0]["wins"],1)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("GET","/v1/pvp/history",{},ot)
+        self.assertEqual(denied.exception.status,403)
+        self.api.db.close()
+        self.api = Store(self.path)
+        self.assertEqual(len(self.api.call("GET","/v1/pvp/history",{},at)[1]["matches"]),3)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
