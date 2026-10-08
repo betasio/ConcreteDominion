@@ -13,6 +13,7 @@ func _ready() -> void:
 	_test_faction_season_rollover()
 	_test_operation_report_grade_rules()
 	_test_battle_report_history_invariants()
+	_test_faction_war_strategy_counters()
 	_finish()
 
 
@@ -280,6 +281,50 @@ func _test_battle_report_history_invariants() -> void:
 	if not manager._build_raid_advice(close_loss).contains("Close loss"):
 		_fail("Battle report close-loss advice is missing.")
 	manager.queue_free()
+
+
+func _test_faction_war_strategy_counters() -> void:
+	var faction := FactionManager.new()
+	add_child(faction)
+	faction.faction_id = "test"
+	faction.faction_name = "Test"
+	faction.faction_tag = "TEST"
+	faction.members = [
+		{"id":"local_player","name":"You","role":FactionManager.ROLE_LEADER,"power":10000,"contribution":50,"online":true}
+	]
+	faction.active_war = {
+		"opponent_id":"prototype_test",
+		"opponent_name":"Test Rival",
+		"opponent_rating":500,
+		"seconds_remaining":1000.0,
+		"our_score":0,
+		"their_score":0,
+		"attacks_remaining":3,
+		"status":"active",
+		"result":"",
+		"reward_tier":"",
+		"attack_cursor":0,
+		"attack_history":[],
+		"last_attack":{}
+	}
+	var defense := faction.get_current_war_defense()
+	var strategy_id := ""
+	for candidate in ["muscle", "convoy", "intel"]:
+		var strategy: Dictionary = FactionManager.WAR_STRATEGIES[candidate]
+		if String(strategy.get("counter", "")) == defense:
+			strategy_id = candidate
+			break
+	if strategy_id.is_empty():
+		_fail("Faction War defense has no valid counter strategy.")
+	else:
+		var result := faction.perform_war_attack(strategy_id)
+		if not bool(result.get("countered", false)):
+			_fail("Faction War counter strategy did not register.")
+		if int(faction.active_war.get("attacks_remaining", 3)) != 2:
+			_fail("Faction War attack did not consume exactly one attack.")
+		if (faction.active_war.get("attack_history", []) as Array).size() != 1:
+			_fail("Faction War attack history was not recorded.")
+	faction.queue_free()
 
 
 func _fail(message: String) -> void:
