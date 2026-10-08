@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
@@ -16,10 +16,15 @@
 [ext_resource type="Resource" path="res://data/raids/industrial_depot.tres" id="14_industrial"]
 [ext_resource type="Script" path="res://scripts/world/TurfOverlay.gd" id="15_overlay"]
 
+[ext_resource type="Script" path="res://scripts/world/CityAtmosphere.gd" id="16_atmosphere"]
+
 [node name="CityMap" type="Node2D"]
 script = ExtResource("1_map")
 
 [node name="Ground" type="Node2D" parent="."]
+
+[node name="CityAtmosphere" type="Node2D" parent="."]
+script = ExtResource("16_atmosphere")
 
 [node name="Buildings" type="Node2D" parent="."]
 
