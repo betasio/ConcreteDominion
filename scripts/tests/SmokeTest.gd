@@ -54,6 +54,7 @@ func _ready() -> void:
 		"FactionManager",
 		"EndgameManager",
 		"OperationResultUI",
+		"BattleReportManager",
 		"AchievementManager",
 		"TutorialManager",
 		"AchievementUI",
@@ -63,7 +64,7 @@ func _ready() -> void:
 			_fail("Missing Main node: %s" % path)
 
 	var save := game.get_node_or_null("SaveManager") as SaveManager
-	if save == null or SaveManager.SAVE_VERSION < 32:
+	if save == null or SaveManager.SAVE_VERSION < 33:
 		_fail("Save schema is not production-ready.")
 
 	var balance := game.get_node_or_null("GameBalance") as GameBalance
@@ -282,22 +283,38 @@ func _ready() -> void:
 		_fail("Dominion prestige presentation is missing.")
 
 	var raid_battle := game.get_node_or_null("RaidBattle") as RaidBattle
+	var battle_reports := game.get_node_or_null("BattleReportManager") as BattleReportManager
 	var operation_results := game.get_node_or_null("OperationResultUI") as OperationResultUI
+	if battle_reports == null:
+		_fail("Persistent battle report manager is missing.")
+	else:
+		if BattleReportManager.MAX_REPORTS != 20:
+			_fail("Battle report history cap is invalid.")
+		if not raid_battle.battle_resolved.is_connected(battle_reports._on_raid_resolved):
+			_fail("Raid results are not wired into battle history.")
+		if world_control != null and not world_control.operation_resolved.is_connected(battle_reports._on_family_operation_resolved):
+			_fail("Rival Family operations are not wired into battle history.")
 	if operation_results == null:
 		_fail("Premium operation report UI is missing.")
 	else:
+		if game.get_node_or_null("OperationResultUI/Root/Reports") == null:
+			_fail("Battle report history shortcut is missing.")
 		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Art") == null:
 			_fail("Operation report art presentation is missing.")
 		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Grade") == null:
 			_fail("Operation report grade presentation is missing.")
+		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Advice") == null:
+			_fail("Operation report tactical advice is missing.")
+		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/HistoryNav/Older") == null:
+			_fail("Operation report history navigation is missing.")
+		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Rematch") == null:
+			_fail("Operation report rematch control is missing.")
 		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Rewards") == null:
 			_fail("Operation report reward reveal is missing.")
 		if game.get_node_or_null("OperationResultUI/Root/Panel/Margin/VBox/Progress") == null:
 			_fail("Operation report progression feedback is missing.")
-		if not raid_battle.battle_resolved.is_connected(operation_results._show_raid_report):
-			_fail("Raid results are not wired to the premium operation report.")
-		if world_control != null and not world_control.operation_resolved.is_connected(operation_results._show_family_operation_report):
-			_fail("Rival Family operations are not wired to the premium operation report.")
+		if battle_reports != null and not battle_reports.report_recorded.is_connected(operation_results._on_report_recorded):
+			_fail("Battle history is not wired to the premium operation report.")
 
 	var achievement_manager := game.get_node_or_null("AchievementManager") as AchievementManager
 	if achievement_manager == null:
