@@ -10,6 +10,7 @@ import secrets
 import sqlite3
 import threading
 from server import pvp, seasons, profiles, rivalries, challenges
+from server.security import RateLimiter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCHEMA = """
