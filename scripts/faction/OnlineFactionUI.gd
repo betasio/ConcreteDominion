@@ -24,6 +24,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/Register.pressed.connect(func():
 		client.register_player($Root/Panel/Margin/Scroll/VBox/DisplayName.text))
 	$Root/Panel/Margin/Scroll/VBox/UseSession.pressed.connect(_connect_session)
+	$Root/Panel/Margin/Scroll/VBox/RecoverAccount.pressed.connect(_recover_account)
 	$Root/Panel/Margin/Scroll/VBox/ClearSession.pressed.connect(_disconnect)
 	$Root/Panel/Margin/Scroll/VBox/CreateFaction.pressed.connect(func():
 		client.create_faction($Root/Panel/Margin/Scroll/VBox/FactionName.text, $Root/Panel/Margin/Scroll/VBox/FactionTag.text))
@@ -58,6 +59,13 @@ func _connect_session() -> void:
 	_refresh()
 
 
+func _recover_account() -> void:
+	client.recover_account(
+		$Root/Panel/Margin/Scroll/VBox/RecoveryPlayer.text,
+		$Root/Panel/Margin/Scroll/VBox/RecoveryKey.text
+	)
+
+
 func _disconnect() -> void:
 	client.clear_session()
 	online_player.clear()
@@ -90,7 +98,19 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			# Show the token exactly once for developer backup; never persist it.
 			token_edit.text = session
 			online_player = {"player_id":String(data.get("player_id", ""))}
-			status_message = "Player created. Copy the development token from the hidden field before leaving."
+			$Root/Panel/Margin/Scroll/VBox/RecoveryPlayer.text = String(data.get("player_id", ""))
+			$Root/Panel/Margin/Scroll/VBox/RecoveryKey.text = String(data.get("recovery_key", ""))
+			status_message = "Player created. Securely copy both your hidden session token and one-time recovery key."
+		"recover":
+			var session := String(data.get("session_token", ""))
+			client.set_session(session)
+			token_edit.text = session
+			$Root/Panel/Margin/Scroll/VBox/RecoveryKey.text = String(data.get("recovery_key", ""))
+			online_player = {"player_id":String(data.get("player_id", ""))}
+			online_faction.clear()
+			online_war.clear()
+			online_pvp.clear()
+			status_message = "Account recovered. Previous credentials revoked. Securely copy BOTH new hidden keys."
 		"me":
 			online_player = data.duplicate(true)
 			if String(data.get("faction_id", "")).is_empty():
