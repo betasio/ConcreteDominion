@@ -147,7 +147,21 @@ func _draw() -> void:
 			draw_line(Vector2(x, -72), Vector2(x, 5), Color(0.80, 0.64, 0.28), 5.0)
 		draw_line(Vector2(-58, -52), Vector2(58, -52), Color(0.80, 0.64, 0.28), 5.0)
 	else:
-		draw_string(ThemeDB.fallback_font, Vector2(-52, -12), "EMPTY LOT", HORIZONTAL_ALIGNMENT_CENTER, 104, 16, Color(0.80, 0.76, 0.65))
+		# Vacant parcels should resemble secured development plots rather
+		# than large generic placeholder labels in the premium turf view.
+		var slab := PackedVector2Array([
+			Vector2(0, -45), Vector2(68, -10),
+			Vector2(0, 24), Vector2(-68, -10)
+		])
+		draw_colored_polygon(slab, Color("#26343d"))
+		draw_polyline(PackedVector2Array([slab[0], slab[1], slab[2], slab[3], slab[0]]), Color("#6c7980"), 2.0, true)
+		for offset in [-30.0, 0.0, 30.0]:
+			draw_line(Vector2(offset - 11.0, -14.0), Vector2(offset + 11.0, -2.0), Color("#a58b5e", 0.46), 1.5)
+		# Survey stakes and work lights communicate that this plot can be built.
+		for post in [Vector2(-63, -10), Vector2(63, -10)]:
+			draw_line(post, post + Vector2(0, -18), Color("#495662"), 4.0)
+			draw_circle(post + Vector2(0, -19), 3.0, Color("#dcb879"))
+		draw_string(ThemeDB.fallback_font, Vector2(-54, -25), "AVAILABLE", HORIZONTAL_ALIGNMENT_CENTER, 108, 13, Color("#f0ca82"))
 
 	if is_selected:
 		draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
