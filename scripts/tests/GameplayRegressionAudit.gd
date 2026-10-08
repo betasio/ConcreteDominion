@@ -14,6 +14,7 @@ func _ready() -> void:
 	_test_operation_report_grade_rules()
 	_test_battle_report_history_invariants()
 	_test_faction_war_strategy_counters()
+	_test_faction_war_preparation_snapshot()
 	_finish()
 
 
@@ -324,6 +325,43 @@ func _test_faction_war_strategy_counters() -> void:
 			_fail("Faction War attack did not consume exactly one attack.")
 		if (faction.active_war.get("attack_history", []) as Array).size() != 1:
 			_fail("Faction War attack history was not recorded.")
+	faction.queue_free()
+
+
+func _test_faction_war_preparation_snapshot() -> void:
+	var faction := FactionManager.new()
+	add_child(faction)
+	faction.faction_id = "test"
+	faction.faction_name = "Test"
+	faction.faction_tag = "TEST"
+	faction.faction_level = 4
+	faction.members = [
+		{"id":"boss","name":"Boss","role":FactionManager.ROLE_LEADER,"power":12000,"contribution":500,"online":true},
+		{"id":"local_player","name":"You","role":FactionManager.ROLE_UNDERBOSS,"power":7000,"contribution":150,"online":true}
+	]
+	faction.research["raid_coordination"] = 3
+	faction.war_preparation = {
+		"captain_id":"boss",
+		"defense":"watchful",
+		"doctrine":"aggressive"
+	}
+	var readiness := faction.get_war_readiness_score()
+	if readiness < 70 or readiness > 100:
+		_fail("Faction War readiness does not reflect captain/research preparation.")
+	if not faction.start_prototype_war():
+		_fail("Prepared Faction War could not start.")
+	else:
+		if String(faction.active_war.get("captain_id", "")) != "boss":
+			_fail("Faction War captain was not snapshotted at war start.")
+		if String(faction.active_war.get("defense_stance", "")) != "watchful":
+			_fail("Faction War defense stance was not snapshotted.")
+		if String(faction.active_war.get("doctrine", "")) != "aggressive":
+			_fail("Faction War doctrine was not snapshotted.")
+		var before_doctrine := String(faction.active_war.get("doctrine", ""))
+		if faction.cycle_war_doctrine():
+			_fail("Faction War doctrine changed after war start.")
+		if String(faction.active_war.get("doctrine", "")) != before_doctrine:
+			_fail("Active Faction War doctrine mutated after preparation lock.")
 	faction.queue_free()
 
 
