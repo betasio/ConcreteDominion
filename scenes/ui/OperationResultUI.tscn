@@ -15,6 +15,18 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="Reports" type="Button" parent="Root"]
+layout_mode = 1
+anchors_preset = 2
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -95.0
+offset_top = 194.0
+offset_right = 95.0
+offset_bottom = 240.0
+grow_horizontal = 2
+text = "Battle Reports"
+
 [node name="Panel" type="PanelContainer" parent="Root"]
 visible = false
 layout_mode = 1
@@ -24,9 +36,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -285.0
-offset_top = -340.0
+offset_top = -395.0
 offset_right = 285.0
-offset_bottom = 340.0
+offset_bottom = 395.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -80,6 +92,13 @@ text = "REWARDS"
 horizontal_alignment = 1
 autowrap_mode = 2
 
+[node name="Advice" type="Label" parent="Root/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+text = "TACTICAL READ"
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="Progress" type="Label" parent="Root/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
@@ -112,6 +131,31 @@ text = "Reports"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Next"
+
+[node name="Rematch" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Rematch"
+
+[node name="HistoryNav" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Newer" type="Button" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Newer"
+
+[node name="Status" type="Label" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Report 1/1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Older" type="Button" parent="Root/Panel/Margin/VBox/HistoryNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Older"
 
 [node name="Rematch" type="Button" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
