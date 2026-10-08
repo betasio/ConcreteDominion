@@ -23,6 +23,10 @@ var pending_level := 0
 
 
 func _ready() -> void:
+	# Once built, the optional premium image is used instead of vector scaffolding.
+	var premium_path := "res://assets/premium/buildings/%s.png" % building_name.to_snake_case()
+	if ResourceLoader.exists(premium_path, "Texture2D"):
+		art_texture = load(premium_path) as Texture2D
 	input_event.connect(_on_input_event)
 	queue_redraw()
 
@@ -95,7 +99,7 @@ func restore_progress(built: bool, saved_level: int = 1) -> void:
 func _draw() -> void:
 	if art_texture != null and is_built:
 		var size := art_texture.get_size()
-		var scale_factor := minf(130.0 / maxf(1.0, size.x), 110.0 / maxf(1.0, size.y))
+		var scale_factor := minf(168.0 / maxf(1.0, size.x), 146.0 / maxf(1.0, size.y))
 		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -36), size * scale_factor), false)
 		if is_selected:
 			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
