@@ -163,6 +163,10 @@ text = "FACTION VS FACTION • DEVELOPER TEST"
 layout_mode = 2
 text = "Queue Faction (leader)"
 
+[node name="CancelPvP" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "Leave matchmaking queue"
+
 [node name="RefreshPvP" type="Button" parent="Root/Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "Refresh PvP"
