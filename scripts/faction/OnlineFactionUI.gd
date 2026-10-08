@@ -44,6 +44,8 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.pressed.connect(client.get_season_history)
 	$Root/Panel/Margin/Scroll/VBox/ApplyIdentity.pressed.connect(_save_identity)
+	$Root/Panel/Margin/Scroll/VBox/Emblem.item_selected.connect(func(_index: int): _refresh())
+	$Root/Panel/Margin/Scroll/VBox/Banner.item_selected.connect(func(_index: int): _refresh())
 	$Root/Panel/Margin/Scroll/VBox/ApplyBadge.pressed.connect(_save_badge)
 	$Root/Panel/Margin/Scroll/VBox/ViewFactionProfile.pressed.connect(func():
 		client.get_faction_profile($Root/Panel/Margin/Scroll/VBox/ProfileLookup.text.strip_edges()))
@@ -163,12 +165,18 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			viewed_identity = data.duplicate(true)
 		"set_faction_identity":
 			status_message = "Faction emblem and banner saved on server."
+			var existing_faction = online_faction.get("faction", {})
+			if existing_faction is Dictionary and not existing_faction.is_empty():
+				client.get_faction_profile(String(existing_faction.get("id", "")))
 		"feature_prestige_badge":
 			status_message = "Earned prestige badge updated."
 		"pvp_queue", "pvp_cancel", "pvp_attack":
 			client.get_pvp()
 		"faction":
 			online_faction = data.duplicate(true)
+			var faction_details = data.get("faction", {})
+			if faction_details is Dictionary and not faction_details.is_empty():
+				client.get_faction_profile(String(faction_details.get("id", "")))
 		"invitations":
 			var response_invites = data.get("invitations", [])
 			invites = response_invites.duplicate(true) if response_invites is Array else []
@@ -340,3 +348,29 @@ func _refresh() -> void:
 			String(public_player.get("featured_badge", "None"))
 		])
 	$Root/Panel/Margin/Scroll/VBox/IdentityStatus.text = "\n".join(identity_lines)
+	_update_identity_card()
+
+
+func _update_identity_card() -> void:
+	var card := $Root/Panel/Margin/Scroll/VBox/FactionCard as FactionIdentityCard
+	var public_faction = viewed_identity.get("faction", {})
+	var displayed := {}
+	var awards := 0
+	var badge := ""
+	if public_faction is Dictionary and not public_faction.is_empty():
+		displayed = public_faction.duplicate()
+		var achievements = viewed_identity.get("achievements", [])
+		if achievements is Array:
+			awards = achievements.size()
+			if not achievements.is_empty() and achievements[0] is Dictionary:
+				badge = String(achievements[0].get("badge", ""))
+	else:
+		var own = online_faction.get("faction", {})
+		if own is Dictionary and not own.is_empty():
+			displayed = own.duplicate()
+		# Before server data arrives, preview the selected styles without saving.
+		displayed["emblem"] = ["crown", "serpent", "shield", "wolf"][
+			maxi(0, $Root/Panel/Margin/Scroll/VBox/Emblem.selected)]
+		displayed["banner"] = ["obsidian", "crimson", "gold", "steel"][
+			maxi(0, $Root/Panel/Margin/Scroll/VBox/Banner.selected)]
+	card.set_identity(displayed, badge, awards)
