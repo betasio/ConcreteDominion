@@ -443,6 +443,10 @@ func _ready() -> void:
 			_fail("Our Faction PvP identity card is missing.")
 		if not (game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPMatchup/OpponentCard") is FactionIdentityCard):
 			_fail("Opponent Faction PvP identity card is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshChallenges") == null:
+			_fail("Direct rivalry challenge inbox is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AcceptChallenge") == null:
+			_fail("Direct rivalry rematch acceptance is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RefreshRivalries") == null:
 			_fail("PvP rivalry history refresh button is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/RivalryStatus") == null:
