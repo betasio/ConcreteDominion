@@ -194,6 +194,32 @@ class FactionApiTests(unittest.TestCase):
         self.assertEqual({x["reason"] for x in ended["ledger"]},{"pvp_timeout"})
         self.assertEqual(len(self.api.call("GET","/v1/pvp",{},lt)[1]["ledger"]),2)
 
+    def test_recovery_rotates_both_secrets_and_preserves_membership(self):
+        player = self.register("Recoverable")
+        token = player["session_token"]
+        key = player["recovery_key"]
+        self.api.call("POST","/v1/factions",{"name":"Safe Faction","tag":"SAFE"},token)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("POST","/v1/recover",{"player_id":player["player_id"],"recovery_key":"incorrect"},"")
+        self.assertEqual(denied.exception.status,401)
+        _, recovered = self.api.call("POST","/v1/recover",
+            {"player_id":player["player_id"],"recovery_key":key},"")
+        self.assertNotEqual(recovered["session_token"],token)
+        self.assertNotEqual(recovered["recovery_key"],key)
+        with self.assertRaises(ApiError) as old_session:
+            self.api.call("GET","/v1/me",{},token)
+        self.assertEqual(old_session.exception.status,401)
+        with self.assertRaises(ApiError) as old_key:
+            self.api.call("POST","/v1/recover",
+                {"player_id":player["player_id"],"recovery_key":key},"")
+        self.assertEqual(old_key.exception.status,401)
+        self.assertTrue(self.api.call("GET","/v1/me",{},recovered["session_token"])[1]["faction_id"])
+        self.api.db.close()
+        self.api = Store(self.path)
+        _, again = self.api.call("POST","/v1/recover",
+            {"player_id":player["player_id"],"recovery_key":recovered["recovery_key"]},"")
+        self.assertNotEqual(again["session_token"],recovered["session_token"])
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
