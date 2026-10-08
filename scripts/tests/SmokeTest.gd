@@ -90,6 +90,27 @@ func _ready() -> void:
 		if hub.get_node("Root/Panel/Margin/Scroll/VBox/RecoveryKey").visible:
 			_fail("Developer recovery credentials leaked into player-facing Identity tab.")
 
+	# Verify the consolidated launcher did not strand secondary features.
+	var secondary := game.get_node_or_null("SecondaryMenu") as SecondaryMenu
+	if secondary == null or secondary.menu_button == null or secondary.list_panel == null:
+		_fail("Consolidated secondary navigation was not initialized.")
+	else:
+		secondary.menu_button.pressed.emit()
+		if not secondary.list_panel.visible:
+			_fail("More menu failed to expand.")
+		var option_count := 0
+		for option in secondary.list_panel.get_node("VBoxContainer").get_children():
+			if option is Button:
+				option_count += 1
+		if option_count != 5:
+			_fail("More menu does not contain all five feature links.")
+		var profile_button := game.get_node_or_null("ProfileUI/Root/Shortcut") as Button
+		if profile_button != null and profile_button.visible:
+			_fail("Old profile shortcut still clutters the turf.")
+		secondary.menu_button.pressed.emit()
+		if secondary.list_panel.visible:
+			_fail("More menu failed to close.")
+
 	var save := game.get_node_or_null("SaveManager") as SaveManager
 	if save == null or SaveManager.SAVE_VERSION < 35:
 		_fail("Save schema is not production-ready.")
