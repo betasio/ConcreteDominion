@@ -62,6 +62,11 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
         self.db.executescript(pvp.PVP_SCHEMA)
+        # Existing development databases predate the PvP timeout timestamp.
+        columns = {row["name"] for row in self.db.execute("PRAGMA table_info(pvp_matches)")}
+        if "created_at" not in columns:
+            self.db.execute("ALTER TABLE pvp_matches ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
+            self.db.execute("UPDATE pvp_matches SET created_at=unixepoch() WHERE created_at=0")
         self.db.commit()
 
     def execute(self, query, params=()):
