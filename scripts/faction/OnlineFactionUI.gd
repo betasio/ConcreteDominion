@@ -5,6 +5,7 @@ var client: OnlineFactionClient
 var online_player: Dictionary = {}
 var online_faction: Dictionary = {}
 var invites: Array = []
+var online_war: Dictionary = {}
 var status_message := "Disconnected"
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -30,6 +31,11 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/Invitations.pressed.connect(client.get_invitations)
 	$Root/Panel/Margin/Scroll/VBox/Accept.pressed.connect(_accept_first)
 	$Root/Panel/Margin/Scroll/VBox/Refresh.pressed.connect(client.get_faction)
+	$Root/Panel/Margin/Scroll/VBox/StartWar.pressed.connect(client.start_war)
+	$Root/Panel/Margin/Scroll/VBox/RefreshWar.pressed.connect(client.get_war)
+	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle.pressed.connect(func(): client.attack_war("muscle"))
+	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy.pressed.connect(func(): client.attack_war("convoy"))
+	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel.pressed.connect(func(): client.attack_war("intel"))
 	_refresh()
 
 
@@ -50,6 +56,7 @@ func _disconnect() -> void:
 	online_player.clear()
 	online_faction.clear()
 	invites.clear()
+	online_war.clear()
 	status_message = "Disconnected"
 	_refresh()
 
@@ -85,6 +92,10 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 		"create_faction", "accept_invitation":
 			invites.clear()
 			client.get_faction()
+		"start_war", "war_attack":
+			client.get_war()
+		"war":
+			online_war = data.duplicate(true)
 		"faction":
 			online_faction = data.duplicate(true)
 		"invitations":
@@ -120,3 +131,19 @@ func _refresh() -> void:
 			if invitation is Dictionary:
 				lines.append("%s • %s" % [String(invitation.get("faction_name", "")),String(invitation.get("id", ""))])
 	status_label.text = "\n".join(lines)
+	var war_data = online_war.get("war", {})
+	var war_lines := PackedStringArray()
+	if war_data is Dictionary and not war_data.is_empty():
+		war_lines.append("%s vs %s • %s" % [String(war_data.get("id", "")).left(6), String(war_data.get("opponent_name", "")), String(war_data.get("status", ""))])
+		war_lines.append("Score %d–%d • Round %d/6 • Defense: %s" % [int(war_data.get("our_score", 0)), int(war_data.get("their_score", 0)), int(war_data.get("rounds", 0)), String(online_war.get("defense", "—"))])
+		for member in online_war.get("contributions", []):
+			if member is Dictionary:
+				war_lines.append("%s: %d points (%d attacks)" % [String(member.get("display_name", "")), int(member.get("contribution", 0)), int(member.get("attacks", 0))])
+	else:
+		war_lines.append("No server war loaded. Refresh after joining a Faction.")
+	$Root/Panel/Margin/Scroll/VBox/WarStatus.text = "\n".join(war_lines)
+	var active := war_data is Dictionary and String(war_data.get("status", "")) == "active"
+	for button in [$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle, $Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy, $Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel]:
+		button.disabled = not active or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/StartWar.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshWar.disabled = client.session_token.is_empty() or client.is_busy()
