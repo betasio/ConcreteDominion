@@ -7,6 +7,7 @@ var online_faction: Dictionary = {}
 var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
+var pvp_history: Dictionary = {}
 var season_rankings: Dictionary = {}
 var season_history: Dictionary = {}
 var viewed_identity: Dictionary = {}
@@ -41,6 +42,7 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.pressed.connect(client.queue_pvp)
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
+	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.pressed.connect(client.get_pvp_history)
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.pressed.connect(client.get_season_history)
 	$Root/Panel/Margin/Scroll/VBox/ApplyIdentity.pressed.connect(_save_identity)
@@ -101,6 +103,7 @@ func _disconnect() -> void:
 	invites.clear()
 	online_war.clear()
 	online_pvp.clear()
+	pvp_history.clear()
 	season_rankings.clear()
 	season_history.clear()
 	viewed_identity.clear()
@@ -157,6 +160,8 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_war = data.duplicate(true)
 		"pvp":
 			online_pvp = data.duplicate(true)
+		"pvp_history":
+			pvp_history = data.duplicate(true)
 		"season_rankings":
 			season_rankings = data.duplicate(true)
 		"season_history":
@@ -272,6 +277,40 @@ func _refresh() -> void:
 	$Root/Panel/Margin/Scroll/VBox/QueuePvP.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.disabled = not bool(online_pvp.get("queued", false)) or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.disabled = client.session_token.is_empty() or client.is_busy()
+	var rivalry_lines := PackedStringArray(["RIVAL FACTIONS • RECENT COMPLETED MATCHES"])
+	var rivals = pvp_history.get("rivals", [])
+	if rivals is Array and not rivals.is_empty():
+		for rival in rivals:
+			if rival is Dictionary:
+				rivalry_lines.append("[%s] %s • %s / %s • %dW %dL %dD %dT" % [
+					String(rival.get("tag", "")),
+					String(rival.get("name", "")),
+					String(rival.get("emblem", "")).to_upper(),
+					String(rival.get("banner", "")).to_upper(),
+					int(rival.get("wins", 0)), int(rival.get("losses", 0)),
+					int(rival.get("draws", 0)), int(rival.get("timeouts", 0))
+				])
+				if rivalry_lines.size() >= 7:
+					break
+	var historic_matches = pvp_history.get("matches", [])
+	if historic_matches is Array and not historic_matches.is_empty():
+		rivalry_lines.append("BATTLE ARCHIVE • LATEST RESULTS")
+		for previous_match in historic_matches:
+			if previous_match is Dictionary:
+				rivalry_lines.append("%s vs [%s] • %d–%d • %s" % [
+					String(previous_match.get("match_id", "")).left(7),
+					String(previous_match.get("opponent_tag", "")),
+					int(previous_match.get("our_score", 0)),
+					int(previous_match.get("enemy_score", 0)),
+					String(previous_match.get("result", ""))
+				])
+				if rivalry_lines.size() >= 16:
+					break
+	else:
+		rivalry_lines.append("No settled matchups found. Finish a Faction PvP war to build your rivalry history.")
+	$Root/Panel/Margin/Scroll/VBox/RivalryStatus.text = "\n".join(rivalry_lines)
+
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.disabled = client.session_token.is_empty() or client.is_busy()
 	var season_info = season_rankings.get("season", {})
 	var ranking_lines := PackedStringArray()
