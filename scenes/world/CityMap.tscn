@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
@@ -20,6 +20,8 @@
 
 [ext_resource type="Script" path="res://scripts/world/StreetLife.gd" id="17_street"]
 
+[ext_resource type="Script" path="res://scripts/world/DistrictScenery.gd" id="18_district"]
+
 [node name="CityMap" type="Node2D"]
 script = ExtResource("1_map")
 
@@ -30,6 +32,9 @@ script = ExtResource("16_atmosphere")
 
 [node name="StreetLife" type="Node2D" parent="."]
 script = ExtResource("17_street")
+
+[node name="DistrictScenery" type="Node2D" parent="."]
+script = ExtResource("18_district")
 
 [node name="Buildings" type="Node2D" parent="."]
 
