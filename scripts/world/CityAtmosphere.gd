@@ -49,6 +49,10 @@ func _draw() -> void:
 			var height: float = float(20 + seed * 10)
 			_draw_tower(pos, height, seed, world)
 	_draw_lamps()
+	if not world:
+		_draw_home_turf()
+	else:
+		_draw_city_landmarks()
 
 
 func _near_target(x: int, y: int) -> bool:
@@ -98,3 +102,50 @@ func _draw_lamps() -> void:
 			var pos: Vector2 = city_map.iso_to_screen(Vector2i(x, y))
 			draw_circle(pos + Vector2(0, -9), 11, Color(1, 0.69, 0.34, 0.10))
 			draw_circle(pos + Vector2(0, -9), 3, Color("#f6c889"))
+
+
+func _draw_home_turf() -> void:
+	# The home district gets its own visual identity without overlapping
+	# interactive lots. Decorative pavement and perimeter detail only.
+	var center: Vector2 = city_map.iso_to_screen(Vector2i(11, 11))
+	var corners := PackedVector2Array([
+		center + Vector2(0, -82),
+		center + Vector2(174, 0),
+		center + Vector2(0, 82),
+		center + Vector2(-174, 0)
+	])
+	draw_colored_polygon(corners, Color(0.12, 0.18, 0.22, 0.19))
+	draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]]),
+			Color("#b68a46", 0.60), 2.5, true)
+	# Lit bollards at the edges give the turf an upscale compound feel.
+	for offset in [Vector2(-148, 0), Vector2(148, 0), Vector2(0, -69), Vector2(0, 69)]:
+		var p: Vector2 = center + offset
+		draw_line(p, p + Vector2(0, -13), Color("#293b49"), 4.0)
+		draw_circle(p + Vector2(0, -14), 5.0, Color(0.96, 0.72, 0.37, 0.18))
+		draw_circle(p + Vector2(0, -14), 2.0, LIGHT)
+
+
+func _draw_city_landmarks() -> void:
+	# Stylized landmark silhouettes: purely decorative, never selectable.
+	_draw_landmark(Vector2i(11, 3), 92.0, Color("#b6a06b"))
+	_draw_landmark(Vector2i(16, 18), 68.0, Color("#a74d4d"))
+
+
+func _draw_landmark(cell: Vector2i, height: float, accent: Color) -> void:
+	var p: Vector2 = city_map.iso_to_screen(cell)
+	var top: Vector2 = p + Vector2(0, -height)
+	draw_colored_polygon(PackedVector2Array([
+		top + Vector2(-31, 0), top + Vector2(0, 16),
+		p + Vector2(0, 16), p + Vector2(-31, 0)]), Color("#1a2936"))
+	draw_colored_polygon(PackedVector2Array([
+		top + Vector2(0, 16), top + Vector2(31, 0),
+		p + Vector2(31, 0), p + Vector2(0, 16)]), Color("#385064"))
+	draw_colored_polygon(PackedVector2Array([
+		top + Vector2(0, -16), top + Vector2(31, 0),
+		top + Vector2(0, 16), top + Vector2(-31, 0)]), Color("#465566"))
+	draw_line(top + Vector2(-20, -1), top + Vector2(20, -1), accent, 3.0)
+	for n in range(1, 5):
+		draw_line(top + Vector2(5, float(n) * 12.0),
+				top + Vector2(23, float(n) * 12.0 - 7.0), LIGHT, 2.0)
+	draw_line(top + Vector2(0, -16), top + Vector2(0, -35), accent, 2.0)
+	draw_circle(top + Vector2(0, -35), 4.0, accent)
