@@ -8,7 +8,10 @@ const ITEMS := [
 	["Faction Hub", "OnlineFactionUI"],
 	["Store", "StoreUI"],
 	["Territory", "WorldControlUI"],
-	["Achievements", "AchievementUI"]
+	["Achievements", "AchievementUI"],
+	["Events", "EventUI"],
+	["Tactics", "CombatStrategyUI"],
+	["Settings", "SettingsDiagnosticsUI"]
 ]
 
 var menu_button: Button
@@ -43,9 +46,15 @@ func _ready() -> void:
 	list_panel.offset_top = 302.0
 	list_panel.offset_bottom = 554.0
 	root.add_child(list_panel)
+	var scroll := ScrollContainer.new()
+	scroll.name = "MenuScroll"
+	scroll.custom_minimum_size = Vector2(204, 0)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	list_panel.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.name = "MenuOptions"
 	column.add_theme_constant_override("separation", 6)
-	list_panel.add_child(column)
+	scroll.add_child(column)
 	for entry in ITEMS:
 		var target_name: String = entry[1]
 		var owner_ui := get_parent().get_node_or_null(target_name)
@@ -75,8 +84,8 @@ func _fit_launcher_to_viewport() -> void:
 	if menu_button == null or list_panel == null:
 		return
 	var height := get_viewport().get_visible_rect().size.y
-	var top := minf(250.0, maxf(104.0, height - 320.0))
+	var top := minf(250.0, maxf(104.0, height - 390.0))
 	menu_button.offset_top = top
 	menu_button.offset_bottom = top + 48.0
 	list_panel.offset_top = top + 52.0
-	list_panel.offset_bottom = minf(height - 16.0, top + 310.0)
+	list_panel.offset_bottom = minf(height - 16.0, top + 368.0)
