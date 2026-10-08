@@ -69,7 +69,7 @@ func _ready() -> void:
 		_fail("Player-facing Faction Hub is missing.")
 	else:
 		for section in ["Identity", "Wars", "Rivals", "Rankings", "Prestige", "Account"]:
-			var tab = hub.get_node_or_null("Root/Panel/Margin/Scroll/VBox/Hub%s" % section)
+			var tab = hub.get_node_or_null("Root/Panel/Margin/Scroll/VBox/%s" % hub._hub_tab_path(section))
 			if not (tab is Button):
 				_fail("Faction Hub tab missing: %s" % section)
 			else:
