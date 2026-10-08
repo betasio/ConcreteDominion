@@ -20,7 +20,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if city_map == null:
 		return
-	var world := city_map.get_view_mode() == &"world"
+	var world: bool = city_map.get_view_mode() == &"world"
 	for y in range(2, 20, 5):
 		for x in range(2, 24, 5):
 			var pos: Vector2 = city_map.iso_to_screen(Vector2i(x, y))
