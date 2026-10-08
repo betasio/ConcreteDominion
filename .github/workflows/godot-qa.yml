@@ -65,7 +65,7 @@ jobs:
       - name: Run smoke test
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
+          timeout --signal=TERM --kill-after=10s 120s godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
       - name: Audit runtime art coverage
