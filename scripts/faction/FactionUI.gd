@@ -225,6 +225,9 @@ func _refresh() -> void:
 		return
 
 	$Root/Shortcut.text = "Faction" if not faction.has_faction() else "[%s] %s" % [faction.faction_tag, faction.faction_name]
+	if not panel.visible:
+		return
+
 	var faction_unlocked := bool(missions.missions["chapter_2_complete"]["completed"])
 	summary_label.text = faction.get_summary() if faction_unlocked else "Faction unlocks after Chapter 2. Build your Family and defeat Harbor + Midtown first."
 
