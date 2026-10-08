@@ -190,7 +190,7 @@ class Store:
             if war is None:
                 raise ApiError(409,"No active war")
             own_attacks = self.execute("SELECT COUNT(*) FROM war_attacks WHERE war_id=? AND player_id=?", (war["id"],actor["id"])).fetchone()[0]
-            if own_attacks >= 2:
+            if own_attacks >= 3:
                 raise ApiError(409,"Member attack limit reached")
             if war["rounds"] >= 6:
                 raise ApiError(409,"War complete")
