@@ -286,10 +286,28 @@ def handler_factory(store):
                 if self.command == "POST" and self.path in ("/v1/players", "/v1/recover"):
                     if not sensitive_limit.allow(client_ip):
                         raise ApiError(429, "Account request limit exceeded")
-                size = int(self.headers.get("Content-Length", "0"))
+                # Reject ambiguous HTTP framing instead of treating an unread body
+                # as a fresh request on a persistent connection.
+                lengths = self.headers.get_all("Content-Length", [])
+                if self.headers.get("Transfer-Encoding") is not None or len(lengths) > 1:
+                    self.close_connection = True
+                    raise ApiError(400, "Unsupported request framing")
+                if self.command == "POST" and not lengths:
+                    self.close_connection = True
+                    raise ApiError(411, "Content-Length required")
+                try:
+                    size = int(lengths[0]) if lengths else 0
+                except ValueError:
+                    self.close_connection = True
+                    raise ApiError(400, "Invalid Content-Length")
                 if size < 0 or size > 16384:
+                    self.close_connection = True
                     raise ApiError(413, "Request too large")
-                data = json.loads(self.rfile.read(size)) if size else {}
+                raw = self.rfile.read(size)
+                if len(raw) != size:
+                    self.close_connection = True
+                    raise ApiError(400, "Incomplete request body")
+                data = json.loads(raw) if size else {}
                 if not isinstance(data, dict):
                     raise ApiError(400, "JSON object required")
                 header = self.headers.get("Authorization", "")
