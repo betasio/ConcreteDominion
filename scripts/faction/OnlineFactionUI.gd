@@ -332,9 +332,10 @@ func _refresh() -> void:
 	if rivals is Array and not rivals.is_empty():
 		for rival in rivals:
 			if rival is Dictionary:
-				rivalry_lines.append("[%s] %s • %s / %s • %dW %dL %dD %dT" % [
+				rivalry_lines.append("[%s] %s (%s) • %s / %s • %dW %dL %dD %dT" % [
 					String(rival.get("tag", "")),
 					String(rival.get("name", "")),
+					String(rival.get("opponent_id", "")),
 					String(rival.get("emblem", "")).to_upper(),
 					String(rival.get("banner", "")).to_upper(),
 					int(rival.get("wins", 0)), int(rival.get("losses", 0)),
