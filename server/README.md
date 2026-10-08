@@ -107,3 +107,13 @@ Public Faction profiles (`GET /v1/profiles/faction/<id>`) now include server-der
 ## Player-facing Faction Hub navigation
 
 The existing Online • Dev shortcut now opens the **Faction Hub**, a six-section UI over the same private multiplayer prototype. **Identity** shows the illustrated Faction profile and cosmetics, **Wars** contains NPC war operations and live Faction PvP, **Rivals** groups rematch challenges, trophy streaks, and rivalry history, **Rankings** shows active season standings, **Prestige** shows completed seasons, and **Account** retains all developer-only registration, token recovery, Faction creation, and invitation tools. Tab changes do not alter stored credentials or server state. The development-only backend restrictions still apply; this UI reorganization is not a production launch or a replacement for account verification.
+
+## Production-readiness pass: local protection and device testing
+
+The opt-in Python development API now applies bounded, **per-process** IP request quotas (120 requests/minute overall; 8 requests/minute on anonymous account creation and recovery). Excess returns HTTP 429. Responses include `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`. These limits reset on server restart and are **not** suitable for a reverse-proxied, multi-worker, public deployment without trusted-IP handling, shared quotas and stronger identity.
+
+**Local concurrency probe:** start the server on loopback, then run `python3 -m server.load_probe --workers 4 --requests 40`. It checks anonymous `/v1/me` responses, latencies and status counts; 401 is expected without a session, while 429 means request quota reached. For safety, it refuses non-localhost destinations. This does not constitute production load testing.
+
+**Physical device checklist (manual, not covered by CI):** On Windows, confirm all six Faction Hub tabs, disconnect/reconnect, portrait-resized panel, and keyboard accessibility. On Android, install the CI APK on an actual phone; check small portrait screens, tab/button touch targets, scrolling, keyboard overlap with account fields, handling of screen rotation and sleep/resume, network loss, and reconnection. Use a private HTTPS test server, never the Python example exposed on a public interface. Ensure recovery keys cannot appear in screenshots or logs. Record model/OS, screenshots and issues separately before claiming device certification.
+
+**Still required for production:** verified sign-in, per-user account ownership and revocation, shared reverse-proxy throttling, TLS termination, durable DB migrations and backups, concurrent worker safety, audit logging without secrets, privacy/data removal controls, operational monitoring, and scheduled security/load reviews.
