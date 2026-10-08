@@ -42,6 +42,7 @@ script = ExtResource("18_district")
 script = ExtResource("19_depth")
 
 [node name="Buildings" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="Safehouse" parent="Buildings" instance=ExtResource("3_safehouse")]
 
@@ -80,6 +81,7 @@ base_upgrade_duration = 480.0
 description = "Produces Intel over time. Higher levels increase production."
 
 [node name="RaidTargets" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="DowntownBank" parent="RaidTargets" instance=ExtResource("7_target")]
 data = ExtResource("8_downtown")
