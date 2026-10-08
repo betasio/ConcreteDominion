@@ -17,6 +17,9 @@ var emblem := "shield"
 var banner := "obsidian"
 var prestige := ""
 var season_awards := 0
+var rivalry_trophies := 0
+var current_streak := 0
+var best_streak := 0
 
 
 func set_identity(info: Dictionary, badge: String = "", awards: int = 0) -> void:
@@ -26,6 +29,13 @@ func set_identity(info: Dictionary, badge: String = "", awards: int = 0) -> void
 	banner = String(info.get("banner", "obsidian"))
 	prestige = badge if badge in ["CHAMPION", "RUNNER_UP", "PODIUM", "VETERAN"] else ""
 	season_awards = maxi(0, awards)
+	queue_redraw()
+
+
+func set_rivalry_prestige(data: Dictionary) -> void:
+	rivalry_trophies = maxi(0, int(data.get("total_rematch_trophies", 0)))
+	current_streak = maxi(0, int(data.get("current_win_streak", 0)))
+	best_streak = maxi(0, int(data.get("best_win_streak", 0)))
 	queue_redraw()
 
 
@@ -60,7 +70,8 @@ func _draw() -> void:
 	draw_string(font, Vector2(162, 120), "ONLINE FACTION IDENTITY", HORIZONTAL_ALIGNMENT_LEFT, maxi(80, int(w - 180)), 13, Color("#b3c4d2"))
 	var grade := prestige.replace("_", " ") if not prestige.is_empty() else "NO PRESTIGE YET"
 	draw_string(font, Vector2(162, 155), grade, HORIZONTAL_ALIGNMENT_LEFT, maxi(80, int(w - 180)), 18, Color("#f7d793") if not prestige.is_empty() else Color("#9bacbb"))
-	draw_string(font, Vector2(162, 177), "%d ARCHIVED SEASON AWARDS" % season_awards, HORIZONTAL_ALIGNMENT_LEFT, maxi(80, int(w - 180)), 13, Color("#c2d3dd"))
+	draw_string(font, Vector2(162, 177), "%d SEASON AWARDS  |  %d RIVAL TROPHIES" % [season_awards, rivalry_trophies], HORIZONTAL_ALIGNMENT_LEFT, maxi(80, int(w - 180)), 13, Color("#c2d3dd"))
+	draw_string(font, Vector2(162, 196), "WIN STREAK %d  /  BEST %d" % [current_streak, best_streak], HORIZONTAL_ALIGNMENT_LEFT, maxi(80, int(w - 180)), 13, Color("#f7d793"))
 
 
 func _draw_emblem(c: Vector2, tint: Color) -> void:
