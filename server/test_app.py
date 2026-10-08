@@ -293,6 +293,44 @@ class FactionApiTests(unittest.TestCase):
             self.api.call("GET","/v1/seasons/history",{},self.register("No Faction")["session_token"])
         self.assertEqual(blocked.exception.status,403)
 
+    def test_public_profiles_and_earned_badges(self):
+        from server import seasons
+        leader = self.register("Identity Leader")
+        member = self.register("Identity Member")
+        stranger = self.register("Profile Visitor")
+        lt,mt,st = (x["session_token"] for x in (leader,member,stranger))
+        _, faction = self.api.call("POST","/v1/factions",{"name":"Emblem Syndicate","tag":"EMS"},lt)
+        fid = faction["faction_id"]
+        _, invite = self.api.call("POST","/v1/invitations",{"player_id":member["player_id"]},lt)
+        self.api.call("POST",f"/v1/invitations/{invite['invitation_id']}/accept",{},mt)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("POST","/v1/profiles/faction",{"emblem":"wolf","banner":"steel"},mt)
+        self.assertEqual(denied.exception.status,403)
+        with self.assertRaises(ApiError) as invalid:
+            self.api.call("POST","/v1/profiles/faction",{"emblem":"not-real","banner":"steel"},lt)
+        self.assertEqual(invalid.exception.status,400)
+        self.api.call("POST","/v1/profiles/faction",{"emblem":"wolf","banner":"steel"},lt)
+        public = self.api.call("GET",f"/v1/profiles/faction/{fid}",{},st)[1]
+        self.assertEqual(public["faction"]["emblem"],"wolf")
+        self.assertEqual(public["faction"]["banner"],"steel")
+        self.assertNotIn("leader_token",str(public))
+        with self.assertRaises(ApiError) as forged:
+            self.api.call("POST","/v1/profiles/badge",{"badge":"CHAMPION"},mt)
+        self.assertEqual(forged.exception.status,403)
+        old = seasons.current_season()["id"]-1
+        self.api.execute("INSERT INTO season_archives(season_id,starts_at,ends_at,finalized_at) VALUES(?,?,?,?)",
+                         (old,old*seasons.SEASON_SECONDS,(old+1)*seasons.SEASON_SECONDS,1))
+        self.api.execute("INSERT INTO season_awards(season_id,faction_id,rank,points,wins,faction_name,faction_tag,badge) VALUES(?,?,?,?,?,?,?,?)",
+                         (old,fid,1,100,1,"Emblem Syndicate","EMS","CHAMPION"))
+        self.api.db.commit()
+        self.api.call("POST","/v1/profiles/badge",{"badge":"CHAMPION"},mt)
+        result = self.api.call("GET",f"/v1/profiles/player/{member['player_id']}",{},st)[1]
+        self.assertEqual(result["player"]["featured_badge"],"CHAMPION")
+        self.assertEqual(len(self.api.call("GET",f"/v1/profiles/faction/{fid}",{},st)[1]["achievements"]),1)
+        self.api.db.close()
+        self.api = Store(self.path)
+        self.assertEqual(self.api.call("GET",f"/v1/profiles/player/{member['player_id']}",{},st)[1]["player"]["featured_badge"],"CHAMPION")
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
