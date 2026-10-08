@@ -238,6 +238,8 @@ func _resolve_active_battle() -> void:
 		"contributions": contributions.duplicate(true),
 		"participants": (active_battle.get("participants", []) as Array).duplicate(true),
 		"loot": awarded_loot,
+		"local_drivers": int(active_battle.get("local_drivers", 0)),
+		"local_spies": int(active_battle.get("local_spies", 0)),
 		"wounded_enforcers": int(wounds["Enforcer"]),
 		"wounded_drivers": int(wounds["Driver"]),
 		"wounded_spies": int(wounds["Spy"]),
