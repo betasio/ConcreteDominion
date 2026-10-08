@@ -452,6 +452,44 @@ class FactionApiTests(unittest.TestCase):
             self.api.call("POST",path,{"target_faction_id":fb},at)
         self.assertEqual(queued.exception.status,409)
 
+    def test_rematch_trophies_and_win_streaks_are_settlement_only(self):
+        a=self.register("Trophy North")
+        b=self.register("Trophy South")
+        outsider=self.register("Trophy Visitor")
+        at,bt,ot=(x["session_token"] for x in (a,b,outsider))
+        self.api.call("POST","/v1/factions",{"name":"Trophy Wolves","tag":"TW"},at)
+        self.api.call("POST","/v1/factions",{"name":"Trophy Vipers","tag":"TV"},bt)
+        fa=self.api.call("GET","/v1/me",{},at)[1]["faction_id"]
+        fb=self.api.call("GET","/v1/me",{},bt)[1]["faction_id"]
+        for mid,winner,reason in (("win_one",fa,"pvp_settlement"),
+                                   ("win_two",fa,"pvp_settlement"),
+                                   ("draw_one","","pvp_settlement"),
+                                   ("timeout_one","","pvp_timeout"),
+                                   ("win_three",fa,"pvp_settlement")):
+            self.api.execute("INSERT INTO pvp_matches(id,faction_a,faction_b,status,winner_id) VALUES(?,?,?,'complete',?)",
+                             (mid,fa,fb,winner))
+            for fid in (fa,fb):
+                self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason) VALUES(?,?,?,?)",
+                                 (mid,fid,0 if reason=="pvp_timeout" else 100,reason))
+        self.api.execute("""INSERT INTO pvp_challenges(id,challenger_id,target_id,status,created_at,match_id)
+                            VALUES('direct',?,?,'accepted',1,'win_two')""",(fa,fb))
+        self.api.db.commit()
+        _, trophies=self.api.call("GET","/v1/pvp/trophies",{},at)
+        self.assertEqual(trophies["best_win_streak"],2)
+        self.assertEqual(trophies["current_win_streak"],1)
+        self.assertEqual(trophies["total_rematch_trophies"],1)
+        self.assertEqual(trophies["rematch_trophies"][0]["trophy"],"RIVAL_CONQUEROR")
+        self.assertEqual(trophies["record"]["wins"],3)
+        self.assertEqual(trophies["record"]["timeouts"],1)
+        self.assertTrue(trophies["cosmetic_only"])
+        self.assertEqual(self.api.call("GET","/v1/pvp/trophies",{},bt)[1]["total_rematch_trophies"],0)
+        with self.assertRaises(ApiError) as denied:
+            self.api.call("GET","/v1/pvp/trophies",{},ot)
+        self.assertEqual(denied.exception.status,403)
+        self.api.db.close()
+        self.api=Store(self.path)
+        self.assertEqual(self.api.call("GET","/v1/pvp/trophies",{},at)[1]["total_rematch_trophies"],1)
+
     def test_permissions_and_names(self):
         p = self.register("Alpha")
         with self.assertRaises(ApiError) as invalid:
