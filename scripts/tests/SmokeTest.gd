@@ -420,6 +420,10 @@ func _ready() -> void:
 			_fail("Online Faction War refresh is missing.")
 		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel") == null:
 			_fail("Online Faction War attack controls are missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/QueuePvP") == null:
+			_fail("Online Faction PvP queue is missing.")
+		if game.get_node_or_null("OnlineFactionUI/Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel") == null:
+			_fail("Online Faction PvP attack controls are missing.")
 
 	game.queue_free()
 	await get_tree().process_frame
