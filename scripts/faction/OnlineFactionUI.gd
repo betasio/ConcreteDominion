@@ -8,6 +8,7 @@ var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
 var pvp_history: Dictionary = {}
+var rival_challenges: Array = []
 var season_rankings: Dictionary = {}
 var season_history: Dictionary = {}
 var viewed_identity: Dictionary = {}
@@ -43,6 +44,12 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.pressed.connect(client.cancel_pvp_queue)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.pressed.connect(client.get_pvp)
 	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.pressed.connect(client.get_pvp_history)
+	$Root/Panel/Margin/Scroll/VBox/SendChallenge.pressed.connect(func():
+		client.send_rival_challenge($Root/Panel/Margin/Scroll/VBox/RivalFactionId.text.strip_edges()))
+	$Root/Panel/Margin/Scroll/VBox/RefreshChallenges.pressed.connect(client.get_challenges)
+	$Root/Panel/Margin/Scroll/VBox/AcceptChallenge.pressed.connect(func(): _respond_first_challenge("accept", "received"))
+	$Root/Panel/Margin/Scroll/VBox/DeclineChallenge.pressed.connect(func(): _respond_first_challenge("decline", "received"))
+	$Root/Panel/Margin/Scroll/VBox/CancelChallenge.pressed.connect(func(): _respond_first_challenge("cancel", "sent"))
 	$Root/Panel/Margin/Scroll/VBox/RefreshSeasons.pressed.connect(client.get_season_rankings)
 	$Root/Panel/Margin/Scroll/VBox/RefreshPrestige.pressed.connect(client.get_season_history)
 	$Root/Panel/Margin/Scroll/VBox/ApplyIdentity.pressed.connect(_save_identity)
@@ -104,10 +111,20 @@ func _disconnect() -> void:
 	online_war.clear()
 	online_pvp.clear()
 	pvp_history.clear()
+	rival_challenges.clear()
 	season_rankings.clear()
 	season_history.clear()
 	viewed_identity.clear()
 	status_message = "Disconnected"
+	_refresh()
+
+
+func _respond_first_challenge(action: String, direction: String) -> void:
+	for record in rival_challenges:
+		if record is Dictionary and String(record.get("status", "")) == "pending" and String(record.get("direction", "")) == direction:
+			client.respond_to_challenge(String(record.get("id", "")), action)
+			return
+	status_message = "No pending %s challenge found" % direction
 	_refresh()
 
 
@@ -162,6 +179,11 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			online_pvp = data.duplicate(true)
 		"pvp_history":
 			pvp_history = data.duplicate(true)
+		"challenges":
+			var incoming = data.get("challenges", [])
+			rival_challenges = incoming.duplicate(true) if incoming is Array else []
+		"send_challenge", "respond_challenge":
+			client.get_challenges()
 		"season_rankings":
 			season_rankings = data.duplicate(true)
 		"season_history":
@@ -278,6 +300,33 @@ func _refresh() -> void:
 	$Root/Panel/Margin/Scroll/VBox/CancelPvP.disabled = not bool(online_pvp.get("queued", false)) or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshPvP.disabled = client.session_token.is_empty() or client.is_busy()
 	$Root/Panel/Margin/Scroll/VBox/RefreshRivalries.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/RefreshChallenges.disabled = client.session_token.is_empty() or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/SendChallenge.disabled = client.session_token.is_empty() or client.is_busy()
+	var first_incoming := false
+	var first_outgoing := false
+	var challenge_lines := PackedStringArray(["DIRECT CHALLENGES • PENDING REQUESTS"])
+	for challenge in rival_challenges:
+		if not (challenge is Dictionary):
+			continue
+		var direction := String(challenge.get("direction", ""))
+		var state := String(challenge.get("status", ""))
+		if state == "pending" and direction == "received":
+			first_incoming = true
+		if state == "pending" and direction == "sent":
+			first_outgoing = true
+		challenge_lines.append("[%s] %s • %s • %s" % [
+			String(challenge.get("opponent_tag", "")),
+			String(challenge.get("opponent_name", "")),
+			direction, state
+		])
+		if challenge_lines.size() >= 11:
+			break
+	if rival_challenges.is_empty():
+		challenge_lines.append("No challenges yet. Select a previous rival from the War Room.")
+	$Root/Panel/Margin/Scroll/VBox/ChallengeStatus.text = "\n".join(challenge_lines)
+	$Root/Panel/Margin/Scroll/VBox/AcceptChallenge.disabled = not first_incoming or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/DeclineChallenge.disabled = not first_incoming or client.is_busy()
+	$Root/Panel/Margin/Scroll/VBox/CancelChallenge.disabled = not first_outgoing or client.is_busy()
 	var rivalry_lines := PackedStringArray(["RIVAL FACTIONS • RECENT COMPLETED MATCHES"])
 	var rivals = pvp_history.get("rivals", [])
 	if rivals is Array and not rivals.is_empty():
