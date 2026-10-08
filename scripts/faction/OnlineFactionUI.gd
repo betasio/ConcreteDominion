@@ -46,7 +46,7 @@ func _ready() -> void:
 	client.request_completed.connect(_on_completed)
 	client.connection_failed.connect(_on_failed)
 	for section in HUB_GROUPS.keys():
-		var tab := $Root/Panel/Margin/Scroll/VBox.get_node("Hub%s" % section) as Button
+		var tab := $Root/Panel/Margin/Scroll/VBox.get_node(_hub_tab_path(section)) as Button
 		tab.pressed.connect(_select_hub_section.bind(section))
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Close.pressed.connect(_toggle)
@@ -96,6 +96,11 @@ func _ready() -> void:
 	_refresh()
 
 
+func _hub_tab_path(section: String) -> String:
+	var row := "HubNav1" if section in ["Identity", "Wars", "Rivals"] else "HubNav2"
+	return "%s/Hub%s" % [row, section]
+
+
 func _select_hub_section(section: String) -> void:
 	if not HUB_GROUPS.has(section):
 		return
@@ -104,7 +109,7 @@ func _select_hub_section(section: String) -> void:
 	for key in HUB_GROUPS.keys():
 		for control_name in HUB_GROUPS[key]:
 			content.get_node(control_name).visible = key == section
-		var tab := content.get_node("Hub%s" % key) as Button
+		var tab := content.get_node(_hub_tab_path(key)) as Button
 		tab.button_pressed = key == section
 	content.get_node("HubHeading").text = section.to_upper()
 	$Root/Panel/Margin/Scroll.scroll_vertical = 0
