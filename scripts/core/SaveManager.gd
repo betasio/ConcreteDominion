@@ -515,6 +515,10 @@ func _migrate_save(raw: Dictionary) -> Dictionary:
 			endgame_data_v32["last_season_result"] = {}
 		data["endgame"] = endgame_data_v32
 
+	if version < 33:
+		if not data.has("battle_reports"):
+			data["battle_reports"] = {}
+
 	data["schema_meta"] = {
 		"migrated_from": version,
 		"schema": SAVE_VERSION
