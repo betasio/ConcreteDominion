@@ -93,6 +93,32 @@ func cancel_pvp_queue() -> bool:
 	return _request("pvp_cancel", HTTPClient.METHOD_POST, "/v1/pvp/cancel", {}, true)
 
 
+func get_faction_profile(faction_id: String) -> bool:
+	if faction_id.length() != 24 or not faction_id.is_valid_hex_number():
+		connection_failed.emit("faction_profile", "Invalid Faction ID")
+		return false
+	return _request("faction_profile", HTTPClient.METHOD_GET,
+		"/v1/profiles/faction/%s" % faction_id, {}, true)
+
+
+func get_player_profile(player_id: String) -> bool:
+	if player_id.length() != 24 or not player_id.is_valid_hex_number():
+		connection_failed.emit("player_profile", "Invalid Player ID")
+		return false
+	return _request("player_profile", HTTPClient.METHOD_GET,
+		"/v1/profiles/player/%s" % player_id, {}, true)
+
+
+func set_faction_identity(emblem: String, banner: String) -> bool:
+	return _request("set_faction_identity", HTTPClient.METHOD_POST,
+		"/v1/profiles/faction", {"emblem":emblem, "banner":banner}, true)
+
+
+func feature_prestige_badge(badge: String) -> bool:
+	return _request("feature_prestige_badge", HTTPClient.METHOD_POST,
+		"/v1/profiles/badge", {"badge":badge}, true)
+
+
 func get_season_history() -> bool:
 	return _request("season_history", HTTPClient.METHOD_GET, "/v1/seasons/history", {}, true)
 
