@@ -48,6 +48,8 @@ func _ready() -> void:
 	for section in HUB_GROUPS.keys():
 		var tab := $Root/Panel/Margin/Scroll/VBox.get_node(_hub_tab_path(section)) as Button
 		tab.pressed.connect(_select_hub_section.bind(section))
+		tab.toggle_mode = true
+		tab.focus_mode = Control.FOCUS_ALL
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Close.pressed.connect(_toggle)
 	$Root/Panel/Margin/Scroll/VBox/Register.pressed.connect(func():
@@ -92,8 +94,46 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle.pressed.connect(func(): client.attack_war("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy.pressed.connect(func(): client.attack_war("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel.pressed.connect(func(): client.attack_war("intel"))
+	get_viewport().size_changed.connect(_resize_hub)
+	_resize_hub()
 	_select_hub_section("Identity")
 	_refresh()
+
+
+func _resize_hub() -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var width := minf(680.0, maxf(280.0, viewport_size.x - 24.0))
+	var height := minf(760.0, maxf(270.0, viewport_size.y - 24.0))
+	panel.offset_left = -width * 0.5
+	panel.offset_right = width * 0.5
+	panel.offset_top = -height * 0.5
+	panel.offset_bottom = height * 0.5
+	var art_width := maxf(220.0, width - 74.0)
+	for path in ["FactionCard", "PvPMatchup/OurCard", "PvPMatchup/OpponentCard"]:
+		var card := $Root/Panel/Margin/Scroll/VBox.get_node(path) as Control
+		card.custom_minimum_size.x = art_width
+
+
+func _style_hub_tabs() -> void:
+	var nav := $Root/Panel/Margin/Scroll/VBox
+	for section in HUB_GROUPS.keys():
+		var tab := nav.get_node(_hub_tab_path(section)) as Button
+		var selected := section == hub_section
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("#655037") if selected else Color("#18212e")
+		style.border_color = Color("#dab981") if selected else Color("#405064")
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(6)
+		style.content_margin_left = 8
+		style.content_margin_right = 8
+		style.content_margin_top = 7
+		style.content_margin_bottom = 7
+		tab.add_theme_stylebox_override("normal", style)
+		tab.add_theme_stylebox_override("pressed", style)
+		tab.add_theme_stylebox_override("hover", style)
+		tab.add_theme_color_override("font_color", Color("#fff3dc") if selected else Color("#b8c5d2"))
+		tab.add_theme_color_override("font_pressed_color", Color("#fff3dc"))
+		tab.add_theme_color_override("font_hover_color", Color("#fff3dc"))
 
 
 func _hub_tab_path(section: String) -> String:
@@ -112,6 +152,7 @@ func _select_hub_section(section: String) -> void:
 		var tab := content.get_node(_hub_tab_path(key)) as Button
 		tab.button_pressed = key == section
 	content.get_node("HubHeading").text = section.to_upper()
+	_style_hub_tabs()
 	$Root/Panel/Margin/Scroll.scroll_vertical = 0
 
 
@@ -284,6 +325,17 @@ func _refresh() -> void:
 		for invitation in invites:
 			if invitation is Dictionary:
 				lines.append("%s • %s" % [String(invitation.get("faction_name", "")),String(invitation.get("id", ""))])
+	var connected := not client.session_token.is_empty()
+	var faction_label := "NO FACTION"
+	if f is Dictionary and not f.is_empty():
+		faction_label = "[%s] %s" % [String(f.get("tag", "")), String(f.get("name", ""))]
+	var matches_label := "QUEUED" if bool(online_pvp.get("queued", false)) else "STANDBY"
+	var latest_match = online_pvp.get("match", {})
+	if latest_match is Dictionary and not latest_match.is_empty():
+		matches_label = String(latest_match.get("status", "STANDBY")).to_upper()
+	$Root/Panel/Margin/Scroll/VBox/HubSummary.text = "ONLINE • %s  |  %s  |  PVP %s" % [
+		"CONNECTED" if connected else "DISCONNECTED", faction_label, matches_label
+	]
 	status_label.text = "\n".join(lines)
 	var war_data = online_war.get("war", {})
 	var war_lines := PackedStringArray()
