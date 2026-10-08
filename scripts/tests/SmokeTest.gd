@@ -198,8 +198,10 @@ func _ready() -> void:
 			_fail("Faction research multipliers are invalid.")
 		if faction_manager.get_territory_lines().size() != 3:
 			_fail("Faction territory objective rules are incomplete.")
-		if faction_manager.get_war_rules_lines().size() < 5:
+		if faction_manager.get_war_rules_lines().size() < 6:
 			_fail("Faction War reward/season rules are incomplete.")
+		if FactionManager.WAR_STRATEGIES.size() != 3 or FactionManager.WAR_DEFENSE_CYCLE.size() != 3:
+			_fail("Faction War strategic counter system is incomplete.")
 		if faction_manager.get_matchmaking_rating() < 0:
 			_fail("Faction matchmaking rating is invalid.")
 		if faction_manager.get_territory_cash_multiplier() < 1.0:
@@ -224,6 +226,10 @@ func _ready() -> void:
 		_fail("Faction rally UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarButtons/StartWar") == null:
 		_fail("Faction War UI is missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Muscle") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Convoy") == null or game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarPlanButtons/Intel") == null:
+		_fail("Faction War strategic attack controls are missing.")
+	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/WarAttackReport") == null:
+		_fail("Faction War attack report presentation is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/MemberAdmin/Invite") == null:
 		_fail("Faction member administration UI is missing.")
 	if game.get_node_or_null("FactionUI/Root/Panel/Margin/Scroll/VBox/CaptureTerritory") == null:
