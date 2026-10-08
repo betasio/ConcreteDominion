@@ -8,6 +8,7 @@ import hashlib
 import json
 import secrets
 import sqlite3
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCHEMA = """
@@ -42,6 +43,7 @@ class ApiError(Exception):
 
 class Store:
     def __init__(self, path):
+        self.lock = threading.RLock()
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
@@ -166,7 +168,8 @@ def handler_factory(store):
                     raise ApiError(400, "JSON object required")
                 header = self.headers.get("Authorization", "")
                 token = header[7:] if header.startswith("Bearer ") else ""
-                status, payload = store.call(self.command,self.path,data,token)
+                with store.lock:
+                    status, payload = store.call(self.command,self.path,data,token)
                 self.send_json(status,payload)
             except ApiError as exc:
                 self.send_json(exc.status,{"error":exc.message})
