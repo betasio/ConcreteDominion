@@ -230,6 +230,11 @@ class FactionApiTests(unittest.TestCase):
         fid_b = self.api.call("GET","/v1/me",{},b["session_token"])[1]["faction_id"]
         season = seasons.current_season()
         start = season["starts_at"]
+        for mid in ("a1", "a0", "b1"):
+            self.api.execute(
+                "INSERT INTO pvp_matches(id,faction_a,faction_b,status) VALUES(?,?,?,'complete')",
+                (mid,fid_a,fid_b)
+            )
         self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('a1',?,100,'pvp_settlement',?)", (fid_a,start+10))
         self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('b1',?,25,'pvp_settlement',?)", (fid_b,start+10))
         self.api.execute("INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES('a0',?,50,'pvp_settlement',?)", (fid_a,start-10))
