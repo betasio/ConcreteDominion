@@ -22,6 +22,10 @@ var pending_level := 0
 
 
 func _ready() -> void:
+	# Optional premium art pack: preserve the original visual when assets are absent.
+	var premium_path := "res://assets/premium/buildings/%s.png" % String(building_type)
+	if ResourceLoader.exists(premium_path, "Texture2D"):
+		art_texture = load(premium_path) as Texture2D
 	input_event.connect(_on_input_event)
 	queue_redraw()
 
@@ -69,7 +73,9 @@ func restore_progress(saved_level: int) -> void:
 func _draw() -> void:
 	if art_texture != null:
 		var size := art_texture.get_size()
-		var scale_factor := minf(132.0 / maxf(1.0, size.x), 116.0 / maxf(1.0, size.y))
+		var art_width := 208.0 if building_type == &"safehouse" else 172.0
+		var art_height := 186.0 if building_type == &"safehouse" else 154.0
+		var scale_factor := minf(art_width / maxf(1.0, size.x), art_height / maxf(1.0, size.y))
 		draw_texture_rect(art_texture, Rect2(-size * scale_factor * 0.5 + Vector2(0, -42), size * scale_factor), false)
 		if is_constructing:
 			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
