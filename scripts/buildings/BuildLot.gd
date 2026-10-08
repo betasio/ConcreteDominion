@@ -166,8 +166,13 @@ func _draw() -> void:
 	if is_selected:
 		draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 
-	var label := building_name if is_built else ("BUILDING %s" % building_name if is_constructing else "BUILD %s" % building_name)
-	draw_string(ThemeDB.fallback_font, Vector2(-70, 62), label.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 140, 18, Color(0.95, 0.91, 0.78))
+	var label := building_name if is_built else ("BUILDING" if is_constructing else "BUILD SITE")
+	# Keep facility identity visible in compact lots; long facility names previously
+	# clipped against adjacent buildings and the screen edge at 1280x720.
+	if not is_built and not is_constructing:
+		label = "%s SITE" % building_name
+	var label_font_size := 14 if label.length() > 12 else 16
+	draw_string(ThemeDB.fallback_font, Vector2(-82, 58), label.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 164, label_font_size, Color(0.95, 0.91, 0.78))
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
