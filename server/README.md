@@ -33,3 +33,11 @@ curl -s -X POST http://127.0.0.1:8765/v1/factions -H 'Content-Type: application/
 The API does **not** yet host real-time wars, donations, territory, seasonal rankings, or rewards. None of those local values should be trusted by a future multiplayer server. The local Godot Faction and Dominion managers continue functioning unchanged while this foundation is developed.
 
 Next integration: add authenticated sign-in/account recovery, decide how users switch from local to online Faction state, then move war attacks, contribution accounting and season rewards to server-validated transactions before enabling online gameplay.
+
+## Shared server-side war prototype
+
+The Online • Dev panel now supports **Start server war**, **Refresh shared war**, and **Muscle / Convoy / Intel** attacks. Start a war as the Faction leader; invite a second development player and connect from another game instance. Each account can submit at most **3 attacks**, with a total of **6 attacks per war**. The server rotates visible defenses (watchful, fortified, mobile), computes all points, records each player's contributions, and closes the war automatically after six rounds. Two clients can refresh the same SQLite-backed war; this is HTTP polling, **not live push networking**.
+
+Endpoints: `GET /v1/war`, `POST /v1/war/start`, `POST /v1/war/attack` with `{"strategy":"muscle"}` (or convoy/intel). The server does not accept client-supplied damage, contribution, or scores. All war state is independent of the offline Faction War system: no online rewards are credited to local saves.
+
+**Production gaps:** Identity verification, robust sessions, replay-safe idempotency, activity limits, multiple concurrent database workers, matchmaking with real opposing factions, timeouts and forfeits, season settlement, real rewards, and secure deployment. This first war uses an **NPC opponent** and deterministic server-side scoring, with multiple real accounts cooperating in a single Faction.
