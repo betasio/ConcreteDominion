@@ -53,6 +53,31 @@ const WAR_STRATEGIES := {
 	}
 }
 const WAR_DEFENSE_CYCLE := ["watchful", "fortified", "mobile"]
+const WAR_OBJECTIVE_DEFS := {
+	"counter_network": {
+		"name":"Counter Network",
+		"goal":2,
+		"score_bonus":40,
+		"summary":"Land 2 correct attack-plan counters."
+	},
+	"round_control": {
+		"name":"Round Control",
+		"goal":2,
+		"score_bonus":45,
+		"summary":"Win 2 of the 3 attack rounds."
+	},
+	"mobilize": {
+		"name":"Mobilize the Faction",
+		"goal":300,
+		"score_bonus":35,
+		"summary":"Generate 300 combined war contribution."
+	}
+}
+const WAR_REWARD_POOLS := {
+	"BRONZE":4000,
+	"SILVER":8000,
+	"GOLD":12000
+}
 const WAR_DOCTRINES := {
 	"disciplined": {
 		"name":"Disciplined",
@@ -949,6 +974,168 @@ func get_war_attack_history_lines() -> PackedStringArray:
 	return lines
 
 
+func get_war_objective_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	if active_war.is_empty():
+		return lines
+	var objectives = active_war.get("objectives", {})
+	if not (objectives is Dictionary):
+		return lines
+	for objective_id in ["counter_network", "round_control", "mobilize"]:
+		if not objectives.has(objective_id):
+			continue
+		var objective: Dictionary = objectives[objective_id]
+		lines.append("%s — %d/%d%s • +%d war score" % [
+			String(objective.get("name", "Objective")),
+			int(objective.get("progress", 0)),
+			int(objective.get("goal", 1)),
+			" ✓" if bool(objective.get("completed", false)) else "",
+			int(objective.get("score_bonus", 0))
+		])
+	return lines
+
+
+func get_war_participation_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	if active_war.is_empty():
+		return lines
+	var contributions = active_war.get("member_contributions", {})
+	if not (contributions is Dictionary):
+		return lines
+	var rows: Array[Dictionary] = []
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		rows.append({
+			"name":String(member.get("name", "Member")),
+			"role":String(member.get("role", ROLE_MEMBER)),
+			"points":maxi(0, int(contributions.get(member_id, 0))),
+			"local":member_id == local_member_id
+		})
+	rows.sort_custom(func(a: Dictionary, b: Dictionary): return int(a["points"]) > int(b["points"]))
+	for row in rows:
+		lines.append("%s%s • %s • %d war contribution" % [
+			"YOU • " if bool(row["local"]) else "",
+			String(row["name"]),
+			String(row["role"]),
+			int(row["points"])
+		])
+	return lines
+
+
+func get_war_reward_split_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	if active_war.is_empty():
+		return lines
+	var split = active_war.get("reward_split", {})
+	if not (split is Dictionary) or split.is_empty():
+		return PackedStringArray(["Participation split is calculated when the war ends."])
+	var contributions = active_war.get("member_contributions", {})
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		if not split.has(member_id):
+			continue
+		lines.append("%s%s — $%s share • %d contribution" % [
+			"YOU • " if member_id == local_member_id else "",
+			String(member.get("name", "Member")),
+			_format_number(int(split.get(member_id, 0))),
+			int(contributions.get(member_id, 0)) if contributions is Dictionary else 0
+		])
+	return lines
+
+
+func _get_war_contribution_total() -> int:
+	if active_war.is_empty():
+		return 0
+	var contributions = active_war.get("member_contributions", {})
+	if not (contributions is Dictionary):
+		return 0
+	var total := 0
+	for value in contributions.values():
+		total += maxi(0, int(value))
+	return total
+
+
+func _add_war_member_contribution(member_id: String, amount: int) -> void:
+	if active_war.is_empty() or amount <= 0:
+		return
+	var contributions = active_war.get("member_contributions", {})
+	if not (contributions is Dictionary):
+		contributions = {}
+	contributions[member_id] = maxi(0, int(contributions.get(member_id, 0))) + amount
+	active_war["member_contributions"] = contributions
+
+
+func _simulate_war_member_support(round_index: int) -> int:
+	var total := 0
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		if member_id == local_member_id or not bool(member.get("online", false)):
+			continue
+		var role_bonus := 0
+		match String(member.get("role", ROLE_MEMBER)):
+			ROLE_LEADER, ROLE_UNDERBOSS:
+				role_bonus = 10
+			ROLE_OFFICER:
+				role_bonus = 5
+		var power_component := mini(50, maxi(0, int(member.get("power", 0))) / 400)
+		var deterministic_bonus := posmod(member_id.hash() + round_index * 17, 11)
+		var contribution := 20 + power_component + role_bonus + deterministic_bonus
+		_add_war_member_contribution(member_id, contribution)
+		total += contribution
+	return total
+
+
+func _update_war_objectives(result: Dictionary, local_contribution: int, support_contribution: int) -> int:
+	if active_war.is_empty():
+		return 0
+	var objectives = active_war.get("objectives", {})
+	if not (objectives is Dictionary):
+		objectives = _create_war_objectives()
+	var objective_bonus := 0
+
+	if objectives.has("counter_network") and bool(result.get("countered", false)):
+		var counter_objective: Dictionary = objectives["counter_network"]
+		counter_objective["progress"] = mini(int(counter_objective["goal"]), int(counter_objective.get("progress", 0)) + 1)
+
+	if objectives.has("round_control") and bool(result.get("victory", false)):
+		var round_objective: Dictionary = objectives["round_control"]
+		round_objective["progress"] = mini(int(round_objective["goal"]), int(round_objective.get("progress", 0)) + 1)
+
+	if objectives.has("mobilize"):
+		var mobilize: Dictionary = objectives["mobilize"]
+		mobilize["progress"] = mini(int(mobilize["goal"]), _get_war_contribution_total())
+
+	for objective_id in ["counter_network", "round_control", "mobilize"]:
+		if not objectives.has(objective_id):
+			continue
+		var objective: Dictionary = objectives[objective_id]
+		if bool(objective.get("completed", false)):
+			continue
+		if int(objective.get("progress", 0)) < int(objective.get("goal", 1)):
+			continue
+		objective["completed"] = true
+		objective_bonus += int(objective.get("score_bonus", 0))
+
+	active_war["objectives"] = objectives
+	if objective_bonus > 0:
+		active_war["objective_score_bonus"] = int(active_war.get("objective_score_bonus", 0)) + objective_bonus
+		active_war["completed_objectives"] = _get_completed_war_objectives()
+	return objective_bonus
+
+
+func _get_completed_war_objectives() -> int:
+	if active_war.is_empty():
+		return 0
+	var objectives = active_war.get("objectives", {})
+	if not (objectives is Dictionary):
+		return 0
+	var completed := 0
+	for objective in objectives.values():
+		if objective is Dictionary and bool(objective.get("completed", false)):
+			completed += 1
+	return completed
+
+
 func perform_war_attack(strategy_id: String) -> Dictionary:
 	if active_war.is_empty() or String(active_war.get("status", "")) != "active":
 		return {}
@@ -1047,17 +1234,54 @@ func _complete_war() -> void:
 	active_war["status"] = "complete"
 	var won := int(active_war.get("our_score", 0)) > int(active_war.get("their_score", 0))
 	active_war["result"] = "VICTORY" if won else "DEFEAT"
-	var awarded_points := 35
+	var completed_objectives := _get_completed_war_objectives()
+	active_war["completed_objectives"] = completed_objectives
+	var awarded_points := (120 if won else 35) + completed_objectives * (15 if won else 10)
 	if won:
 		season_wins += 1
-		awarded_points = 120
-		season_points += awarded_points
-		active_war["reward_tier"] = "GOLD" if int(active_war.get("our_score", 0)) >= 450 else "SILVER"
+		active_war["reward_tier"] = "GOLD" if completed_objectives >= 2 else "SILVER"
 	else:
-		season_points += awarded_points
 		active_war["reward_tier"] = "BRONZE"
+	season_points += awarded_points
+	active_war["reward_split"] = _build_war_reward_split(String(active_war.get("reward_tier", "BRONZE")))
 	war_reward_claimed = false
 	war_completed.emit(won, awarded_points)
+
+
+func _build_war_reward_split(tier: String) -> Dictionary:
+	var pool := int(WAR_REWARD_POOLS.get(tier, WAR_REWARD_POOLS["BRONZE"]))
+	var contributions = active_war.get("member_contributions", {})
+	if not (contributions is Dictionary) or contributions.is_empty():
+		return {local_member_id:pool}
+
+	var positive_rows: Array[Dictionary] = []
+	var total := 0
+	for member in members:
+		var member_id := String(member.get("id", ""))
+		var points := maxi(0, int(contributions.get(member_id, 0)))
+		if points <= 0:
+			continue
+		positive_rows.append({"id":member_id,"points":points})
+		total += points
+
+	if positive_rows.is_empty() or total <= 0:
+		return {local_member_id:pool}
+
+	var split := {}
+	var distributed := 0
+	var top_member_id := String(positive_rows[0]["id"])
+	var top_points := int(positive_rows[0]["points"])
+	for row in positive_rows:
+		var member_id := String(row["id"])
+		var points := int(row["points"])
+		if points > top_points:
+			top_points = points
+			top_member_id = member_id
+		var share := floori(float(pool) * float(points) / float(total))
+		split[member_id] = share
+		distributed += share
+	split[top_member_id] = int(split.get(top_member_id, 0)) + (pool - distributed)
+	return split
 
 
 func can_claim_war_reward() -> bool:
@@ -1069,17 +1293,19 @@ func claim_war_reward() -> bool:
 		return false
 	war_reward_claimed = true
 	var tier := String(active_war.get("reward_tier", "BRONZE"))
+	var reward_split = active_war.get("reward_split", {})
+	var participation_cash := int(reward_split.get(local_member_id, 0)) if reward_split is Dictionary else 0
 	match tier:
 		"GOLD":
-			economy.add_cash(8000)
+			economy.add_cash(8000 + participation_cash)
 			economy.add_gold(6)
 			loot.add_loot({"Parts":3,"Intel":2})
 		"SILVER":
-			economy.add_cash(5000)
+			economy.add_cash(5000 + participation_cash)
 			economy.add_gold(3)
 			loot.add_loot({"Parts":2,"Intel":1})
 		_:
-			economy.add_cash(2500)
+			economy.add_cash(2500 + participation_cash)
 			economy.add_gold(1)
 			loot.add_item("Parts", 1)
 	changed.emit()
@@ -1119,7 +1345,9 @@ func get_war_rules_lines() -> PackedStringArray:
 		"3 attacks per member in the prototype ruleset",
 		"Choose Muscle, Convoy, or Intel for each attack; each plan counters a visible enemy stance",
 		"Score scales with Faction level, contribution, Raid Coordination, held objectives, and counter choice",
-		"Victory adds 120 season points; defeat still grants 35 participation points",
+		"Complete shared war objectives for up to +120 bonus war score and extra season points",
+		"Member war contribution determines the split of a separate participation cash pool",
+		"Victory starts at 120 season points; completed objectives add more season progress",
 		"Bronze/Silver/Gold reward tiers are claimable after war completion",
 		"Live matchmaking and server authority will replace prototype opponents"
 	])
@@ -1278,6 +1506,26 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 			active_war["attack_history"] = []
 		if not active_war.has("last_attack") or not (active_war["last_attack"] is Dictionary):
 			active_war["last_attack"] = {}
+		if not active_war.has("objectives") or not (active_war["objectives"] is Dictionary):
+			active_war["objectives"] = _create_war_objectives()
+		else:
+			var loaded_objectives: Dictionary = active_war["objectives"]
+			for objective_id in WAR_OBJECTIVE_DEFS.keys():
+				if not loaded_objectives.has(objective_id) or not (loaded_objectives[objective_id] is Dictionary):
+					loaded_objectives[objective_id] = _create_war_objectives()[objective_id]
+		if not active_war.has("member_contributions") or not (active_war["member_contributions"] is Dictionary):
+			active_war["member_contributions"] = _create_war_member_contributions()
+		else:
+			var loaded_contributions: Dictionary = active_war["member_contributions"]
+			for member in members:
+				var member_id := String(member.get("id", ""))
+				loaded_contributions[member_id] = maxi(0, int(loaded_contributions.get(member_id, 0)))
+		if not active_war.has("objective_score_bonus"):
+			active_war["objective_score_bonus"] = 0
+		if not active_war.has("completed_objectives"):
+			active_war["completed_objectives"] = _get_completed_war_objectives()
+		if not active_war.has("reward_split") or not (active_war["reward_split"] is Dictionary):
+			active_war["reward_split"] = {}
 		if not active_war.has("captain_id"):
 			active_war["captain_id"] = String(war_preparation.get("captain_id", ""))
 		if not active_war.has("captain_bonus"):
