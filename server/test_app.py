@@ -116,6 +116,10 @@ class FactionApiTests(unittest.TestCase):
         matchup_a = self.api.call("GET","/v1/pvp",{},a)[1]
         matchup_b = self.api.call("GET","/v1/pvp",{},c)[1]
         self.assertEqual(matchup_a["our_identity"]["emblem"],"wolf")
+        self.assertIn("our_rivalry_prestige",matchup_a)
+        self.assertIn("opponent_rivalry_prestige",matchup_a)
+        self.assertEqual(matchup_a["our_rivalry_prestige"]["total_rematch_trophies"],0)
+        self.assertEqual(matchup_a["opponent_rivalry_prestige"]["current_win_streak"],0)
         self.assertEqual(matchup_a["opponent_identity"]["emblem"],"crown")
         self.assertEqual(matchup_b["our_identity"]["banner"],"gold")
         self.assertEqual(matchup_b["opponent_identity"]["banner"],"crimson")
@@ -478,6 +482,10 @@ class FactionApiTests(unittest.TestCase):
         self.assertEqual(trophies["best_win_streak"],2)
         self.assertEqual(trophies["current_win_streak"],1)
         self.assertEqual(trophies["total_rematch_trophies"],1)
+        profile=self.api.call("GET",f"/v1/profiles/faction/{fa}",{},bt)[1]
+        self.assertEqual(profile["rivalry_prestige"]["total_rematch_trophies"],1)
+        self.assertEqual(profile["rivalry_prestige"]["best_win_streak"],2)
+        self.assertTrue(profile["cosmetic_only"])
         self.assertEqual(trophies["rematch_trophies"][0]["trophy"],"RIVAL_CONQUEROR")
         self.assertEqual(trophies["record"]["wins"],3)
         self.assertEqual(trophies["record"]["timeouts"],1)
