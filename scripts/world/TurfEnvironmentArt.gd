@@ -40,6 +40,9 @@ func _draw() -> void:
 	var cliff_center: Vector2 = (west + east) * 0.5
 	_stamp_cliff("cliff_straight", west + Vector2(-129, 145), 213.0)
 	_stamp_cliff("wall_straight", cliff_center + Vector2(-115, 189), 217.0)
+	# Bridge the visible void between central gate masonry and east cliff.
+	# Place below the Data Hub foundation and leave its label unobstructed.
+	_stamp_cliff("cliff_straight", east + Vector2(-80, 172), 155.0)
 	_stamp_cliff("cliff_straight", east + Vector2(126, 146), 210.0)
 	# Avoid separate cliff islands beside the HQ: the Safehouse is already
 	# established by its own raised podium and the natural estate silhouette.
