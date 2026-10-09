@@ -110,11 +110,19 @@ func _draw_estate_landform() -> void:
 		var b: Vector2 = outline[i + 1]
 		draw_colored_polygon(PackedVector2Array([a, b, b + depth, a + depth]),
 				Color("#171e26") if i % 2 == 0 else Color("#27313a"))
-		draw_line(a, b, Color("#69777d", 0.58), 3.0)
+		# Broken strata soften the panel-like vertical cliff faces.
+		draw_line(a, b, Color("#68716d", 0.38), 2.0)
 		for step in range(1, 5):
-			var p := a.lerp(b, float(step) / 5.0)
-			draw_line(p + Vector2(0, 7), p + Vector2(0, 65),
-					Color("#46515b", 0.30), 1.5)
+			var t := float(step) / 5.0
+			var p: Vector2 = a.lerp(b, t)
+			var next: Vector2 = a.lerp(b, minf(t + 0.10, 1.0))
+			var seam_drop := 19.0 + float((step + i) % 3) * 13.0
+			draw_line(p + Vector2(0, seam_drop),
+					next + Vector2(0, seam_drop + 5.0),
+					Color("#8b9082", 0.30), 1.7)
+			draw_line(p + Vector2(0, seam_drop + 7.0),
+					p + Vector2(7, seam_drop + 15.0),
+					Color("#101c22", 0.36), 1.3)
 	# Angular stone strata create a broken rocky face rather than a single
 	# flat vertical extrusion. Facets follow the true foreground contour.
 	for i in range(3, 8):
