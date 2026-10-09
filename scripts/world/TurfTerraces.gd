@@ -22,8 +22,7 @@ func _draw() -> void:
 	_draw_platform(city_map.barracks.position + Vector2(0, 36), 112.0, 56.0, 24.0, false)
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		_draw_platform(lot.position + Vector2(0, 35), 106.0, 52.0, 18.0, false)
-	_draw_tier_edge_bands()
-	_draw_retaining_links()
+	_draw_segmented_retaining_edges()
 	_draw_connecting_ramps()
 	_draw_architectural_courtyards()
 	_draw_terrace_lights()
@@ -326,3 +325,25 @@ func _draw_ledge(start: Vector2, finish: Vector2, depth: float, prestige: bool) 
 		var point: Vector2 = start.lerp(finish, float(index) / 10.0)
 		draw_line(point + Vector2(0, 5), point + Vector2(0, depth - 3),
 				Color("#76807d", 0.38), 1.2)
+
+
+func _draw_segmented_retaining_edges() -> void:
+	# The estate's center is reserved for access roads and the tier ramps.
+	# Short masonry shoulders mark each elevation without cutting across it.
+	var hq: Vector2 = city_map.safehouse.position
+	var clinic: Vector2 = city_map.hospital.position
+	var barracks: Vector2 = city_map.barracks.position
+	var scrap: Vector2 = city_map.lot_c.position
+	var data: Vector2 = city_map.lot_d.position
+	for side in [-1.0, 1.0]:
+		var hq_start: Vector2 = hq + Vector2(side * 90.0, 91.0)
+		var hq_end: Vector2 = hq + Vector2(side * 167.0, 91.0)
+		_draw_ledge(hq_start, hq_end, 26.0, true)
+	for site in [clinic, barracks]:
+		for side in [-1.0, 1.0]:
+			var origin: Vector2 = site.position + Vector2(side * 51.0, 81.0)
+			_draw_ledge(origin, origin + Vector2(side * 49.0, 0), 18.0, false)
+	for site in [scrap, data]:
+		for side in [-1.0, 1.0]:
+			var origin: Vector2 = site.position + Vector2(side * 53.0, 70.0)
+			_draw_ledge(origin, origin + Vector2(side * 44.0, 0), 14.0, false)
