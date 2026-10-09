@@ -89,7 +89,8 @@ func _draw() -> void:
 			art_level_text += " → %d" % pending_level
 		elif level >= max_level:
 			art_level_text += " MAX"
-		draw_string(ThemeDB.fallback_font, Vector2(-72, 62), display_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 144, 18, Color(0.95, 0.91, 0.78))
+		var map_label := "BARRACKS" if building_type == &"barracks" else ("CLINIC" if building_type == &"hospital" else display_name.to_upper())
+		draw_string(ThemeDB.fallback_font, Vector2(-86, 62), map_label, HORIZONTAL_ALIGNMENT_CENTER, 172, 17, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)
 		return
 
