@@ -24,6 +24,7 @@ func _draw() -> void:
 	_draw_connected_courtyards()
 	# Premium illustrated planting now draws in TurfDetailArt.
 	_draw_compound_routes()
+	_draw_road_edge_lighting()
 	for node in nodes:
 		_draw_pad(node.position, node == city_map.safehouse)
 	_draw_gate_approach()
@@ -249,3 +250,25 @@ func _draw_planted_bank(center: Vector2, width: float, depth: float) -> void:
 		draw_circle(position, radius + 3.0, Color("#18332d"))
 		draw_circle(position + Vector2(-2, -3), radius, Color("#466c52"))
 		draw_circle(position + Vector2(3, -4), radius * 0.56, Color("#638363"))
+
+
+func _draw_road_edge_lighting() -> void:
+	# Restrained paving lamps trace the actual approach rather than the old
+	# isometric grid. Keep the center lane clear for visual traffic.
+	var clinic: Vector2 = city_map.hospital.position
+	var barracks: Vector2 = city_map.barracks.position
+	var center: Vector2 = (clinic + barracks) * 0.5 + Vector2(0, 28)
+	var garage: Vector2 = city_map.lot_a.position
+	var lower_landing: Vector2 = center.lerp(garage + Vector2(0, 23), 0.73)
+	# A small dressed-stone landing visually receives the illustrated ramp.
+	var left: Vector2 = lower_landing + Vector2(-34, 5)
+	var right: Vector2 = lower_landing + Vector2(34, 5)
+	draw_line(left, right, Color("#82745d", 0.66), 3.0)
+	draw_line(left + Vector2(0, 5), right + Vector2(0, 5),
+			Color("#59666a", 0.47), 2.0)
+	for side in [-1.0, 1.0]:
+		for t in [0.18, 0.61]:
+			var p: Vector2 = center.lerp(lower_landing, t)
+			var light: Vector2 = p + Vector2(side * 26.0, 8.0)
+			draw_circle(light, 8.0, Color(0.92, 0.68, 0.36, 0.08))
+			draw_circle(light, 2.2, Color("#d5ad71", 0.82))
