@@ -44,26 +44,14 @@ func _draw_platform(center: Vector2, rx: float, ry: float, depth: float, hero: b
 	draw_colored_polygon(top, Color("#394650") if hero else Color("#303a42"))
 	draw_polyline(PackedVector2Array([left, back, right, front]), Color("#bd995b") if hero else Color("#7d8790"), 3.0, true)
 	draw_line(front, front + down, Color("#67727a"), 2.0)
-	# Coursed masonry across both visible retaining-wall faces. Offset joints
-	# between courses to suggest individual stone blocks, rather than flat slabs.
-	for course in range(1, 4):
-		var vertical_fraction := float(course) / 4.0
-		var level_shift := down * vertical_fraction
-		draw_line(left + level_shift, front + level_shift, Color("#0e171f", 0.60), 1.6)
-		draw_line(front + level_shift, right + level_shift, Color("#56636c", 0.46), 1.4)
-		for unit in range(1, 5):
-			var t := (float(unit) + (0.4 if course % 2 == 0 else 0.0)) / 5.0
-			if t < 1.0:
-				var west_joint := left.lerp(front, t) + level_shift
-				var east_joint := front.lerp(right, t) + level_shift
-				draw_line(west_joint - Vector2(0, depth * 0.13), west_joint + Vector2(0, depth * 0.11),
-						Color("#87918a", 0.29), 1.1)
-				draw_line(east_joint - Vector2(0, depth * 0.13), east_joint + Vector2(0, depth * 0.11),
-						Color("#0f1822", 0.50), 1.1)
-	for i in range(1, 6):
-		var t := float(i) / 6.0
-		var brick := front.lerp(left, t)
-		draw_line(brick + Vector2(0, 4), brick + Vector2(0, depth - 3), Color("#53606a", 0.45), 1.0)
+	# Keep the vertical faces solid and readable at the playable camera zoom.
+	# Dense crosshatched joints previously resembled black wire cages under
+	# the building pads and competed with the premium illustrated structures.
+	var course_shift: Vector2 = down * 0.55
+	draw_line(left + course_shift, front + course_shift,
+			Color("#66716d", 0.22), 1.2)
+	draw_line(front + course_shift, right + course_shift,
+			Color("#66716d", 0.22), 1.2)
 	# Ground lights accentuate the HQ terrace without hiding its sprite.
 	if hero:
 		for p in [left, right]:
