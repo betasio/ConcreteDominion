@@ -91,6 +91,26 @@ func _ready() -> void:
 	queue_redraw()
 
 
+func _base_composition_center() -> Vector2:
+	# Frame the playable estate from its real building bounds rather than
+	# repeatedly hand-tuning offsets after each terrace rearrangement.
+	var sites: Array[Vector2] = [
+		safehouse.position, hospital.position, barracks.position,
+		lot_a.position, lot_b.position, lot_c.position, lot_d.position
+	]
+	var left: float = sites[0].x
+	var right: float = left
+	var top: float = sites[0].y
+	var bottom: float = top
+	for p in sites:
+		left = minf(left, p.x)
+		right = maxf(right, p.x)
+		top = minf(top, p.y)
+		bottom = maxf(bottom, p.y)
+	# Give the upper HQ art some sky and the Garage drive space at the foot.
+	return Vector2((left + right) * 0.5, (top + bottom) * 0.5 + 23.0)
+
+
 func set_view_mode(mode: StringName) -> void:
 	if mode != &"base" and mode != &"world":
 		return
@@ -98,8 +118,8 @@ func set_view_mode(mode: StringName) -> void:
 	var previous_mode: StringName = view_mode
 	view_mode = mode
 	_clear_selection()
-	var destination := safehouse.position + Vector2(-185, 195) if mode == &"base" else Vector2(0, 140)
-	var destination_zoom := Vector2(1.20, 1.20) if mode == &"base" else Vector2(0.72, 0.72)
+	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
+	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
 	if camera.has_meta("view_tween"):
