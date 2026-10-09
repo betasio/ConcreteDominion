@@ -2,7 +2,7 @@ extends Node3D
 ## Optional isolated 3D comparison. Does not change live 2D/2.5D turf.
 ## Place source models in res://assets/buildings/3d/ before opening this scene.
 const MASTER_PATH := "res://assets/buildings/3d/HQ.glb"
-const MOBILE_PATH := "res://assets/buildings/3d/HQ Mobile.glb"
+const MOBILE_PATH := "res://assets/buildings/3d/HQ_Mobile.glb"
 
 func _ready() -> void:
 	_add_model(MASTER_PATH, Vector3(-1.45, 0, 0))
