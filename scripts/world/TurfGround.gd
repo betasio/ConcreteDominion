@@ -66,27 +66,36 @@ func _draw_compound_routes() -> void:
 		draw_polyline(points, Color("#ad936b", 0.72), 25.0, true)
 		draw_polyline(points, Color("#273440"), 19.0, true)
 		draw_polyline(points, Color("#849099", 0.32), 1.3, true)
+		# Small inset road seams add readable construction detail at junctions.
+		for index in range(1, points.size()):
+			var center: Vector2 = points[index - 1].lerp(points[index], 0.5)
+			var segment: Vector2 = points[index] - points[index - 1]
+			if segment.length() > 10.0:
+				var across := segment.normalized().orthogonal() * 7.0
+				draw_line(center - across, center + across, Color("#9a9f99", 0.42), 1.6)
 
 
 func _draw_landscaping() -> void:
-	# Repeatable, sparse high-end perimeter planting: deliberately outside
-	# the central building slots so labels and interactive areas stay legible.
-	for cell in [Vector2i(6, 8), Vector2i(7, 7), Vector2i(14, 6),
-			Vector2i(17, 9), Vector2i(18, 12), Vector2i(16, 16),
-			Vector2i(9, 17), Vector2i(6, 15)]:
-		var p: Vector2 = city_map.iso_to_screen(cell)
-		draw_colored_polygon(PackedVector2Array([
-			p + Vector2(-21, 0), p + Vector2(0, -11),
-			p + Vector2(21, 0), p + Vector2(0, 11)
-		]), Color("#223b35"))
-		draw_line(p + Vector2(0, -3), p + Vector2(0, -26), Color("#615847"), 4.0)
-		draw_circle(p + Vector2(0, -30), 11.0, Color("#355e52"))
-		draw_circle(p + Vector2(-5, -34), 6.0, Color("#597663"))
-		draw_circle(p + Vector2(10, 2), 3.5, Color("#e5ba72", 0.85))
-	# Two recessed entrance spotlights define the HQ's driveway.
-	for cell in [Vector2i(8, 9), Vector2i(8, 11)]:
-		var light_position: Vector2 = city_map.iso_to_screen(cell)
-		draw_circle(light_position, 16.0, Color(0.93, 0.71, 0.37, 0.09))
+	# Landscaping is tied to current facility positions, not old grid cells.
+	# Stay outside the central building art and collision footprints.
+	var sites := [city_map.safehouse, city_map.hospital, city_map.barracks,
+			city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]
+	for site in sites:
+		var base: Vector2 = site.position
+		for side in [-1.0, 1.0]:
+			var p := base + Vector2(side * 125.0, 24.0)
+			draw_colored_polygon(PackedVector2Array([
+				p + Vector2(-16, 3), p + Vector2(0, -5),
+				p + Vector2(16, 3), p + Vector2(0, 11)
+			]), Color("#263a35"))
+			draw_line(p, p + Vector2(0, -18), Color("#625b48"), 3.0)
+			draw_circle(p + Vector2(0, -23), 10.0, Color("#355b4b"))
+			draw_circle(p + Vector2(-5, -26), 6.0, Color("#60806a"))
+			draw_circle(p + Vector2(14, 5), 2.5, Color("#e8c281"))
+	# Warm recessed lights align with the central HQ arrival route.
+	for offset in [-42.0, 42.0]:
+		var light_position: Vector2 = city_map.safehouse.position + Vector2(offset, 110)
+		draw_circle(light_position, 14.0, Color(0.93, 0.71, 0.37, 0.12))
 		draw_circle(light_position, 3.0, Color("#efc985"))
 
 
