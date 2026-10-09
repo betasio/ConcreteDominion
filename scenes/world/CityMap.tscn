@@ -48,11 +48,11 @@ script = ExtResource("19_depth")
 [node name="TurfTerraces" type="Node2D" parent="."]
 script = ExtResource("21_terraces")
 
-[node name="TurfGround" type="Node2D" parent="."]
-script = ExtResource("20_turf_ground")
-
 [node name="TurfEnvironmentArt" type="Node2D" parent="."]
 script = ExtResource("22_environment_art")
+
+[node name="TurfGround" type="Node2D" parent="."]
+script = ExtResource("20_turf_ground")
 
 [node name="Buildings" type="Node2D" parent="."]
 y_sort_enabled = true
