@@ -359,21 +359,20 @@ func _draw_hillside_groundcover() -> void:
 	var garage: Vector2 = city_map.lot_a.position
 	var scrap: Vector2 = city_map.lot_c.position
 	var data: Vector2 = city_map.lot_d.position
+	# Each bank is a simple convex quadrilateral; the previous six-point
+	# outlines crossed themselves and failed Godot polygon triangulation.
 	var banks: Array[PackedVector2Array] = [
 		PackedVector2Array([
-			hq + Vector2(-248, -10), hq + Vector2(-170, -64),
-			clinic + Vector2(-136, 35), clinic + Vector2(-170, 125),
-			scrap + Vector2(-153, 52), scrap + Vector2(-185, 128)
+			hq + Vector2(-238, -6), hq + Vector2(-177, -52),
+			scrap + Vector2(-139, 108), scrap + Vector2(-179, 130)
 		]),
 		PackedVector2Array([
-			hq + Vector2(179, -74), hq + Vector2(250, -6),
-			barracks + Vector2(161, 39), data + Vector2(185, 35),
-			data + Vector2(184, 127), barracks + Vector2(137, 120)
+			hq + Vector2(177, -52), hq + Vector2(241, -6),
+			data + Vector2(180, 128), data + Vector2(138, 107)
 		]),
 		PackedVector2Array([
-			scrap + Vector2(-153, 121), garage + Vector2(-90, 172),
-			garage + Vector2(90, 172), data + Vector2(150, 121),
-			data + Vector2(129, 160), scrap + Vector2(-132, 160)
+			scrap + Vector2(-138, 125), data + Vector2(136, 125),
+			data + Vector2(128, 159), scrap + Vector2(-130, 159)
 		])
 	]
 	for bank in banks:
