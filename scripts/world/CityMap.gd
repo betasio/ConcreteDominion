@@ -308,6 +308,9 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 
 
 func _draw() -> void:
+	if view_mode == &"base":
+		_draw_estate_backdrop()
+		return
 	for y in range(grid_height):
 		for x in range(grid_width):
 			var center := iso_to_screen(Vector2i(x, y))
@@ -316,6 +319,29 @@ func _draw() -> void:
 			_draw_diamond(center, color)
 
 	_draw_street_art()
+
+
+func _draw_estate_backdrop() -> void:
+	# The HQ view is an estate, not a tactical grid. Reserve grid lines and
+	# road-atlas intersections for World view only.
+	draw_rect(Rect2(Vector2(-3000, -2200), Vector2(6000, 4400)), Color("#1c292e"))
+	var ridges := [
+		PackedVector2Array([
+			Vector2(-1800, -1100), Vector2(-400, -750), Vector2(160, -900),
+			Vector2(1400, -450), Vector2(1900, 350), Vector2(-1800, 350)
+		]),
+		PackedVector2Array([
+			Vector2(-1700, 120), Vector2(-880, -170), Vector2(-360, -20),
+			Vector2(250, 300), Vector2(1100, 700), Vector2(-1700, 1200)
+		])
+	]
+	draw_colored_polygon(ridges[0], Color("#26383b"))
+	draw_colored_polygon(ridges[1], Color("#1a3232"))
+	# Quiet silhouettes imply distant hills rather than repetitive box blocks.
+	for x in range(-1600, 1700, 310):
+		var y := -430.0 + sin(float(x) * 0.006) * 85.0
+		draw_circle(Vector2(float(x), y), 120.0, Color("#2d4942", 0.40))
+		draw_circle(Vector2(float(x) + 55.0, y - 30.0), 72.0, Color("#375348", 0.25))
 
 
 func _draw_street_art() -> void:
