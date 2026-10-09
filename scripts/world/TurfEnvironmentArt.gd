@@ -41,12 +41,9 @@ func _draw() -> void:
 	_stamp("cliff_straight", west + Vector2(-103, 117), 245.0)
 	_stamp("wall_straight", cliff_center + Vector2(-123, 160), 237.0)
 	_stamp("cliff_straight", east + Vector2(110, 115), 245.0)
-	# Upper crest uses two compact corner pieces beyond the HQ podium.
-	_stamp("cliff_outer_corner", hq + Vector2(-183, 31), 160.0)
-	_stamp("cliff_inner_corner", hq + Vector2(196, 33), 147.0)
-	# Medical and security terraces retain restrained planting, no hovering
-	# walls, while the road stays visibly open.
-	_stamp("cypress_planter", hq + Vector2(-152, -8), 78.0)
+	# Avoid separate cliff islands beside the HQ: the Safehouse is already
+	# established by its own raised podium and the natural estate silhouette.
+	# Retain only grounded landscaping along the middle security terrace.
 	_stamp("hedge_barrier", city_map.barracks.position + Vector2(121, 89), 88.0)
 	# The imported front_gate.png is the illustrated roadway ramp.
 	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 129.0)
