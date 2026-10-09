@@ -4,8 +4,13 @@ extends Node2D
 ## Never handles input and does not change economy, ownership, or save data.
 @export var city_map_path: NodePath = NodePath("..")
 var city_map: Node2D
+var courtyard_texture: Texture2D
 
 func _ready() -> void:
+	# The uploaded stairs.png is the illustrated paved courtyard tile.
+	var art_path := "res://assets/environment/stairs.png"
+	if ResourceLoader.exists(art_path):
+		courtyard_texture = load(art_path) as Texture2D
 	city_map = get_node_or_null(city_map_path) as Node2D
 	if city_map != null:
 		city_map.view_mode_changed.connect(func(_mode: StringName) -> void: queue_redraw())
@@ -173,6 +178,16 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) 
 		center + Vector2(-rx, -10)
 	])
 	draw_colored_polygon(corners, Color("#36454a") if prestige else Color("#304042"))
+	# Paint the real illustrated stone-plaza art into each connected tier.
+	# Roads and building foundations draw later, keeping all controls visible.
+	if courtyard_texture != null:
+		var art_size: Vector2 = courtyard_texture.get_size()
+		if art_size.x > 0.0:
+			var rendered_width: float = rx * 1.62
+			var rendered_size: Vector2 = art_size * (rendered_width / art_size.x)
+			var top_left: Vector2 = center - rendered_size * 0.5 + Vector2(0, -10)
+			draw_texture_rect(courtyard_texture, Rect2(top_left, rendered_size), false)
+
 	# Narrow hand-laid stone bands break up the previously untextured slabs.
 	# Constrain the geometry to this diamond by interpolating its edges.
 	for band in range(1, 6):
