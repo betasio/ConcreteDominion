@@ -71,11 +71,13 @@ theme_override_constants/separation = 8
 layout_mode = 2
 size_flags_horizontal = 3
 text = "BASE"
+tooltip_text = "View your turf. Move: WASD / arrows or drag. Zoom: mouse wheel or pinch."
 
 [node name="World" type="Button" parent="Root/ViewBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "WORLD"
+tooltip_text = "View city targets. Move: WASD / arrows or drag. Zoom: mouse wheel or pinch."
 
 [node name="AllianceShortcut" type="Button" parent="Root"]
 layout_mode = 1
@@ -545,6 +547,7 @@ layout_mode = 2
 text = "Finish Now"
 
 [node name="Help" type="Label" parent="Root"]
+visible = false
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -557,6 +560,6 @@ offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "BASE ↔ WORLD • Crew Support + player Faction on the left\nWASD / Arrows + Wheel • Mobile: Drag + Pinch"
+text = "Navigate: WASD / arrows and mouse wheel. Touch: drag and pinch."
 horizontal_alignment = 2
 vertical_alignment = 2
