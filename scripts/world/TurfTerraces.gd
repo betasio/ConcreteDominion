@@ -22,6 +22,7 @@ func _draw() -> void:
 	_draw_platform(city_map.barracks.position + Vector2(0, 36), 112.0, 56.0, 24.0, false)
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		_draw_platform(lot.position + Vector2(0, 35), 106.0, 52.0, 18.0, false)
+	_draw_retaining_links()
 	_draw_connecting_ramps()
 	_draw_architectural_courtyards()
 	_draw_terrace_lights()
@@ -254,3 +255,40 @@ func _draw_court_strip(center: Vector2, length: float, prestige: bool) -> void:
 		draw_circle(plant + Vector2(3, -6), 4.0, Color("#66805b"))
 		if prestige and i != 1:
 			draw_circle(plant + Vector2(0, 5), 2.0, Color("#ebc17c"))
+
+
+func _draw_retaining_links() -> void:
+	# Broad engineered terraces between the three compound elevations.
+	# Draw before ramps so ramp paving stays legible over retaining structures.
+	var hq: Vector2 = city_map.safehouse.position
+	var mid: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5
+	var service: Vector2 = city_map.lot_a.position
+	_draw_retaining_bridge(hq + Vector2(0, 90), mid + Vector2(0, 4), 54.0, 28.0)
+	_draw_retaining_bridge(mid + Vector2(0, 60), service + Vector2(0, 9), 48.0, 19.0)
+
+func _draw_retaining_bridge(start: Vector2, finish: Vector2, width: float, height: float) -> void:
+	var direction: Vector2 = finish - start
+	if direction.length_squared() < 1.0:
+		return
+	var side: Vector2 = direction.normalized().orthogonal() * width * 0.5
+	var top := PackedVector2Array([
+		start - side, start + side, finish + side, finish - side
+	])
+	# The road foundation bridges each change in grade, with an exposed
+	# stone face and warm trim instead of disconnected horizontal pads.
+	var front_a: Vector2 = start + side
+	var front_b: Vector2 = finish + side
+	draw_colored_polygon(PackedVector2Array([
+		front_a, front_b, front_b + Vector2(0, height),
+		front_a + Vector2(0, height)
+	]), Color("#1c282f"))
+	draw_colored_polygon(top, Color("#35434a"))
+	draw_line(start - side, finish - side, Color("#988663"), 2.5)
+	draw_line(front_a, front_b, Color("#bd9d64", 0.79), 3.0)
+	draw_line(front_a + Vector2(0, height), front_b + Vector2(0, height),
+			Color("#47555b"), 1.5)
+	for i in range(1, 7):
+		var t := float(i) / 7.0
+		var p: Vector2 = front_a.lerp(front_b, t)
+		draw_line(p + Vector2(0, 4), p + Vector2(0, height - 3),
+				Color("#7d8785", 0.45), 1.4)
