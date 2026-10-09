@@ -51,30 +51,28 @@ func _draw_bollard(pos: Vector2) -> void:
 
 
 func _draw_compound_routes() -> void:
-	# A single hierarchy: HQ boulevard -> middle court -> service yard.
-	# Branch spurs attach at the court rather than forming an X interchange.
+	# Main road is one quiet paved spine, rather than multiple heavy lines
+	# competing with the new illustrated stone courts.
 	var hq: Vector2 = city_map.safehouse.position + Vector2(0, 65)
 	var middle: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5 + Vector2(0, 28)
 	var lower: Vector2 = city_map.lot_a.position + Vector2(0, 23)
-	var routes: Array[PackedVector2Array] = [
-		PackedVector2Array([hq, middle, lower]),
-		PackedVector2Array([middle + Vector2(-48, 0), city_map.hospital.position + Vector2(0, 34)]),
-		PackedVector2Array([middle + Vector2(48, 0), city_map.barracks.position + Vector2(0, 34)]),
-		PackedVector2Array([lower + Vector2(-42, 0), city_map.lot_c.position + Vector2(0, 32)]),
-		PackedVector2Array([lower + Vector2(42, 0), city_map.lot_d.position + Vector2(0, 32)]),
-		PackedVector2Array([middle + Vector2(56, 30), city_map.lot_b.position + Vector2(0, 34)])
+	var main_route := PackedVector2Array([hq, middle, lower])
+	draw_polyline(main_route, Color("#8a7757", 0.72), 17.0, true)
+	draw_polyline(main_route, Color("#2a353b"), 13.0, true)
+	# Access lanes are deliberately narrow; the courts remain dominant.
+	var spurs: Array[PackedVector2Array] = [
+		PackedVector2Array([middle + Vector2(-35, 0), city_map.hospital.position + Vector2(0, 34)]),
+		PackedVector2Array([middle + Vector2(35, 0), city_map.barracks.position + Vector2(0, 34)]),
+		PackedVector2Array([lower + Vector2(-30, 0), city_map.lot_c.position + Vector2(0, 32)]),
+		PackedVector2Array([lower + Vector2(30, 0), city_map.lot_d.position + Vector2(0, 32)]),
+		PackedVector2Array([middle + Vector2(45, 25), city_map.lot_b.position + Vector2(0, 34)])
 	]
-	for points in routes:
-		draw_polyline(points, Color("#897b68", 0.67), 18.0, true)
-		draw_polyline(points, Color("#27343a"), 14.0, true)
-		draw_polyline(points, Color("#a4a59d", 0.26), 1.0, true)
-		# Restrained seam markings: no broad overlapping intersection lines.
-		for index in range(1, points.size()):
-			var segment: Vector2 = points[index] - points[index - 1]
-			if segment.length() > 120.0:
-				var center: Vector2 = points[index - 1].lerp(points[index], 0.5)
-				var across: Vector2 = segment.normalized().orthogonal() * 4.5
-				draw_line(center - across, center + across, Color("#a8a797", 0.32), 1.1)
+	for spur in spurs:
+		draw_polyline(spur, Color("#34434a", 0.85), 8.0, true)
+	# Small curb details mark only the junctions rather than tiling roads.
+	for point in [middle, lower]:
+		draw_circle(point, 10.0, Color("#3b4549"))
+		draw_arc(point, 10.0, 0.0, TAU, 16, Color("#aa9063", 0.63), 1.6)
 
 
 func _draw_landscaping() -> void:
