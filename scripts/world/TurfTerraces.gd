@@ -377,34 +377,47 @@ func _draw_stone_to_landscape_transition() -> void:
 
 
 func _draw_terraced_surface_patina(outline: PackedVector2Array) -> void:
-	# Natural stone/soil texture belongs to the continuous estate surface,
-	# not to disconnected decorative pads. Fixed positions stay deterministic
-	# and are clipped to the estate outline rather than the full city map.
+	# Readable natural surface variation at the standard gameplay zoom.
+	# Only draw patches fully inside the estate and away from facility pads.
+	# Simple four-corner diamonds avoid the triangulation errors of the
+	# previous continuous groundcover polygons.
 	var hq: Vector2 = city_map.safehouse.position
 	var sites: Array[Vector2] = [
 		hq, city_map.hospital.position, city_map.barracks.position,
 		city_map.lot_a.position, city_map.lot_b.position,
 		city_map.lot_c.position, city_map.lot_d.position
 	]
-	for ix in range(31):
-		for iy in range(17):
-			var point := hq + Vector2(float(ix - 15) * 33.0,
-					float(iy - 7) * 29.0)
-			if not Geometry2D.is_point_in_polygon(point, outline):
+	for ix in range(22):
+		for iy in range(14):
+			var seed: int = (ix * 37 + iy * 53 + ix * iy * 11) % 23
+			if seed > 8:
 				continue
-			var near_building := false
-			for site in sites:
-				if point.distance_to(site + Vector2(0, 25)) < 78.0:
-					near_building = true
+			var point: Vector2 = hq + Vector2(float(ix - 11) * 45.0,
+					float(iy - 5) * 38.0)
+			var width: float = 10.0 + float(seed % 4) * 5.0
+			var height: float = 5.0 + float(seed % 3) * 3.0
+			var corners := PackedVector2Array([
+				point + Vector2(0, -height),
+				point + Vector2(width, 0),
+				point + Vector2(0, height),
+				point + Vector2(-width, 0)
+			])
+			var allowed := true
+			for corner in corners:
+				if not Geometry2D.is_point_in_polygon(corner, outline):
+					allowed = false
 					break
-			if near_building:
+			if not allowed:
 				continue
-			var hash_value := (ix * 73 + iy * 41 + ix * iy * 7) % 17
-			if hash_value < 5:
-				draw_line(point, point + Vector2(7 + hash_value, -3),
-						Color("#78847a", 0.09), 1.2)
-			elif hash_value == 8:
-				draw_circle(point, 6.0, Color("#1f3933", 0.20))
-			elif hash_value == 13:
-				draw_line(point + Vector2(-5, 2),
-						point + Vector2(6, -2), Color("#18282d", 0.17), 2.2)
+			for site in sites:
+				if point.distance_to(site + Vector2(0, 25)) < 100.0:
+					allowed = false
+					break
+			if not allowed:
+				continue
+			draw_colored_polygon(corners,
+					Color("#62736b", 0.14) if seed % 2 == 0 else Color("#172b2d", 0.25))
+			if seed % 3 == 0:
+				draw_line(point + Vector2(-width * 0.55, 0),
+						point + Vector2(width * 0.35, -height * 0.4),
+						Color("#94a093", 0.12), 1.2)
