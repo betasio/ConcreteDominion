@@ -23,6 +23,7 @@ func _draw() -> void:
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		_draw_platform(lot.position + Vector2(0, 35), 106.0, 52.0, 18.0, false)
 	_draw_connecting_ramps()
+	_draw_terrace_lights()
 	_draw_entry()
 
 func _draw_platform(center: Vector2, rx: float, ry: float, depth: float, hero: bool) -> void:
@@ -179,3 +180,28 @@ func _draw_ramp(start: Vector2, finish: Vector2, width: float) -> void:
 	for step in range(1, 7):
 		var p: Vector2 = start.lerp(finish, float(step) / 7.0)
 		draw_line(p - side * 0.78, p + side * 0.78, Color("#72808a", 0.40), 1.5)
+
+
+func _draw_terrace_lights() -> void:
+	# Low-level warm illumination along the tier transitions and retaining
+	# walls; lights are cosmetic and do not intercept building interaction.
+	var sites := [
+		city_map.safehouse.position + Vector2(0, 42),
+		city_map.hospital.position + Vector2(0, 37),
+		city_map.barracks.position + Vector2(0, 37),
+		city_map.lot_a.position + Vector2(0, 35),
+		city_map.lot_b.position + Vector2(0, 35)
+	]
+	for p in sites:
+		for side in [-1.0, 1.0]:
+			var position := p + Vector2(side * 78.0, 10.0)
+			draw_circle(position, 18.0, Color(0.94, 0.67, 0.28, 0.08))
+			draw_line(position, position + Vector2(0, -11), Color("#5a6568"), 3.0)
+			draw_circle(position + Vector2(0, -12), 3.5, Color("#f1c57b"))
+	# Stair-like masonry steps soften the transition from HQ to middle court.
+	var hq_foot: Vector2 = city_map.safehouse.position + Vector2(0, 111)
+	for step in range(5):
+		var y := float(step) * 7.0
+		var half_width := 35.0 + float(step) * 3.5
+		draw_line(hq_foot + Vector2(-half_width, y),
+				hq_foot + Vector2(half_width, y), Color("#a39b87", 0.56), 2.0)
