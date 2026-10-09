@@ -56,9 +56,16 @@ func _draw_compound_routes() -> void:
 	var hq: Vector2 = city_map.safehouse.position + Vector2(0, 65)
 	var middle: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5 + Vector2(0, 28)
 	var lower: Vector2 = city_map.lot_a.position + Vector2(0, 23)
-	var main_route := PackedVector2Array([hq, middle, lower])
-	draw_polyline(main_route, Color("#8a7757", 0.72), 17.0, true)
-	draw_polyline(main_route, Color("#2a353b"), 13.0, true)
+	# Divide the main approach into two short, restrained tier connections.
+	# The engineered ramp artwork and masonry shoulder cover the transitions;
+	# one continuous diagonal boulevard visually bisected the whole estate.
+	var upper_link := PackedVector2Array([
+		hq.lerp(middle, 0.20), hq.lerp(middle, 0.77)])
+	var lower_link := PackedVector2Array([
+		middle.lerp(lower, 0.23), middle.lerp(lower, 0.78)])
+	for link in [upper_link, lower_link]:
+		draw_polyline(link, Color("#897b68", 0.66), 13.0, true)
+		draw_polyline(link, Color("#2a353b"), 9.0, true)
 	# Access lanes are deliberately narrow; the courts remain dominant.
 	var spurs: Array[PackedVector2Array] = [
 		PackedVector2Array([middle + Vector2(-35, 0), city_map.hospital.position + Vector2(0, 34)]),
