@@ -183,9 +183,9 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) 
 	if courtyard_texture != null:
 		var art_size: Vector2 = courtyard_texture.get_size()
 		if art_size.x > 0.0:
-			var rendered_width: float = rx * 1.62
+			var rendered_width: float = rx * (1.02 if prestige else 0.94)
 			var rendered_size: Vector2 = art_size * (rendered_width / art_size.x)
-			var top_left: Vector2 = center - rendered_size * 0.5 + Vector2(0, -10)
+			var top_left: Vector2 = center - rendered_size * 0.5 + Vector2(0, -18)
 			draw_texture_rect(courtyard_texture, Rect2(top_left, rendered_size), false)
 
 	# Narrow hand-laid stone bands break up the previously untextured slabs.
