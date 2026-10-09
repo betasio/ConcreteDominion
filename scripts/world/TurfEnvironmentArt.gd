@@ -34,18 +34,21 @@ func _draw() -> void:
 	# scattering tiny props across central roads and building labels.
 	var west: Vector2 = city_map.lot_c.position
 	var east: Vector2 = city_map.lot_d.position
-	# Build a three-part cliff silhouette from the actual illustrated
-	# retaining-wall sprites. Keep the upper HQ footprint and main road free.
-	_stamp("cliff_straight", hq + Vector2(-151, 41), 208.0)
-	_stamp("cliff_outer_corner", hq + Vector2(101, 36), 161.0)
-	_stamp("cypress_planter", hq + Vector2(-166, 4), 82.0)
-	# Medical / security shoulders frame the shared middle level.
-	_stamp("wall_straight", city_map.hospital.position + Vector2(-112, 61), 160.0)
-	# Omit free-standing east-side corner; the main terrace has its own edge.
-	# Grounded rocky boundaries surround the outer service yards.
-	_stamp("wall_straight", west + Vector2(-93, 93), 152.0)
-	_stamp("cliff_straight", east + Vector2(84, 89), 160.0)
-	# The uploaded front_gate.png actually depicts the tier road ramp.
+	# Large dressed cliff assets belong on the visible *outer* estate edge.
+	# The previous small pieces floated near the interior buildings.
+	# Anchor a continuous-looking frontage to the lower service boundary.
+	var cliff_center: Vector2 = (west + east) * 0.5
+	_stamp("cliff_straight", west + Vector2(-103, 117), 245.0)
+	_stamp("wall_straight", cliff_center + Vector2(-123, 160), 237.0)
+	_stamp("cliff_straight", east + Vector2(110, 115), 245.0)
+	# Upper crest uses two compact corner pieces beyond the HQ podium.
+	_stamp("cliff_outer_corner", hq + Vector2(-183, 31), 160.0)
+	_stamp("cliff_inner_corner", hq + Vector2(196, 33), 147.0)
+	# Medical and security terraces retain restrained planting, no hovering
+	# walls, while the road stays visibly open.
+	_stamp("cypress_planter", hq + Vector2(-152, -8), 78.0)
+	_stamp("hedge_barrier", city_map.barracks.position + Vector2(121, 89), 88.0)
+	# The imported front_gate.png is the illustrated roadway ramp.
 	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 129.0)
 
 func _stamp(key: String, center: Vector2, target_width: float) -> void:
