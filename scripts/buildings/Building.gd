@@ -14,6 +14,7 @@ signal changed
 @export var max_level: int = 5
 @export var base_upgrade_cash_cost: int = 5000
 @export var base_upgrade_duration: float = 15.0
+@export var render_3d_art: bool = false
 @export var art_texture: Texture2D
 
 var is_selected := false
@@ -79,7 +80,8 @@ func _draw() -> void:
 		# Anchor the illustration by its footprint so roofs rise above the lot
 		# rather than drifting when different source aspect ratios are imported.
 		var rendered_size := size * scale_factor
-		draw_texture_rect(art_texture, Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size), false)
+		if not render_3d_art:
+			draw_texture_rect(art_texture, Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size), false)
 		if is_constructing:
 			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
 		if is_selected:
