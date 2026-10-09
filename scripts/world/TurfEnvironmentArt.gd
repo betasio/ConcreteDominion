@@ -30,22 +30,26 @@ func _draw() -> void:
 	var hq: Vector2 = city_map.safehouse.position
 	var middle: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5
 	var lower: Vector2 = city_map.lot_a.position
-	# Render behind interactable buildings; each piece follows live positions.
-	# Footprint-size sprites are intentionally restricted to clear corridors.
-	# Do not cover Safehouse art, label, or the interactive HQ threshold.
-	# The central transition is handled by procedural steps underneath.
-	_stamp("ramp", middle.lerp(lower, 0.56) + Vector2(-15, 18), 85.0)
-	_stamp("front_gate", hq + Vector2(-63, 265), 113.0)
-	_stamp("rock_embankment", hq + Vector2(-275, 71), 165.0)
-	_stamp("cliff_outer_corner", hq + Vector2(270, -30), 145.0)
-	_stamp("garden_strip", hq + Vector2(-165, 82), 112.0)
-	_stamp("garden_strip", hq + Vector2(187, 77), 112.0)
-	_stamp("cypress_planter", hq + Vector2(-198, -35), 80.0)
-	_stamp("hedge_barrier", hq + Vector2(183, 16), 73.0)
-	_stamp("security_post", hq + Vector2(-185, 260), 85.0)
-	_stamp("service_yard", city_map.lot_a.position + Vector2(-107, 80), 81.0)
-	_stamp("industrial_yard", city_map.lot_c.position + Vector2(-108, 68), 90.0)
-	_stamp("courtyard_benches", city_map.lot_d.position + Vector2(99, 62), 86.0)
+	# Group the large illustrated pieces around the edge rather than
+	# scattering tiny props across central roads and building labels.
+	var west: Vector2 = city_map.lot_c.position
+	var east: Vector2 = city_map.lot_d.position
+	# Upper ridge behind HQ (the HQ sprite remains fully readable).
+	_stamp("cliff_straight", hq + Vector2(-285, -65), 270.0)
+	_stamp("cliff_outer_corner", hq + Vector2(275, -85), 174.0)
+	_stamp("cypress_planter", hq + Vector2(-185, -46), 92.0)
+	# Walled western flank and landscaped drive edge.
+	_stamp("wall_straight", city_map.hospital.position + Vector2(-172, 19), 185.0)
+	_stamp("rock_embankment", west + Vector2(-120, 116), 230.0)
+	_stamp("garden_strip", hq + Vector2(175, 70), 144.0)
+	# A single legible arrival gate and off-road security building.
+	_stamp("front_gate", hq + Vector2(-85, 276), 140.0)
+	_stamp("security_post", hq + Vector2(-220, 266), 94.0)
+	# Ramps and lower-service detail; never stamp directly onto facility lots.
+	_stamp("ramp", middle.lerp(lower, 0.57) + Vector2(-12, 20), 100.0)
+	_stamp("industrial_yard", west + Vector2(-108, 70), 106.0)
+	_stamp("service_yard", lower + Vector2(-113, 85), 95.0)
+	_stamp("courtyard_benches", east + Vector2(109, 71), 95.0)
 
 func _stamp(key: String, center: Vector2, target_width: float) -> void:
 	if not sprites.has(key):
