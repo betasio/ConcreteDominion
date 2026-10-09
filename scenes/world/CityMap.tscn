@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://scripts/world/TurfTerraces.gd" id="21_terraces"]
 [ext_resource type="Script" path="res://scripts/world/TurfEnvironmentArt.gd" id="22_environment_art"]
 [ext_resource type="Script" path="res://scripts/world/TurfEntranceArt.gd" id="23_entrance_art"]
+[ext_resource type="Script" path="res://scripts/world/TurfDetailArt.gd" id="24_detail_art"]
 
 [node name="CityMap" type="Node2D"]
 script = ExtResource("1_map")
@@ -54,6 +55,9 @@ script = ExtResource("22_environment_art")
 
 [node name="TurfGround" type="Node2D" parent="."]
 script = ExtResource("20_turf_ground")
+
+[node name="TurfDetailArt" type="Node2D" parent="."]
+script = ExtResource("24_detail_art")
 
 [node name="TurfEntranceArt" type="Node2D" parent="."]
 script = ExtResource("23_entrance_art")
