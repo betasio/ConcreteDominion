@@ -20,12 +20,7 @@ func _draw() -> void:
 	_draw_landscaping()
 	for node in nodes:
 		_draw_pad(node.position, node == city_map.safehouse)
-	var gate: Vector2 = city_map.safehouse.position + Vector2(0, 235)
-	var hq: Vector2 = city_map.safehouse.position
-	draw_line(gate, hq + Vector2(0, 60), Color("#9f8760", 0.55), 17.0)
-	draw_line(gate, hq + Vector2(0, 60), Color("#303b45"), 13.0)
-	for offset in [-52.0, 52.0]:
-		_draw_bollard(gate + Vector2(offset, -11))
+	_draw_gate_approach()
 
 
 func _draw_pad(pos: Vector2, headquarters: bool) -> void:
@@ -126,3 +121,25 @@ func _draw_pavement_detail() -> void:
 	var b: Vector2 = city_map.iso_to_screen(Vector2i(10, 10))
 	draw_line(a + Vector2(-7, 6), b + Vector2(-7, 18), Color("#ceaa6c", 0.70), 2.2)
 	draw_line(a + Vector2(7, 20), b + Vector2(7, 32), Color("#ceaa6c", 0.70), 2.2)
+
+
+func _draw_gate_approach() -> void:
+	# One continuous stone-paved avenue aligns with the HQ and the estate's
+	# illustrated entrance, rather than conflicting with the primary roads.
+	var hq: Vector2 = city_map.safehouse.position
+	var from: Vector2 = hq + Vector2(0, 102)
+	var gate: Vector2 = hq + Vector2(0, 242)
+	var exit: Vector2 = hq + Vector2(0, 312)
+	var route := PackedVector2Array([from, gate, exit])
+	draw_polyline(route, Color("#b29a75", 0.80), 50.0, true)
+	draw_polyline(route, Color("#313b42"), 43.0, true)
+	draw_polyline(route, Color("#637078", 0.42), 1.8, true)
+	for step in range(1, 7):
+		var p: Vector2 = from.lerp(exit, float(step) / 7.0)
+		draw_line(p + Vector2(-15, 0), p + Vector2(15, 0),
+				Color("#627179", 0.38), 1.6)
+	for side in [-1.0, 1.0]:
+		draw_line(from + Vector2(side * 29.0, 0), exit + Vector2(side * 29.0, 0),
+				Color("#b49b6c", 0.58), 2.2)
+		for dy in [18.0, 92.0, 162.0]:
+			_draw_bollard(from + Vector2(side * 36.0, dy))
