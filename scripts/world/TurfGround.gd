@@ -126,10 +126,10 @@ func _draw_pavement_detail() -> void:
 func _draw_gate_approach() -> void:
 	# One continuous stone-paved avenue aligns with the HQ and the estate's
 	# illustrated entrance, rather than conflicting with the primary roads.
-	var hq: Vector2 = city_map.safehouse.position
-	var from: Vector2 = hq + Vector2(0, 102)
-	var gate: Vector2 = hq + Vector2(0, 242)
-	var exit: Vector2 = hq + Vector2(0, 312)
+	var lower: Vector2 = city_map.lot_a.position
+	var from: Vector2 = lower + Vector2(0, 38)
+	var gate: Vector2 = lower + Vector2(0, 124)
+	var exit: Vector2 = lower + Vector2(0, 182)
 	var route := PackedVector2Array([from, gate, exit])
 	draw_polyline(route, Color("#b29a75", 0.80), 50.0, true)
 	draw_polyline(route, Color("#313b42"), 43.0, true)
