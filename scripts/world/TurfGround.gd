@@ -173,11 +173,11 @@ func _draw_connected_courtyards() -> void:
 	# Keep these surfaces within each actual tier. Former 308px / 355px
 	# giant plazas spanned the gaps and looked like separate floating islands.
 	_draw_court_surface(hq + Vector2(0, 32), 180.0, 82.0, true)
-	_draw_court_surface(middle_center + Vector2(0, 33), 178.0, 62.0, false)
+	_draw_court_surface(middle_center + Vector2(0, 33), 178.0, 62.0, false, false)
 	_draw_court_surface(service_center + Vector2(0, 25), 196.0, 66.0, false)
 	# The Garage already has an illustrated pad: no duplicate plaza below it.
 
-func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) -> void:
+func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool, illustrated: bool = true) -> void:
 	var corners := PackedVector2Array([
 		center + Vector2(0, -ry),
 		center + Vector2(rx, -10),
@@ -187,7 +187,7 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) 
 	draw_colored_polygon(corners, Color("#36454a") if prestige else Color("#304042"))
 	# Paint the real illustrated stone-plaza art into each connected tier.
 	# Roads and building foundations draw later, keeping all controls visible.
-	if courtyard_texture != null:
+	if illustrated and courtyard_texture != null:
 		var art_size: Vector2 = courtyard_texture.get_size()
 		if art_size.x > 0.0:
 			var rendered_width: float = rx * (1.02 if prestige else 0.72)
