@@ -6,6 +6,7 @@ extends CanvasLayer
 const ITEMS := [
 	["Boss Profile", "ProfileUI"],
 	["Faction Hub", "OnlineFactionUI"],
+	["Faction Management", "FactionUI"],
 	["Store", "StoreUI"],
 	["Territory", "WorldControlUI"],
 	["Achievements", "AchievementUI"],
