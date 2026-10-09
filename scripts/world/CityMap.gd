@@ -98,7 +98,7 @@ func set_view_mode(mode: StringName) -> void:
 	var previous_mode: StringName = view_mode
 	view_mode = mode
 	_clear_selection()
-	var destination := safehouse.position + Vector2(0, 195) if mode == &"base" else Vector2(0, 140)
+	var destination := safehouse.position + Vector2(-90, 195) if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.20, 1.20) if mode == &"base" else Vector2(0.72, 0.72)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
