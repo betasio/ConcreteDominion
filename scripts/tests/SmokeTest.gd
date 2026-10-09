@@ -102,8 +102,8 @@ func _ready() -> void:
 		for option in secondary.list_panel.get_node("MenuScroll/MenuOptions").get_children():
 			if option is Button:
 				option_count += 1
-		if option_count != 8:
-			_fail("More menu does not contain all eight feature links.")
+		if option_count != 9:
+			_fail("More menu does not contain all nine feature links.")
 		else:
 			var profile_panel := game.get_node_or_null("ProfileUI/Root/Panel") as PanelContainer
 			var first_option := secondary.list_panel.get_node("MenuScroll/MenuOptions").get_child(0) as Button
