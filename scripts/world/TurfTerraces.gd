@@ -341,9 +341,9 @@ func _draw_segmented_retaining_edges() -> void:
 		_draw_ledge(hq_start, hq_end, 26.0, true)
 	for site in [clinic, barracks]:
 		for side in [-1.0, 1.0]:
-			var origin: Vector2 = site.position + Vector2(side * 51.0, 81.0)
+			var origin: Vector2 = site + Vector2(side * 51.0, 81.0)
 			_draw_ledge(origin, origin + Vector2(side * 49.0, 0), 18.0, false)
 	for site in [scrap, data]:
 		for side in [-1.0, 1.0]:
-			var origin: Vector2 = site.position + Vector2(side * 53.0, 70.0)
+			var origin: Vector2 = site + Vector2(side * 53.0, 70.0)
 			_draw_ledge(origin, origin + Vector2(side * 44.0, 0), 14.0, false)
