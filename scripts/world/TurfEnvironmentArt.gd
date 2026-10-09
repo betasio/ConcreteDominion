@@ -38,9 +38,9 @@ func _draw() -> void:
 	# The previous small pieces floated near the interior buildings.
 	# Anchor a continuous-looking frontage to the lower service boundary.
 	var cliff_center: Vector2 = (west + east) * 0.5
-	_stamp("cliff_straight", west + Vector2(-103, 117), 245.0)
-	_stamp("wall_straight", cliff_center + Vector2(-123, 160), 237.0)
-	_stamp("cliff_straight", east + Vector2(110, 115), 245.0)
+	_stamp_cliff("cliff_straight", west + Vector2(-103, 117), 245.0)
+	_stamp_cliff("wall_straight", cliff_center + Vector2(-123, 160), 237.0)
+	_stamp_cliff("cliff_straight", east + Vector2(110, 115), 245.0)
 	# Avoid separate cliff islands beside the HQ: the Safehouse is already
 	# established by its own raised podium and the natural estate silhouette.
 	# Retain only grounded landscaping along the middle security terrace.
@@ -60,3 +60,19 @@ func _stamp(key: String, center: Vector2, target_width: float) -> void:
 	# Ground-relative registration: bottom of asset aligns to placement point.
 	draw_texture_rect(texture, Rect2(center - Vector2(rendered.x * 0.5,
 			rendered.y), rendered), false)
+
+func _stamp_cliff(key: String, foot: Vector2, width: float) -> void:
+	# A low rocky footing ties each illustrated cliff to the dark plateau
+	# without introducing detached geometric platforms or road obstructions.
+	if not sprites.has(key):
+		return
+	var half: float = width * 0.45
+	var apron := PackedVector2Array([
+		foot + Vector2(-half, -23),
+		foot + Vector2(half, -23),
+		foot + Vector2(half + 14.0, 8.0),
+		foot + Vector2(-half - 14.0, 8.0)
+	])
+	draw_colored_polygon(apron, Color("#27373a", 0.94))
+	draw_line(apron[3], apron[2], Color("#52615b", 0.36), 2.0)
+	_stamp(key, foot, width)
