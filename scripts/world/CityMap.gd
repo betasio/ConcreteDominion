@@ -7,6 +7,7 @@ signal view_mode_changed(mode: StringName)
 
 const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
+const HQ_HYBRID_SCRIPT := preload("res://scripts/world/HQHybridVisual.gd")
 
 @export var grid_width: int = 24
 @export var grid_height: int = 20
@@ -75,6 +76,14 @@ func _ready() -> void:
 	financial_tower.position = iso_to_screen(Vector2i(22, 10))
 	midtown_exchange.position = iso_to_screen(Vector2i(4, 10))
 	industrial_depot.position = iso_to_screen(Vector2i(22, 17))
+
+	if ProjectSettings.get_setting("concrete_dominion/enable_3d_safehouse", false):
+		var hybrid := Node2D.new()
+		hybrid.name = "HQHybridVisual"
+		hybrid.set_script(HQ_HYBRID_SCRIPT)
+		safehouse.add_child(hybrid)
+		safehouse.render_3d_art = true
+		safehouse.queue_redraw()
 
 	safehouse.selected.connect(_select_building)
 	hospital.selected.connect(_select_building)
