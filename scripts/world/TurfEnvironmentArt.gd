@@ -45,11 +45,13 @@ func _draw() -> void:
 	# A single legible arrival gate and off-road security building.
 	_stamp("front_gate", hq + Vector2(-85, 276), 140.0)
 	_stamp("security_post", hq + Vector2(-220, 266), 94.0)
-	# Ramps and lower-service detail; never stamp directly onto facility lots.
+	# Tie lower-yard artwork to the estate edges. Avoid miniature service
+	# pads floating off the roads or covering build-slot interaction labels.
 	_stamp("ramp", middle.lerp(lower, 0.57) + Vector2(-12, 20), 100.0)
-	_stamp("industrial_yard", west + Vector2(-108, 70), 106.0)
-	_stamp("service_yard", lower + Vector2(-113, 85), 95.0)
-	_stamp("courtyard_benches", east + Vector2(109, 71), 95.0)
+	_stamp("wall_straight", west + Vector2(-114, 91), 180.0)
+	_stamp("rock_embankment", east + Vector2(100, 117), 187.0)
+	_stamp("hedge_barrier", lower + Vector2(-126, 39), 105.0)
+	_stamp("garden_strip", east + Vector2(104, 63), 137.0)
 
 func _stamp(key: String, center: Vector2, target_width: float) -> void:
 	if not sprites.has(key):
