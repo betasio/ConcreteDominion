@@ -196,7 +196,7 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool, 
 
 	# Narrow hand-laid stone bands break up the previously untextured slabs.
 	# Constrain the geometry to this diamond by interpolating its edges.
-	for band in range(1, 4) if prestige else range(0):
+	for band in range(1, 4 if prestige else 1):
 		var t := float(band) / 6.0
 		var far_left: Vector2 = corners[0].lerp(corners[3], t)
 		var far_right: Vector2 = corners[0].lerp(corners[1], t)
