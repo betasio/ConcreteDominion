@@ -5,8 +5,12 @@ const MASTER_PATH := "res://assets/buildings/3d/HQ.glb"
 const MOBILE_PATH := "res://assets/buildings/3d/HQ_Mobile.glb"
 
 func _ready() -> void:
-	_add_model(MASTER_PATH, Vector3(-1.45, 0, 0))
-	_add_model(MOBILE_PATH, Vector3(1.45, 0, 0))
+	if ResourceLoader.exists(MASTER_PATH):
+		_add_model(MASTER_PATH, Vector3(-1.45, 0, 0))
+		_add_model(MOBILE_PATH, Vector3(1.45, 0, 0))
+	else:
+		# The repository stores the optimized 4K version only for now.
+		_add_model(MOBILE_PATH, Vector3.ZERO)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48.0, -35.0, 0.0)
 	sun.light_energy = 1.7
@@ -22,7 +26,7 @@ func _ready() -> void:
 	add_child(environment)
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 4.9
+	camera.size = 3.25 if not ResourceLoader.exists(MASTER_PATH) else 4.9
 	camera.position = Vector3(3.2, 2.3, 6.8)
 	add_child(camera)
 	camera.look_at(Vector3(0.0, 0.2, 0.0), Vector3.UP)
