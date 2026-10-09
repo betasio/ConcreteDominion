@@ -22,9 +22,8 @@ func _draw() -> void:
 	var nodes := [city_map.safehouse, city_map.hospital, city_map.barracks,
 			city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]
 	_draw_connected_courtyards()
-	_draw_hillside_landscaping()
+	# Premium illustrated planting now draws in TurfDetailArt.
 	_draw_compound_routes()
-	_draw_landscaping()
 	for node in nodes:
 		_draw_pad(node.position, node == city_map.safehouse)
 	_draw_gate_approach()
