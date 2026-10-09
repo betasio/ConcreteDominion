@@ -106,6 +106,27 @@ func _draw_estate_landform() -> void:
 			var p := a.lerp(b, float(step) / 5.0)
 			draw_line(p + Vector2(0, 7), p + Vector2(0, 65),
 					Color("#46515b", 0.30), 1.5)
+	# Angular stone strata create a broken rocky face rather than a single
+	# flat vertical extrusion. Facets follow the true foreground contour.
+	for i in range(3, 8):
+		var edge_a: Vector2 = outline[i]
+		var edge_b: Vector2 = outline[i + 1]
+		for segment in range(4):
+			var t0 := float(segment) / 4.0
+			var t1 := float(segment + 1) / 4.0
+			var p0: Vector2 = edge_a.lerp(edge_b, t0)
+			var p1: Vector2 = edge_a.lerp(edge_b, t1)
+			var low0 := p0 + Vector2(-7.0 if segment % 2 == 0 else 5.0, 52.0 + float(segment % 3) * 6.0)
+			var low1 := p1 + Vector2(9.0 if segment % 2 == 0 else -4.0, 67.0 - float(segment % 3) * 5.0)
+			draw_colored_polygon(PackedVector2Array([p0, p1, low1, low0]),
+					Color("#354249") if (segment + i) % 3 == 0 else Color("#222d33"))
+			draw_line(p0 + Vector2(0, 5), low0, Color("#647079", 0.38), 1.5)
+	# Sparse perimeter planting softens the faceted silhouette.
+	for i in [3, 4, 6, 7]:
+		var foot: Vector2 = outline[i].lerp(outline[i + 1], 0.48)
+		draw_circle(foot + Vector2(0, -9), 14.0, Color("#263d35"))
+		draw_circle(foot + Vector2(-6, -16), 10.0, Color("#395648"))
+		draw_circle(foot + Vector2(9, -18), 7.0, Color("#52715a"))
 	draw_colored_polygon(outline, Color("#303d42"))
 	draw_polyline(PackedVector2Array([
 		outline[0], outline[1], outline[2], outline[3],
