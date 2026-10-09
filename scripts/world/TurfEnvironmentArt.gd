@@ -41,10 +41,10 @@ func _draw() -> void:
 	_stamp("cypress_planter", hq + Vector2(-166, 4), 82.0)
 	# Medical / security shoulders frame the shared middle level.
 	_stamp("wall_straight", city_map.hospital.position + Vector2(-112, 61), 160.0)
-	_stamp("cliff_inner_corner", city_map.barracks.position + Vector2(125, 65), 124.0)
+	# Omit free-standing east-side corner; the main terrace has its own edge.
 	# Grounded rocky boundaries surround the outer service yards.
-	_stamp("wall_straight", west + Vector2(-108, 88), 170.0)
-	_stamp("cliff_straight", east + Vector2(107, 88), 191.0)
+	_stamp("wall_straight", west + Vector2(-93, 93), 152.0)
+	_stamp("cliff_straight", east + Vector2(84, 89), 160.0)
 	# The uploaded front_gate.png actually depicts the tier road ramp.
 	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 129.0)
 
