@@ -14,6 +14,7 @@ func _ready() -> void:
 func _draw() -> void:
 	if city_map == null or city_map.get_view_mode() != &"base":
 		return
+	_draw_estate_landform()
 	# Layer heights create believable vertical faces and deep ground shadows.
 	# Rendered underneath the selectable building nodes.
 	_draw_platform(city_map.safehouse.position + Vector2(0, 36), 166.0, 78.0, 37.0, true)
@@ -59,3 +60,47 @@ func _draw_entry() -> void:
 		var pillar := finish + Vector2(x, -9)
 		draw_rect(Rect2(pillar + Vector2(-6, -19), Vector2(12, 25)), Color("#45515d"))
 		draw_circle(pillar + Vector2(0, -22), 4.0, Color("#eabf75"))
+
+
+func _draw_estate_landform() -> void:
+	# A single irregular estate silhouette conceals the repetitive city grid
+	# behind the playable compound. Terrace pads and buildings render above it.
+	var hq: Vector2 = city_map.safehouse.position
+	var west: Vector2 = city_map.lot_c.position
+	var east: Vector2 = city_map.lot_d.position
+	var south: Vector2 = city_map.lot_a.position
+	var outline := PackedVector2Array([
+		hq + Vector2(-140, -150),
+		hq + Vector2(95, -172),
+		hq + Vector2(250, -84),
+		east + Vector2(170, -85),
+		east + Vector2(195, 80),
+		south + Vector2(170, 154),
+		south + Vector2(-80, 192),
+		west + Vector2(-175, 85),
+		west + Vector2(-190, -40),
+		hq + Vector2(-255, -95)
+	])
+	var depth := Vector2(0, 80)
+	# Cliff faces are visible at the foreground and sides.
+	for i in range(3, 8):
+		var a: Vector2 = outline[i]
+		var b: Vector2 = outline[i + 1]
+		draw_colored_polygon(PackedVector2Array([a, b, b + depth, a + depth]),
+				Color("#171e26") if i % 2 == 0 else Color("#27313a"))
+		draw_line(a, b, Color("#69777d", 0.58), 3.0)
+		for step in range(1, 5):
+			var p := a.lerp(b, float(step) / 5.0)
+			draw_line(p + Vector2(0, 7), p + Vector2(0, 65),
+					Color("#46515b", 0.30), 1.5)
+	draw_colored_polygon(outline, Color("#303d42"))
+	draw_polyline(PackedVector2Array([
+		outline[0], outline[1], outline[2], outline[3],
+		outline[4], outline[5], outline[6], outline[7], outline[8], outline[9],
+		outline[0]
+	]), Color("#a28c62", 0.64), 3.0, true)
+	# Broad, understated landscaped bands give the estate a planted backdrop.
+	for x in [-155.0, -105.0, 110.0, 165.0]:
+		var base: Vector2 = hq + Vector2(x, 20)
+		draw_circle(base, 30.0, Color("#263d37", 0.66))
+		draw_circle(base + Vector2(8, -12), 17.0, Color("#3d5a4b", 0.58))
