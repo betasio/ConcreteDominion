@@ -375,9 +375,12 @@ func _draw_hillside_groundcover() -> void:
 			data + Vector2(128, 159), scrap + Vector2(-130, 159)
 		])
 	]
+	# Wide vegetated contour strokes are safer than concave polygon strips.
+	# They cannot fail the Godot canvas triangulation path.
 	for bank in banks:
-		draw_colored_polygon(bank, Color("#274039"))
-		draw_polyline(bank, Color("#536a57", 0.28), 2.0, true)
+		for edge in range(0, bank.size() - 1):
+			draw_line(bank[edge], bank[edge + 1], Color("#274039", 0.48), 18.0)
+			draw_line(bank[edge], bank[edge + 1], Color("#536a57", 0.30), 1.7)
 	# Gentle clusters instead of repeated artificial circles or lone shrubs.
 	for site in [hq, clinic, barracks, scrap, data]:
 		for side in [-1.0, 1.0]:
