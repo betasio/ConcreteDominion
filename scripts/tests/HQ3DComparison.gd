@@ -24,9 +24,9 @@ func _ready() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 4.9
 	camera.position = Vector3(3.2, 2.3, 6.8)
+	add_child(camera)
 	camera.look_at(Vector3(0.0, 0.2, 0.0), Vector3.UP)
 	camera.current = true
-	add_child(camera)
 
 func _add_model(asset_path: String, position_3d: Vector3) -> void:
 	if not ResourceLoader.exists(asset_path):
