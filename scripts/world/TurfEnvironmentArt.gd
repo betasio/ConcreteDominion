@@ -35,13 +35,13 @@ func _draw() -> void:
 	var west: Vector2 = city_map.lot_c.position
 	var east: Vector2 = city_map.lot_d.position
 	# Upper ridge behind HQ (the HQ sprite remains fully readable).
-	_stamp("cliff_straight", hq + Vector2(-285, -65), 270.0)
-	_stamp("cliff_outer_corner", hq + Vector2(275, -85), 174.0)
-	_stamp("cypress_planter", hq + Vector2(-185, -46), 92.0)
+	_stamp("cliff_straight", hq + Vector2(-255, 6), 244.0)
+	_stamp("cliff_outer_corner", hq + Vector2(222, -5), 165.0)
+	_stamp("cypress_planter", hq + Vector2(-188, 12), 90.0)
 	# Walled western flank and landscaped drive edge.
-	_stamp("wall_straight", city_map.hospital.position + Vector2(-172, 19), 185.0)
+	_stamp("wall_straight", city_map.hospital.position + Vector2(-158, 35), 174.0)
 	_stamp("rock_embankment", west + Vector2(-120, 116), 230.0)
-	_stamp("garden_strip", hq + Vector2(175, 70), 144.0)
+	_stamp("garden_strip", hq + Vector2(195, 88), 138.0)
 	# A single legible arrival gate and off-road security building.
 	_stamp("front_gate", hq + Vector2(-85, 276), 140.0)
 	_stamp("security_post", hq + Vector2(-220, 266), 94.0)
