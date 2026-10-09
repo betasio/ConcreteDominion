@@ -22,6 +22,7 @@ func _draw() -> void:
 	_draw_platform(city_map.barracks.position + Vector2(0, 36), 112.0, 56.0, 24.0, false)
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		_draw_platform(lot.position + Vector2(0, 35), 106.0, 52.0, 18.0, false)
+	_draw_tier_edge_bands()
 	_draw_retaining_links()
 	_draw_connecting_ramps()
 	_draw_architectural_courtyards()
@@ -292,3 +293,36 @@ func _draw_retaining_bridge(start: Vector2, finish: Vector2, width: float, heigh
 		var p: Vector2 = front_a.lerp(front_b, t)
 		draw_line(p + Vector2(0, 4), p + Vector2(0, height - 3),
 				Color("#7d8785", 0.45), 1.4)
+
+
+func _draw_tier_edge_bands() -> void:
+	# Continuous dressed-stone ledges connect the terrace geometry visually,
+	# following live center points rather than the original isometric grid.
+	var hq: Vector2 = city_map.safehouse.position
+	var middle: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5
+	var garage: Vector2 = city_map.lot_a.position
+	_draw_ledge(hq + Vector2(-169, 88), hq + Vector2(169, 88), 34.0, true)
+	_draw_ledge(city_map.hospital.position + Vector2(-117, 91),
+			city_map.barracks.position + Vector2(117, 91), 24.0, false)
+	_draw_ledge(city_map.lot_c.position + Vector2(-115, 85),
+			city_map.lot_d.position + Vector2(115, 85), 18.0, false)
+	# Shorted side returns frame each tier without blocking the road corridors.
+	for direction in [-1.0, 1.0]:
+		_draw_ledge(middle + Vector2(direction * 200, 50),
+				middle + Vector2(direction * 220, 107), 18.0, false)
+		_draw_ledge(garage + Vector2(direction * 176, 38),
+				garage + Vector2(direction * 188, 103), 16.0, false)
+
+func _draw_ledge(start: Vector2, finish: Vector2, depth: float, prestige: bool) -> void:
+	# Underside is stone, top edge is gold for HQ and gray limestone elsewhere.
+	var down := Vector2(0, depth)
+	draw_colored_polygon(PackedVector2Array([
+		start, finish, finish + down, start + down
+	]), Color("#1a272d") if prestige else Color("#233037"))
+	draw_line(start, finish,
+			Color("#bc9e67", 0.8) if prestige else Color("#86908b", 0.70), 3.0)
+	draw_line(start + down, finish + down, Color("#586366", 0.55), 2.0)
+	for index in range(1, 10):
+		var point: Vector2 = start.lerp(finish, float(index) / 10.0)
+		draw_line(point + Vector2(0, 5), point + Vector2(0, depth - 3),
+				Color("#76807d", 0.38), 1.2)
