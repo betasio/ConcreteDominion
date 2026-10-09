@@ -15,6 +15,7 @@ func _draw() -> void:
 	if city_map == null or city_map.get_view_mode() != &"base":
 		return
 	_draw_estate_landform()
+	_draw_stone_to_landscape_transition()
 	# Terrain silhouette and illustrated cliff art supply the backdrop.
 	# Layer heights create believable vertical faces and deep ground shadows.
 	# Rendered underneath the selectable building nodes.
@@ -348,3 +349,31 @@ func _draw_segmented_retaining_edges() -> void:
 		for side in [-1.0, 1.0]:
 			var origin: Vector2 = site + Vector2(side * 53.0, 70.0)
 			_draw_ledge(origin, origin + Vector2(side * 44.0, 0), 14.0, false)
+
+
+func _draw_stone_to_landscape_transition() -> void:
+	# Short natural shoulders bridge the visible stone podiums to the estate
+	# bedrock without crossing buildings or the central entrance route.
+	var sites: Array[Vector2] = [
+		city_map.safehouse.position,
+		city_map.hospital.position,
+		city_map.barracks.position,
+		city_map.lot_c.position,
+		city_map.lot_d.position
+	]
+	for index in range(sites.size()):
+		var center: Vector2 = sites[index]
+		var radius: float = 160.0 if index == 0 else 112.0
+		for side in [-1.0, 1.0]:
+			var outer: Vector2 = center + Vector2(side * (radius + 22.0), 74.0)
+			var inner: Vector2 = center + Vector2(side * (radius - 10.0), 50.0)
+			# Simple convex wedges are deliberately triangulation-safe.
+			var wedge := PackedVector2Array([
+				inner + Vector2(0, -15),
+				outer + Vector2(0, -19),
+				outer + Vector2(0, 19),
+				inner + Vector2(0, 12)
+			])
+			draw_colored_polygon(wedge, Color("#30443e", 0.72))
+			draw_line(inner + Vector2(0, 13), outer + Vector2(0, 19),
+					Color("#768071", 0.33), 2.0)
