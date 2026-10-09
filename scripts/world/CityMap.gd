@@ -58,13 +58,15 @@ func setup_presentation(catalog: PresentationCatalog) -> void:
 
 
 func _ready() -> void:
-	safehouse.position = iso_to_screen(Vector2i(10, 10))
-	hospital.position = iso_to_screen(Vector2i(13, 10))
-	barracks.position = iso_to_screen(Vector2i(10, 7))
-	lot_a.position = iso_to_screen(Vector2i(10, 13))
-	lot_b.position = iso_to_screen(Vector2i(13, 13))
-	lot_c.position = iso_to_screen(Vector2i(7, 13))
-	lot_d.position = iso_to_screen(Vector2i(16, 13))
+	# Upper prestige terrace, middle security/medical terrace and lower
+	# service yards. Position changes only: node identity/save keys stay intact.
+	safehouse.position = iso_to_screen(Vector2i(10, 7)) + Vector2(0, -60)
+	hospital.position = iso_to_screen(Vector2i(7, 10))
+	barracks.position = iso_to_screen(Vector2i(13, 10))
+	lot_a.position = iso_to_screen(Vector2i(11, 15))  # Garage: lower drive
+	lot_b.position = iso_to_screen(Vector2i(14, 12))  # Intel: secure flank
+	lot_c.position = iso_to_screen(Vector2i(7, 15))   # Scrapyard: outer service
+	lot_d.position = iso_to_screen(Vector2i(15, 15))  # Data Hub: lower flank
 
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
@@ -96,7 +98,7 @@ func set_view_mode(mode: StringName) -> void:
 	var previous_mode: StringName = view_mode
 	view_mode = mode
 	_clear_selection()
-	var destination := safehouse.position + Vector2(0, 60) if mode == &"base" else Vector2(0, 140)
+	var destination := safehouse.position + Vector2(0, 195) if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.20, 1.20) if mode == &"base" else Vector2(0.72, 0.72)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
