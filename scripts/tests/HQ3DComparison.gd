@@ -1,35 +1,46 @@
 extends Node3D
-## Optional isolated 3D comparison. Does not change live 2D/2.5D turf.
-## Place source models in res://assets/buildings/3d/ before opening this scene.
+## Isolated visual QA for the imported Meshy HQ. Live turf stays untouched.
 const MASTER_PATH := "res://assets/buildings/3d/HQ.glb"
 const MOBILE_PATH := "res://assets/buildings/3d/HQ_Mobile.glb"
 
 func _ready() -> void:
-	if ResourceLoader.exists(MASTER_PATH):
-		_add_model(MASTER_PATH, Vector3(-1.45, 0, 0))
-		_add_model(MOBILE_PATH, Vector3(1.45, 0, 0))
+	var dual := ResourceLoader.exists(MASTER_PATH)
+	if dual:
+		_add_model(MASTER_PATH, Vector3(-1.45, 0.0, 0.0))
+		_add_model(MOBILE_PATH, Vector3(1.45, 0.0, 0.0))
 	else:
-		# The repository stores the optimized 4K version only for now.
 		_add_model(MOBILE_PATH, Vector3.ZERO)
+
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48.0, -35.0, 0.0)
-	sun.light_energy = 1.7
+	sun.rotation_degrees = Vector3(-54.0, -38.0, 0.0)
+	sun.light_energy = 2.15
+	sun.shadow_enabled = true
 	add_child(sun)
-	var environment := WorldEnvironment.new()
+
+	var fill := DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(-32.0, 120.0, 0.0)
+	fill.light_energy = 0.5
+	fill.light_color = Color("#b6cfdf")
+	fill.shadow_enabled = false
+	add_child(fill)
+
+	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("#202b33")
+	env.background_color = Color("#18242a")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("#a8b9c5")
-	env.ambient_light_energy = 0.65
-	environment.environment = env
-	add_child(environment)
+	env.ambient_light_color = Color("#bbc6c5")
+	env.ambient_light_energy = 0.75
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	world.environment = env
+	add_child(world)
+
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 3.25 if not ResourceLoader.exists(MASTER_PATH) else 4.9
-	camera.position = Vector3(3.2, 2.3, 6.8)
+	camera.size = 2.65 if not dual else 4.6
+	camera.position = Vector3(3.8, 3.0, 6.8)
 	add_child(camera)
-	camera.look_at(Vector3(0.0, 0.2, 0.0), Vector3.UP)
+	camera.look_at(Vector3(0.0, 0.22, 0.0), Vector3.UP)
 	camera.current = true
 
 func _add_model(asset_path: String, position_3d: Vector3) -> void:
@@ -38,31 +49,45 @@ func _add_model(asset_path: String, position_3d: Vector3) -> void:
 		return
 	var source := load(asset_path) as PackedScene
 	if source == null:
-		push_warning("Unable to load model: " + asset_path)
+		push_warning("Unable to load HQ: " + asset_path)
 		return
 	var holder := Node3D.new()
 	holder.position = position_3d
 	add_child(holder)
+
 	var model := source.instantiate() as Node3D
 	if model == null:
-		push_warning("GLB did not instantiate as Node3D: " + asset_path)
+		push_warning("GLB is not a Node3D: " + asset_path)
 		return
-	# Meshy model is centered on its origin; seat lowest point on the floor.
 	model.position.y = 0.4233
 	holder.add_child(model)
-	var floor_mesh := BoxMesh.new()
-	floor_mesh.size = Vector3(2.12, 0.06, 1.55)
-	var floor_instance := MeshInstance3D.new()
-	floor_instance.mesh = floor_mesh
-	floor_instance.position.y = -0.05
+
+	var earth := StandardMaterial3D.new()
+	earth.albedo_color = Color("#344138")
+	earth.roughness = 0.98
+	var turf := StandardMaterial3D.new()
+	turf.albedo_color = Color("#45564a")
+	turf.roughness = 0.98
 	var stone := StandardMaterial3D.new()
-	stone.albedo_color = Color("#36454d")
-	floor_instance.material_override = stone
-	holder.add_child(floor_instance)
-	var caption := Label3D.new()
-	caption.text = "MASTER · 1.58M tris" if asset_path == MASTER_PATH else "MOBILE · 49.9K tris"
-	caption.font_size = 36
-	caption.pixel_size = 0.0028
-	caption.position = Vector3(0, -0.22, 0.88)
-	caption.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	holder.add_child(caption)
+	stone.albedo_color = Color("#5f6665")
+	stone.roughness = 0.9
+	var dark_stone := StandardMaterial3D.new()
+	dark_stone.albedo_color = Color("#283339")
+	dark_stone.roughness = 0.87
+	_box(holder, "Cliff base", Vector3(2.45, 0.32, 2.12), Vector3(0, -0.21, 0), earth)
+	_box(holder, "Grass terrace", Vector3(2.34, 0.08, 2.01), Vector3(0, -0.01, 0), turf)
+	_box(holder, "Stone edge", Vector3(2.13, 0.045, 1.89), Vector3(0, 0.029, 0), stone)
+	# Keep the GLB's own base visible; only flank its entry with a short approach.
+	_box(holder, "Entry drive", Vector3(0.40, 0.02, 0.46), Vector3(0, 0.065, 1.22), dark_stone)
+	_box(holder, "Drive gold inset", Vector3(0.012, 0.023, 0.43), Vector3(-0.14, 0.078, 1.22), stone)
+	_box(holder, "Drive gold inset right", Vector3(0.012, 0.023, 0.43), Vector3(0.14, 0.078, 1.22), stone)
+
+func _box(parent: Node3D, label_text: String, dimensions: Vector3, location: Vector3, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = label_text
+	var cube := BoxMesh.new()
+	cube.size = dimensions
+	instance.mesh = cube
+	instance.position = location
+	instance.material_override = material
+	parent.add_child(instance)
