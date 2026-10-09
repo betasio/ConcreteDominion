@@ -32,17 +32,17 @@ func _draw() -> void:
 	var lower: Vector2 = city_map.lot_a.position
 	# Render behind interactable buildings; each piece follows live positions.
 	# Footprint-size sprites are intentionally restricted to clear corridors.
-	_stamp("courtyard", hq + Vector2(0, 116), 170.0)
-	_stamp("stairs", hq + Vector2(0, 151), 86.0)
-	_stamp("ramp", middle.lerp(lower, 0.56) + Vector2(0, 17), 95.0)
-	_stamp("front_gate", hq + Vector2(0, 235), 120.0)
-	_stamp("rock_embankment", hq + Vector2(-248, 64), 146.0)
-	_stamp("cliff_outer_corner", hq + Vector2(235, -30), 110.0)
-	_stamp("garden_strip", hq + Vector2(-136, 75), 80.0)
-	_stamp("garden_strip", hq + Vector2(145, 75), 80.0)
+	# Do not cover Safehouse art, label, or the interactive HQ threshold.
+	# The central transition is handled by procedural steps underneath.
+	_stamp("ramp", middle.lerp(lower, 0.56) + Vector2(-15, 18), 85.0)
+	_stamp("front_gate", hq + Vector2(-63, 265), 113.0)
+	_stamp("rock_embankment", hq + Vector2(-275, 71), 165.0)
+	_stamp("cliff_outer_corner", hq + Vector2(270, -30), 145.0)
+	_stamp("garden_strip", hq + Vector2(-165, 82), 112.0)
+	_stamp("garden_strip", hq + Vector2(187, 77), 112.0)
 	_stamp("cypress_planter", hq + Vector2(-198, -35), 80.0)
 	_stamp("hedge_barrier", hq + Vector2(183, 16), 73.0)
-	_stamp("security_post", hq + Vector2(-115, 205), 70.0)
+	_stamp("security_post", hq + Vector2(-185, 260), 85.0)
 	_stamp("service_yard", city_map.lot_a.position + Vector2(-107, 80), 81.0)
 	_stamp("industrial_yard", city_map.lot_c.position + Vector2(-108, 68), 90.0)
 	_stamp("courtyard_benches", city_map.lot_d.position + Vector2(99, 62), 86.0)
