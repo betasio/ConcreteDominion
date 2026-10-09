@@ -171,9 +171,9 @@ func _draw_connected_courtyards() -> void:
 	var service_center: Vector2 = (scrap + data) * 0.5 + Vector2(0, 34)
 	# Keep these surfaces within each actual tier. Former 308px / 355px
 	# giant plazas spanned the gaps and looked like separate floating islands.
-	_draw_court_surface(hq + Vector2(0, 32), 180.0, 82.0, true)
-	_draw_court_surface(middle_center + Vector2(0, 33), 178.0, 62.0, false, false)
-	_draw_court_surface(service_center + Vector2(0, 25), 196.0, 66.0, false)
+	_draw_court_surface(hq + Vector2(0, 32), 151.0, 73.0, true)
+	_draw_court_surface(middle_center + Vector2(0, 29), 94.0, 41.0, false, false)
+	_draw_court_surface(service_center + Vector2(0, 27), 118.0, 48.0, false)
 	# The Garage already has an illustrated pad: no duplicate plaza below it.
 
 func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool, illustrated: bool = true) -> void:
@@ -196,7 +196,7 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool, 
 
 	# Narrow hand-laid stone bands break up the previously untextured slabs.
 	# Constrain the geometry to this diamond by interpolating its edges.
-	for band in range(1, 6):
+	for band in range(1, 4) if prestige else range(0):
 		var t := float(band) / 6.0
 		var far_left: Vector2 = corners[0].lerp(corners[3], t)
 		var far_right: Vector2 = corners[0].lerp(corners[1], t)
@@ -206,9 +206,9 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool, 
 		draw_line(near_left, near_right, Color("#101d22", 0.16), 1.2)
 	draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2],
 			corners[3], corners[0]]),
-			Color("#9e8b65", 0.53) if prestige else Color("#71827b", 0.55), 2.5, true)
+			Color("#9e8b65", 0.42) if prestige else Color("#71827b", 0.20), 2.5, true)
 	# Quiet seam lines indicate high-end laid stone without a busy tiled grid.
-	for step in [-0.5, 0.0, 0.5]:
+	for step in ([-0.5, 0.0, 0.5] if prestige else []):
 		var left: Vector2 = corners[3].lerp(corners[0], (step + 1.0) * 0.5)
 		var right: Vector2 = corners[2].lerp(corners[1], (step + 1.0) * 0.5)
 		draw_line(left, right, Color("#89938c", 0.14), 1.2)
