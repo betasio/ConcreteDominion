@@ -38,9 +38,9 @@ func _draw() -> void:
 	# The previous small pieces floated near the interior buildings.
 	# Anchor a continuous-looking frontage to the lower service boundary.
 	var cliff_center: Vector2 = (west + east) * 0.5
-	_stamp_cliff("cliff_straight", west + Vector2(-103, 117), 245.0)
-	_stamp_cliff("wall_straight", cliff_center + Vector2(-123, 160), 237.0)
-	_stamp_cliff("cliff_straight", east + Vector2(110, 115), 245.0)
+	_stamp_cliff("cliff_straight", west + Vector2(-129, 145), 213.0)
+	_stamp_cliff("wall_straight", cliff_center + Vector2(-115, 189), 217.0)
+	_stamp_cliff("cliff_straight", east + Vector2(126, 146), 210.0)
 	# Avoid separate cliff islands beside the HQ: the Safehouse is already
 	# established by its own raised podium and the natural estate silhouette.
 	# Retain only grounded landscaping along the middle security terrace.
