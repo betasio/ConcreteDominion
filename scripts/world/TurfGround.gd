@@ -173,6 +173,16 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) 
 		center + Vector2(-rx, -10)
 	])
 	draw_colored_polygon(corners, Color("#36454a") if prestige else Color("#304042"))
+	# Narrow hand-laid stone bands break up the previously untextured slabs.
+	# Constrain the geometry to this diamond by interpolating its edges.
+	for band in range(1, 6):
+		var t := float(band) / 6.0
+		var far_left: Vector2 = corners[0].lerp(corners[3], t)
+		var far_right: Vector2 = corners[0].lerp(corners[1], t)
+		var near_left: Vector2 = corners[3].lerp(corners[2], t)
+		var near_right: Vector2 = corners[1].lerp(corners[2], t)
+		draw_line(far_left, far_right, Color("#82918a", 0.21), 1.2)
+		draw_line(near_left, near_right, Color("#101d22", 0.16), 1.2)
 	draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2],
 			corners[3], corners[0]]),
 			Color("#9e8b65", 0.53) if prestige else Color("#71827b", 0.55), 2.5, true)
