@@ -43,8 +43,6 @@ func _draw() -> void:
 	_stamp("rock_embankment", west + Vector2(-120, 116), 230.0)
 	_stamp("garden_strip", hq + Vector2(195, 88), 138.0)
 	# A single legible arrival gate and off-road security building.
-	_stamp("front_gate", hq + Vector2(0, 276), 150.0)
-	_stamp("security_post", hq + Vector2(-220, 266), 94.0)
 	# Tie lower-yard artwork to the estate edges. Avoid miniature service
 	# pads floating off the roads or covering build-slot interaction labels.
 	_stamp("ramp", middle.lerp(lower, 0.57) + Vector2(-12, 20), 100.0)
