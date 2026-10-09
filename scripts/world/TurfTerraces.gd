@@ -145,6 +145,22 @@ func _draw_estate_landform() -> void:
 		draw_circle(foot + Vector2(-6, -16), 10.0, Color("#395648"))
 		draw_circle(foot + Vector2(9, -18), 7.0, Color("#52715a"))
 	draw_colored_polygon(outline, Color("#303d42"))
+	# Layered tree screens along the outer boundary. These are planted just
+	# inside the perimeter and leave all seven facility footprints open.
+	for segment_index in [0, 1, 2, 4, 6, 8, 9]:
+		var a: Vector2 = outline[segment_index]
+		var b: Vector2 = outline[(segment_index + 1) % outline.size()]
+		for tree_index in range(1, 5):
+			var t := float(tree_index) / 5.0
+			var foot: Vector2 = a.lerp(b, t)
+			var inward: Vector2 = (hq - foot).normalized() * 18.0
+			var planting: Vector2 = foot + inward
+			var crown_height := 17.0 + float((tree_index + segment_index) % 3) * 5.0
+			draw_circle(planting + Vector2(3, 4), 14.0, Color("#142a29", 0.55))
+			draw_line(planting, planting + Vector2(0, -crown_height), Color("#564e40"), 3.5)
+			draw_circle(planting + Vector2(0, -crown_height), 11.0, Color("#2d5042"))
+			draw_circle(planting + Vector2(-5, -crown_height - 5), 7.0, Color("#426b52"))
+			draw_circle(planting + Vector2(5, -crown_height + 2), 7.0, Color("#345e4a"))
 	draw_polyline(PackedVector2Array([
 		outline[0], outline[1], outline[2], outline[3],
 		outline[4], outline[5], outline[6], outline[7], outline[8], outline[9],
