@@ -22,6 +22,7 @@ func _draw() -> void:
 	var nodes := [city_map.safehouse, city_map.hospital, city_map.barracks,
 			city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]
 	_draw_connected_courtyards()
+	_draw_hillside_landscaping()
 	_draw_compound_routes()
 	_draw_landscaping()
 	for node in nodes:
@@ -212,3 +213,40 @@ func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) 
 		var left: Vector2 = corners[3].lerp(corners[0], (step + 1.0) * 0.5)
 		var right: Vector2 = corners[2].lerp(corners[1], (step + 1.0) * 0.5)
 		draw_line(left, right, Color("#89938c", 0.14), 1.2)
+
+
+func _draw_hillside_landscaping() -> void:
+	# Low groundcover connects the large empty margins of the upper, middle
+	# and service terraces. All planting stays outside the main road spine.
+	var hq: Vector2 = city_map.safehouse.position
+	var clinic: Vector2 = city_map.hospital.position
+	var barracks: Vector2 = city_map.barracks.position
+	var scrap: Vector2 = city_map.lot_c.position
+	var data: Vector2 = city_map.lot_d.position
+	_draw_planted_bank(hq + Vector2(-228, 104), 112.0, 24.0)
+	_draw_planted_bank(hq + Vector2(207, 106), 96.0, 22.0)
+	_draw_planted_bank(clinic + Vector2(-121, 115), 102.0, 22.0)
+	_draw_planted_bank(barracks + Vector2(124, 110), 106.0, 22.0)
+	_draw_planted_bank(scrap + Vector2(-97, 95), 86.0, 19.0)
+	_draw_planted_bank(data + Vector2(110, 91), 94.0, 19.0)
+
+func _draw_planted_bank(center: Vector2, width: float, depth: float) -> void:
+	# Isometric beds with short limestone edges and staggered shrubs.
+	var ends := PackedVector2Array([
+		center + Vector2(0, -depth),
+		center + Vector2(width * 0.5, -3),
+		center + Vector2(0, depth * 0.55),
+		center + Vector2(-width * 0.5, -3)
+	])
+	draw_colored_polygon(ends, Color("#243d37"))
+	draw_polyline(PackedVector2Array([
+		ends[3], ends[2], ends[1]
+	]), Color("#887f65", 0.65), 2.0, true)
+	for index in range(5):
+		var t := float(index) / 4.0
+		var x := (t - 0.5) * width * 0.74
+		var position: Vector2 = center + Vector2(x, -7.0 + abs(x) * 0.09)
+		var radius := 6.0 + float(index % 2) * 2.0
+		draw_circle(position, radius + 3.0, Color("#18332d"))
+		draw_circle(position + Vector2(-2, -3), radius, Color("#466c52"))
+		draw_circle(position + Vector2(3, -4), radius * 0.56, Color("#638363"))
