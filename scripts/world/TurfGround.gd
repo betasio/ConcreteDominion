@@ -16,6 +16,7 @@ func _draw() -> void:
 		return
 	var nodes := [city_map.safehouse, city_map.hospital, city_map.barracks,
 			city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]
+	_draw_connected_courtyards()
 	_draw_compound_routes()
 	_draw_landscaping()
 	for node in nodes:
@@ -143,3 +144,39 @@ func _draw_gate_approach() -> void:
 				Color("#b49b6c", 0.58), 2.2)
 		for dy in [18.0, 92.0, 162.0]:
 			_draw_bollard(from + Vector2(side * 36.0, dy))
+
+
+func _draw_connected_courtyards() -> void:
+	# Broad, connected architectural ground planes establish three legible
+	# tiers beneath the facilities. Roads, individual foundations and art are
+	# drawn above them rather than appearing as separate floating diamonds.
+	var hq: Vector2 = city_map.safehouse.position
+	var clinic: Vector2 = city_map.hospital.position
+	var barracks: Vector2 = city_map.barracks.position
+	var garage: Vector2 = city_map.lot_a.position
+	var scrap: Vector2 = city_map.lot_c.position
+	var data: Vector2 = city_map.lot_d.position
+	var middle_center: Vector2 = (clinic + barracks) * 0.5 + Vector2(0, 32)
+	var service_center: Vector2 = (scrap + data) * 0.5 + Vector2(0, 34)
+	_draw_court_surface(hq + Vector2(0, 32), 214.0, 106.0, true)
+	_draw_court_surface(middle_center, 308.0, 100.0, false)
+	_draw_court_surface(service_center, 355.0, 104.0, false)
+	# Stone approach landings visually join the decks at the road bends.
+	_draw_court_surface(garage + Vector2(0, 31), 130.0, 69.0, false)
+
+func _draw_court_surface(center: Vector2, rx: float, ry: float, prestige: bool) -> void:
+	var corners := PackedVector2Array([
+		center + Vector2(0, -ry),
+		center + Vector2(rx, -10),
+		center + Vector2(0, ry - 12),
+		center + Vector2(-rx, -10)
+	])
+	draw_colored_polygon(corners, Color("#36454a") if prestige else Color("#304042"))
+	draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2],
+			corners[3], corners[0]]),
+			Color("#9e8b65", 0.53) if prestige else Color("#71827b", 0.55), 2.5, true)
+	# Quiet seam lines indicate high-end laid stone without a busy tiled grid.
+	for step in [-0.5, 0.0, 0.5]:
+		var left: Vector2 = corners[3].lerp(corners[0], (step + 1.0) * 0.5)
+		var right: Vector2 = corners[2].lerp(corners[1], (step + 1.0) * 0.5)
+		draw_line(left, right, Color("#89938c", 0.14), 1.2)
