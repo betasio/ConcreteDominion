@@ -46,29 +46,30 @@ func _draw_bollard(pos: Vector2) -> void:
 
 
 func _draw_compound_routes() -> void:
-	# Roads follow actual facilities, even if terrace layouts move again.
+	# A single hierarchy: HQ boulevard -> middle court -> service yard.
+	# Branch spurs attach at the court rather than forming an X interchange.
 	var hq: Vector2 = city_map.safehouse.position + Vector2(0, 65)
 	var middle: Vector2 = (city_map.hospital.position + city_map.barracks.position) * 0.5 + Vector2(0, 28)
 	var lower: Vector2 = city_map.lot_a.position + Vector2(0, 23)
 	var routes: Array[PackedVector2Array] = [
 		PackedVector2Array([hq, middle, lower]),
-		PackedVector2Array([middle, city_map.hospital.position + Vector2(0, 34)]),
-		PackedVector2Array([middle, city_map.barracks.position + Vector2(0, 34)]),
-		PackedVector2Array([lower, city_map.lot_c.position + Vector2(0, 32)]),
-		PackedVector2Array([lower, city_map.lot_d.position + Vector2(0, 32)]),
-		PackedVector2Array([middle, city_map.lot_b.position + Vector2(0, 34)])
+		PackedVector2Array([middle + Vector2(-48, 0), city_map.hospital.position + Vector2(0, 34)]),
+		PackedVector2Array([middle + Vector2(48, 0), city_map.barracks.position + Vector2(0, 34)]),
+		PackedVector2Array([lower + Vector2(-42, 0), city_map.lot_c.position + Vector2(0, 32)]),
+		PackedVector2Array([lower + Vector2(42, 0), city_map.lot_d.position + Vector2(0, 32)]),
+		PackedVector2Array([middle + Vector2(56, 30), city_map.lot_b.position + Vector2(0, 34)])
 	]
 	for points in routes:
-		draw_polyline(points, Color("#ad936b", 0.72), 25.0, true)
-		draw_polyline(points, Color("#273440"), 19.0, true)
-		draw_polyline(points, Color("#849099", 0.32), 1.3, true)
-		# Small inset road seams add readable construction detail at junctions.
+		draw_polyline(points, Color("#897b68", 0.67), 18.0, true)
+		draw_polyline(points, Color("#27343a"), 14.0, true)
+		draw_polyline(points, Color("#a4a59d", 0.26), 1.0, true)
+		# Restrained seam markings: no broad overlapping intersection lines.
 		for index in range(1, points.size()):
-			var center: Vector2 = points[index - 1].lerp(points[index], 0.5)
 			var segment: Vector2 = points[index] - points[index - 1]
-			if segment.length() > 10.0:
-				var across := segment.normalized().orthogonal() * 7.0
-				draw_line(center - across, center + across, Color("#9a9f99", 0.42), 1.6)
+			if segment.length() > 120.0:
+				var center: Vector2 = points[index - 1].lerp(points[index], 0.5)
+				var across: Vector2 = segment.normalized().orthogonal() * 4.5
+				draw_line(center - across, center + across, Color("#a8a797", 0.32), 1.1)
 
 
 func _draw_landscaping() -> void:
