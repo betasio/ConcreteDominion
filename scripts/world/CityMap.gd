@@ -131,6 +131,7 @@ func set_view_mode(mode: StringName) -> void:
 		camera.zoom = destination_zoom
 
 	view_mode_changed.emit(view_mode)
+	queue_redraw()
 
 
 func get_view_mode() -> StringName:
