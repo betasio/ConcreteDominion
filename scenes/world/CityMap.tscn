@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
@@ -25,6 +25,7 @@
 [ext_resource type="Script" path="res://scripts/world/EnvironmentDepth.gd" id="19_depth"]
 
 [ext_resource type="Script" path="res://scripts/world/TurfGround.gd" id="20_turf_ground"]
+[ext_resource type="Script" path="res://scripts/world/TurfTerraces.gd" id="21_terraces"]
 
 [node name="CityMap" type="Node2D"]
 script = ExtResource("1_map")
@@ -42,6 +43,9 @@ script = ExtResource("18_district")
 
 [node name="EnvironmentDepth" type="Node2D" parent="."]
 script = ExtResource("19_depth")
+
+[node name="TurfTerraces" type="Node2D" parent="."]
+script = ExtResource("21_terraces")
 
 [node name="TurfGround" type="Node2D" parent="."]
 script = ExtResource("20_turf_ground")
