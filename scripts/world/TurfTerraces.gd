@@ -145,6 +145,7 @@ func _draw_estate_landform() -> void:
 		draw_circle(foot + Vector2(-6, -16), 10.0, Color("#395648"))
 		draw_circle(foot + Vector2(9, -18), 7.0, Color("#52715a"))
 	draw_colored_polygon(outline, Color("#303d42"))
+	_draw_terraced_surface_patina(outline)
 	# Layered tree screens along the outer boundary. These are planted just
 	# inside the perimeter and leave all seven facility footprints open.
 	for segment_index in [0, 1, 2, 4, 6, 8, 9]:
@@ -373,3 +374,37 @@ func _draw_stone_to_landscape_transition() -> void:
 			draw_colored_polygon(wedge, Color("#30443e", 0.72))
 			draw_line(inner + Vector2(0, 13), outer + Vector2(0, 19),
 					Color("#768071", 0.33), 2.0)
+
+
+func _draw_terraced_surface_patina(outline: PackedVector2Array) -> void:
+	# Natural stone/soil texture belongs to the continuous estate surface,
+	# not to disconnected decorative pads. Fixed positions stay deterministic
+	# and are clipped to the estate outline rather than the full city map.
+	var hq: Vector2 = city_map.safehouse.position
+	var sites: Array[Vector2] = [
+		hq, city_map.hospital.position, city_map.barracks.position,
+		city_map.lot_a.position, city_map.lot_b.position,
+		city_map.lot_c.position, city_map.lot_d.position
+	]
+	for ix in range(31):
+		for iy in range(17):
+			var point := hq + Vector2(float(ix - 15) * 33.0,
+					float(iy - 7) * 29.0)
+			if not Geometry2D.is_point_in_polygon(point, outline):
+				continue
+			var near_building := false
+			for site in sites:
+				if point.distance_to(site + Vector2(0, 25)) < 78.0:
+					near_building = true
+					break
+			if near_building:
+				continue
+			var hash_value := (ix * 73 + iy * 41 + ix * iy * 7) % 17
+			if hash_value < 5:
+				draw_line(point, point + Vector2(7 + hash_value, -3),
+						Color("#78847a", 0.09), 1.2)
+			elif hash_value == 8:
+				draw_circle(point, 6.0, Color("#1f3933", 0.20))
+			elif hash_value == 13:
+				draw_line(point + Vector2(-5, 2),
+						point + Vector2(6, -2), Color("#18282d", 0.17), 2.2)
