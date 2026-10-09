@@ -40,16 +40,13 @@ func _draw() -> void:
 	_stamp("cypress_planter", hq + Vector2(-188, 12), 90.0)
 	# Walled western flank and landscaped drive edge.
 	_stamp("wall_straight", city_map.hospital.position + Vector2(-128, 54), 155.0)
-	_stamp("rock_embankment", west + Vector2(-86, 106), 170.0)
-	# Do not float a thin fence over the HQ approach; reserve that side for the road.
-	# A single legible arrival gate and off-road security building.
-	# Tie lower-yard artwork to the estate edges. Avoid miniature service
-	# pads floating off the roads or covering build-slot interaction labels.
+	# Lower boundary: two grounded embankments, one on each flank.
+	# Avoid stacking extra fence images over the same retaining-wall face.
+	_stamp("rock_embankment", west + Vector2(-103, 101), 168.0)
+	_stamp("rock_embankment", east + Vector2(96, 101), 163.0)
+	# The illustrated slope joins the middle court to the garage drive.
 	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 138.0)
-	_stamp("wall_straight", west + Vector2(-114, 91), 180.0)
-	_stamp("rock_embankment", east + Vector2(80, 104), 155.0)
-	_stamp("hedge_barrier", lower + Vector2(-126, 39), 105.0)
-	_stamp("garden_strip", east + Vector2(104, 63), 137.0)
+	_stamp("hedge_barrier", lower + Vector2(-129, 46), 92.0)
 
 func _stamp(key: String, center: Vector2, target_width: float) -> void:
 	if not sprites.has(key):
