@@ -45,7 +45,7 @@ func _draw() -> void:
 	# A single legible arrival gate and off-road security building.
 	# Tie lower-yard artwork to the estate edges. Avoid miniature service
 	# pads floating off the roads or covering build-slot interaction labels.
-	_stamp("ramp", middle.lerp(lower, 0.57) + Vector2(-12, 20), 100.0)
+	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 100.0)
 	_stamp("wall_straight", west + Vector2(-114, 91), 180.0)
 	_stamp("rock_embankment", east + Vector2(100, 117), 187.0)
 	_stamp("hedge_barrier", lower + Vector2(-126, 39), 105.0)
