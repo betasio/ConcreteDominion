@@ -18,7 +18,7 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	if city_map == null:
+	if city_map == null or city_map.get_view_mode() != &"world":
 		return
 	var world: bool = city_map.get_view_mode() == &"world"
 	for y in range(1, 20):
