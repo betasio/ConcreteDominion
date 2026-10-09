@@ -61,6 +61,18 @@ func _draw_entry() -> void:
 		var pillar := finish + Vector2(x, -9)
 		draw_rect(Rect2(pillar + Vector2(-6, -19), Vector2(12, 25)), Color("#45515d"))
 		draw_circle(pillar + Vector2(0, -22), 4.0, Color("#eabf75"))
+	# Secured entrance: stone columns and wrought-metal gate between them.
+	var gate_left: Vector2 = finish + Vector2(-33, -10)
+	var gate_right: Vector2 = finish + Vector2(33, -10)
+	draw_line(gate_left, gate_right, Color("#b9945e"), 4.0)
+	draw_line(gate_left + Vector2(0, -20), gate_right + Vector2(0, -20), Color("#b9945e"), 4.0)
+	for index in range(1, 9):
+		var t := float(index) / 9.0
+		var post := gate_left.lerp(gate_right, t)
+		draw_line(post, post + Vector2(0, -20), Color("#36434c"), 3.0)
+	draw_circle(finish + Vector2(0, -20), 7.0, Color("#cba968"))
+	draw_circle(finish + Vector2(0, -20), 3.0, Color("#27313b"))
+
 
 
 func _draw_estate_landform() -> void:
