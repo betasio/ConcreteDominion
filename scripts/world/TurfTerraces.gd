@@ -15,7 +15,7 @@ func _draw() -> void:
 	if city_map == null or city_map.get_view_mode() != &"base":
 		return
 	_draw_estate_landform()
-	_draw_hillside_groundcover()
+	# Terrain silhouette and illustrated cliff art supply the backdrop.
 	# Layer heights create believable vertical faces and deep ground shadows.
 	# Rendered underneath the selectable building nodes.
 	_draw_platform(city_map.safehouse.position + Vector2(0, 36), 166.0, 78.0, 37.0, true)
@@ -348,42 +348,3 @@ func _draw_segmented_retaining_edges() -> void:
 		for side in [-1.0, 1.0]:
 			var origin: Vector2 = site + Vector2(side * 53.0, 70.0)
 			_draw_ledge(origin, origin + Vector2(side * 44.0, 0), 14.0, false)
-
-
-func _draw_hillside_groundcover() -> void:
-	# Continuous natural shoulders link the estate boundary to its stone
-	# courtyards. Draw under all ramps, platforms and selectable buildings.
-	var hq: Vector2 = city_map.safehouse.position
-	var clinic: Vector2 = city_map.hospital.position
-	var barracks: Vector2 = city_map.barracks.position
-	var garage: Vector2 = city_map.lot_a.position
-	var scrap: Vector2 = city_map.lot_c.position
-	var data: Vector2 = city_map.lot_d.position
-	# Each bank is a simple convex quadrilateral; the previous six-point
-	# outlines crossed themselves and failed Godot polygon triangulation.
-	var banks: Array[PackedVector2Array] = [
-		PackedVector2Array([
-			hq + Vector2(-238, -6), hq + Vector2(-177, -52),
-			scrap + Vector2(-139, 108), scrap + Vector2(-179, 130)
-		]),
-		PackedVector2Array([
-			hq + Vector2(177, -52), hq + Vector2(241, -6),
-			data + Vector2(180, 128), data + Vector2(138, 107)
-		]),
-		PackedVector2Array([
-			scrap + Vector2(-138, 125), data + Vector2(136, 125),
-			data + Vector2(128, 159), scrap + Vector2(-130, 159)
-		])
-	]
-	# Wide vegetated contour strokes are safer than concave polygon strips.
-	# They cannot fail the Godot canvas triangulation path.
-	for bank in banks:
-		for edge in range(0, bank.size() - 1):
-			draw_line(bank[edge], bank[edge + 1], Color("#274039", 0.48), 18.0)
-			draw_line(bank[edge], bank[edge + 1], Color("#536a57", 0.30), 1.7)
-	# Gentle clusters instead of repeated artificial circles or lone shrubs.
-	for site in [hq, clinic, barracks, scrap, data]:
-		for side in [-1.0, 1.0]:
-			var p: Vector2 = site + Vector2(side * 150.0, 82.0)
-			draw_circle(p, 13.0, Color("#2e4b3d", 0.60))
-			draw_circle(p + Vector2(11, -7), 9.0, Color("#3d6048", 0.51))
