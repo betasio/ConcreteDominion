@@ -167,7 +167,7 @@ func _draw_estate_landform() -> void:
 		outline[0], outline[1], outline[2], outline[3],
 		outline[4], outline[5], outline[6], outline[7], outline[8], outline[9],
 		outline[0]
-	]), Color("#a28c62", 0.64), 3.0, true)
+	]), Color("#56645f", 0.32), 1.5, true)
 	# Broad, understated landscaped bands give the estate a planted backdrop.
 	for x in [-155.0, -105.0, 110.0, 165.0]:
 		var base: Vector2 = hq + Vector2(x, 20)
