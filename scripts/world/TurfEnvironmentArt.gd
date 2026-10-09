@@ -34,19 +34,19 @@ func _draw() -> void:
 	# scattering tiny props across central roads and building labels.
 	var west: Vector2 = city_map.lot_c.position
 	var east: Vector2 = city_map.lot_d.position
-	# Upper ridge behind HQ (the HQ sprite remains fully readable).
-	_stamp("cliff_straight", hq + Vector2(-183, 35), 185.0)
-	_stamp("cliff_outer_corner", hq + Vector2(158, 39), 145.0)
-	_stamp("cypress_planter", hq + Vector2(-188, 12), 90.0)
-	# Walled western flank and landscaped drive edge.
-	_stamp("wall_straight", city_map.hospital.position + Vector2(-128, 54), 155.0)
-	# Lower boundary: two grounded embankments, one on each flank.
-	# Avoid stacking extra fence images over the same retaining-wall face.
-	_stamp("rock_embankment", west + Vector2(-103, 101), 168.0)
-	_stamp("rock_embankment", east + Vector2(96, 101), 163.0)
-	# The illustrated slope joins the middle court to the garage drive.
-	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 138.0)
-	_stamp("hedge_barrier", lower + Vector2(-129, 46), 92.0)
+	# Build a three-part cliff silhouette from the actual illustrated
+	# retaining-wall sprites. Keep the upper HQ footprint and main road free.
+	_stamp("cliff_straight", hq + Vector2(-151, 41), 208.0)
+	_stamp("cliff_outer_corner", hq + Vector2(101, 36), 161.0)
+	_stamp("cypress_planter", hq + Vector2(-166, 4), 82.0)
+	# Medical / security shoulders frame the shared middle level.
+	_stamp("wall_straight", city_map.hospital.position + Vector2(-112, 61), 160.0)
+	_stamp("cliff_inner_corner", city_map.barracks.position + Vector2(125, 65), 124.0)
+	# Grounded rocky boundaries surround the outer service yards.
+	_stamp("wall_straight", west + Vector2(-108, 88), 170.0)
+	_stamp("cliff_straight", east + Vector2(107, 88), 191.0)
+	# The uploaded front_gate.png actually depicts the tier road ramp.
+	_stamp("front_gate", middle.lerp(lower, 0.57) + Vector2(-12, 20), 129.0)
 
 func _stamp(key: String, center: Vector2, target_width: float) -> void:
 	if not sprites.has(key):
