@@ -25,7 +25,7 @@ func _draw() -> void:
 	_draw_connecting_ramps()
 	_draw_architectural_courtyards()
 	_draw_terrace_lights()
-	_draw_entry()
+	# Entrance gate now resides by lower garage access, above the road layer.
 
 func _draw_platform(center: Vector2, rx: float, ry: float, depth: float, hero: bool) -> void:
 	var back := center + Vector2(0, -ry)
