@@ -192,9 +192,10 @@ func _draw_terrace_lights() -> void:
 		city_map.lot_a.position + Vector2(0, 35),
 		city_map.lot_b.position + Vector2(0, 35)
 	]
-	for p in sites:
+	for site in sites:
+		var p: Vector2 = site
 		for side in [-1.0, 1.0]:
-			var position := p + Vector2(side * 78.0, 10.0)
+			var position: Vector2 = p + Vector2(side * 78.0, 10.0)
 			draw_circle(position, 18.0, Color(0.94, 0.67, 0.28, 0.08))
 			draw_line(position, position + Vector2(0, -11), Color("#5a6568"), 3.0)
 			draw_circle(position + Vector2(0, -12), 3.5, Color("#f1c57b"))
