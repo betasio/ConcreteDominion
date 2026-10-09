@@ -23,6 +23,7 @@ func _draw() -> void:
 	for lot in [city_map.lot_a, city_map.lot_b, city_map.lot_c, city_map.lot_d]:
 		_draw_platform(lot.position + Vector2(0, 35), 106.0, 52.0, 18.0, false)
 	_draw_connecting_ramps()
+	_draw_architectural_courtyards()
 	_draw_terrace_lights()
 	_draw_entry()
 
@@ -222,3 +223,34 @@ func _draw_terrace_lights() -> void:
 		var half_width := 35.0 + float(step) * 3.5
 		draw_line(hq_foot + Vector2(-half_width, y),
 				hq_foot + Vector2(half_width, y), Color("#a39b87", 0.56), 2.0)
+
+
+func _draw_architectural_courtyards() -> void:
+	# Recessed planted stone courts soften the transition between premium art
+	# and hard-edged supporting platforms, without covering building sprites.
+	var hq: Vector2 = city_map.safehouse.position
+	var garage: Vector2 = city_map.lot_a.position
+	var scrapyard: Vector2 = city_map.lot_c.position
+	var data_hub: Vector2 = city_map.lot_d.position
+	_draw_court_strip(hq + Vector2(-116, 49), 68.0, true)
+	_draw_court_strip(hq + Vector2(116, 49), 68.0, true)
+	_draw_court_strip(garage + Vector2(-89, 39), 50.0, false)
+	_draw_court_strip(scrapyard + Vector2(-83, 38), 46.0, false)
+	_draw_court_strip(data_hub + Vector2(83, 38), 46.0, false)
+
+func _draw_court_strip(center: Vector2, length: float, prestige: bool) -> void:
+	var half: float = length * 0.5
+	var stone := PackedVector2Array([
+		center + Vector2(-half, -9), center + Vector2(half, -9),
+		center + Vector2(half + 6, 8), center + Vector2(-half - 6, 8)
+	])
+	draw_colored_polygon(stone, Color("#1b292c"))
+	draw_line(stone[0], stone[1], Color("#b19b72") if prestige else Color("#74837c"), 2.0)
+	for i in range(3):
+		var x: float = -half + 10.0 + float(i) * (length - 20.0) / 2.0
+		var plant: Vector2 = center + Vector2(x, -4)
+		draw_circle(plant, 8.0, Color("#213a31"))
+		draw_circle(plant + Vector2(-3, -4), 6.0, Color("#4b6c50"))
+		draw_circle(plant + Vector2(3, -6), 4.0, Color("#66805b"))
+		if prestige and i != 1:
+			draw_circle(plant + Vector2(0, 5), 2.0, Color("#ebc17c"))
