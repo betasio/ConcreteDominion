@@ -110,6 +110,21 @@ jobs:
           path: build/previews/hq_mobile_3d.png
           if-no-files-found: error
 
+      - name: Capture hybrid 3D Safehouse in playable turf
+        run: |
+          set -o pipefail
+          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/TurfHybridScreenshot.tscn 2>&1 | tee godot-hybrid-hq.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-hybrid-hq.log
+          test -s build/previews/turf_hybrid_hq.png
+          test -s build/previews/turf_hybrid_map_only.png
+
+      - name: Upload hybrid playable turf previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-hybrid-hq-turf
+          path: build/previews/turf_hybrid_*.png
+          if-no-files-found: error
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
