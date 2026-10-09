@@ -96,6 +96,20 @@ jobs:
           path: build/previews/turf_*.png
           if-no-files-found: error
 
+      - name: Capture imported HQ 3D render
+        run: |
+          set -o pipefail
+          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/HQ3DScreenshot.tscn 2>&1 | tee godot-hq3d.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-hq3d.log
+          test -s build/previews/hq_mobile_3d.png
+
+      - name: Upload HQ 3D preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-hq-3d-preview
+          path: build/previews/hq_mobile_3d.png
+          if-no-files-found: error
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
