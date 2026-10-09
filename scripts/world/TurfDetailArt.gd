@@ -12,16 +12,12 @@ func _draw() -> void:
 	var garage: Vector2 = city_map.lot_a.position
 	var scrap: Vector2 = city_map.lot_c.position
 	var data: Vector2 = city_map.lot_d.position
-	# The shipped filenames are verified visually: luxury_fence contains
-	# the rocky planted embankment, rock_embankment the long garden median.
-	_stamp("luxury_fence", hq + Vector2(-205, 85), 140.0)
-	_stamp("luxury_fence", hq + Vector2(200, 81), 131.0)
+	# Keep floating rock/median artwork out of the central playable estate.
+	# Prefer compact planters with clear footing next to the facilities.
 	_stamp("cypress_planter", hq + Vector2(-157, -26), 80.0)
 	_stamp("ornamental_tree", hq + Vector2(164, -18), 57.0)
 	# Mid-level planted edges stay away from the clinic/barracks labels.
 	_stamp("flower_planter", clinic + Vector2(-111, 80), 83.0)
 	_stamp("hedge_barrier", barracks + Vector2(123, 79), 93.0)
 	# Lower service-zone landscaping; keep the central entrance accessible.
-	_stamp("rock_embankment", scrap + Vector2(-101, 104), 146.0)
 	_stamp("flower_planter", garage + Vector2(-132, 89), 72.0)
-	_stamp("rock_embankment", data + Vector2(122, 102), 140.0)
