@@ -30,6 +30,7 @@ func _ready() -> void:
 		return
 
 	_check_city_art(presentation, city)
+	_check_environment_art(city)
 	_check_character_art(presentation)
 	_check_campaign_art(presentation)
 	_check_ui_and_street_art(presentation)
@@ -88,6 +89,28 @@ func _check_city_art(presentation: PresentationCatalog, city: Node) -> void:
 	for target in city.get_raid_targets():
 		if target == null or target.art_texture == null:
 			_fail("A raid target did not receive approved art at runtime.")
+
+
+
+func _check_environment_art(city: Node) -> void:
+	var layer := city.get_node_or_null("TurfEnvironmentArt") as TurfEnvironmentArt
+	if layer == null:
+		_fail("Environment art layer is missing from CityMap.")
+		return
+	for key in [
+		"cliff_straight", "cliff_outer_corner", "cliff_inner_corner",
+		"wall_straight", "wall_corner", "ramp", "stairs", "front_gate",
+		"courtyard", "garden_strip", "rock_embankment", "luxury_fence",
+		"cypress_planter", "hedge_barrier", "flower_planter", "ornamental_tree",
+		"tall_lamp", "bollard", "square_light", "security_post", "fence_panel",
+		"fountain", "service_yard", "industrial_yard", "courtyard_benches"
+	]:
+		var expected_path := "res://assets/environment/%s.png" % key
+		var texture := layer.sprites.get(key) as Texture2D
+		if texture == null or texture.resource_path != expected_path:
+			_fail("Illustrated terrain art failed to load at runtime: %s" % expected_path)
+		elif texture.get_width() < 16 or texture.get_height() < 16:
+			_fail("Illustrated terrain art has unexpected dimensions: %s" % expected_path)
 
 
 func _check_character_art(presentation: PresentationCatalog) -> void:
