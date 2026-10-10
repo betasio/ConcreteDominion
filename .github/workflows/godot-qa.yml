@@ -125,6 +125,20 @@ jobs:
           path: build/previews/turf_hybrid_*.png
           if-no-files-found: error
 
+      - name: Capture animated coastal backdrop
+        run: |
+          set -o pipefail
+          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/CoastalBackdropScreenshot.tscn 2>&1 | tee godot-coastal.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-coastal.log
+          test -s build/previews/coastal_estate_animated.png
+
+      - name: Upload coastal backdrop screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-coastal-animated-preview
+          path: build/previews/coastal_estate_animated.png
+          if-no-files-found: error
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
