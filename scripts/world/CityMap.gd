@@ -69,6 +69,29 @@ func _ready() -> void:
 	lot_c.position = iso_to_screen(Vector2i(7, 15))   # Scrapyard: outer service
 	lot_d.position = iso_to_screen(Vector2i(15, 15))  # Data Hub: lower flank
 
+	# Art alignment proof-of-concept only. Keep original save/node identities and
+	# normal production positions until the illustrated terrain is approved.
+	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+		var pad_scale := 0.73
+		var pad_origin := Vector2(72, 447)
+		# Coordinates below are measured in the 941x1672 terrain PNG.
+		# Center each existing clickable node on one empty illustrated pad.
+		safehouse.position = pad_origin + (Vector2(675, 347) - Vector2(470.5, 836)) * pad_scale
+		hospital.position = pad_origin + (Vector2(429, 574) - Vector2(470.5, 836)) * pad_scale
+		barracks.position = pad_origin + (Vector2(254, 780) - Vector2(470.5, 836)) * pad_scale
+		lot_a.position = pad_origin + (Vector2(307, 1039) - Vector2(470.5, 836)) * pad_scale
+		lot_b.position = pad_origin + (Vector2(753, 777) - Vector2(470.5, 836)) * pad_scale
+		lot_c.position = pad_origin + (Vector2(733, 1213) - Vector2(470.5, 836)) * pad_scale
+		lot_d.position = pad_origin + (Vector2(606, 1008) - Vector2(470.5, 836)) * pad_scale
+		# The new PNG supplies roads, cliffs and planting: do not double-render
+		# their procedural versions in the artwork alignment preview.
+		for terrain_name in ["TurfTerraces", "TurfGround", "TurfEnvironmentArt",
+				"TurfDetailArt", "TurfEntranceArt", "EnvironmentDepth",
+				"DistrictScenery", "StreetLife"]:
+			var layer := get_node_or_null(terrain_name) as CanvasItem
+			if layer != null:
+				layer.visible = false
+
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
 	northside_hq.position = iso_to_screen(Vector2i(19, 15))
@@ -101,6 +124,8 @@ func _ready() -> void:
 
 
 func _base_composition_center() -> Vector2:
+	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+		return Vector2(72, 440)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.
 	var sites: Array[Vector2] = [
@@ -129,6 +154,8 @@ func set_view_mode(mode: StringName) -> void:
 	_clear_selection()
 	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
+	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+		destination_zoom = Vector2(0.60, 0.60)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
 	if camera.has_meta("view_tween"):
