@@ -17,7 +17,7 @@ func _ready() -> void:
     sprite.name = "GoldenBayPanorama"
     sprite.texture = texture
     sprite.centered = true
-    sprite.position = Vector2(0, -50)
+    sprite.position = Vector2(0, 310)
     sprite.scale = Vector2(1.35, 1.35)
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
     var material := ShaderMaterial.new()
