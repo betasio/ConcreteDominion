@@ -355,7 +355,7 @@ func _draw_estate_backdrop() -> void:
 	# The HQ view is an estate, not a tactical grid. Reserve grid lines and
 	# road-atlas intersections for World view only.
 	# The distant panorama sits behind this Node2D. Avoid painting an opaque\n	# rectangle over it; keep the old backdrop only when the PNG is missing.\n	if not ResourceLoader.exists("res://assets/backgrounds/coastal_estate/ConcreteDominion_Golden_Bay_Background.png"):\n		draw_rect(Rect2(Vector2(-3000, -2200), Vector2(6000, 4400)), Color("#1c292e"))
-	var ridges := [
+	# Original procedural distant hills also hide the skyline; they are only a fallback.\n	if ResourceLoader.exists("res://assets/backgrounds/coastal_estate/ConcreteDominion_Golden_Bay_Background.png"):\n		return\n	var ridges := [
 		PackedVector2Array([
 			Vector2(-1800, -1100), Vector2(-400, -750), Vector2(160, -900),
 			Vector2(1400, -450), Vector2(1900, 350), Vector2(-1800, 350)
