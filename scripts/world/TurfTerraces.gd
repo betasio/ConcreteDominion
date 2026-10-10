@@ -108,8 +108,23 @@ func _draw_estate_landform() -> void:
 	for i in range(3, 8):
 		var a: Vector2 = outline[i]
 		var b: Vector2 = outline[i + 1]
-		draw_colored_polygon(PackedVector2Array([a, b, b + depth, a + depth]),
-				Color("#171e26") if i % 2 == 0 else Color("#27313a"))
+		# Uneven basal outline creates an eroded cliff rather than a rectangular wall.
+		var fractured := PackedVector2Array([a, b])
+		for notch in range(9, -1, -1):
+			var t := float(notch) / 9.0
+			var crest := a.lerp(b, t)
+			var drop := 61.0 + 14.0 * sin(float(i * 13 + notch * 19)) + 8.0 * sin(float(notch * 7 + i))
+			fractured.append(crest + Vector2(4.0 * sin(float(notch * 11)), drop))
+		draw_colored_polygon(fractured, Color("#1d2a31") if i % 2 == 0 else Color("#26343a"))
+		# Narrow rock ridges and a muted sea-facing mineral highlight.
+		for fracture in range(1, 10):
+			var t := float(fracture) / 10.0
+			var joint := a.lerp(b, t)
+			var fracture_drop := 28.0 + float((fracture * 7 + i * 3) % 5) * 7.0
+			draw_line(joint + Vector2(0, 5), joint + Vector2(-7 + (fracture % 3) * 7, fracture_drop),
+					Color("#697b79", 0.22), 1.4)
+			draw_line(joint + Vector2(2, fracture_drop), joint + Vector2(9, fracture_drop + 13),
+					Color("#101f27", 0.49), 1.7)
 		# Broken strata soften the panel-like vertical cliff faces.
 		draw_line(a, b, Color("#68716d", 0.38), 2.0)
 		for step in range(1, 5):
