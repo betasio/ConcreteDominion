@@ -16,9 +16,12 @@ func _ready() -> void:
     image.name = "TerrainIllustration"
     image.texture = texture
     image.centered = true
-    image.position = Vector2(0, 235)
-    image.scale = Vector2(1.13, 1.13)
+    image.position = Vector2(72, 447)
+    image.scale = Vector2(0.73, 0.73)
     image.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+    var mat := ShaderMaterial.new()
+    mat.shader = load("res://shaders/backgrounds/illustrated_estate_alpha.gdshader") as Shader
+    image.material = mat
     add_child(image)
     city_map.view_mode_changed.connect(func(mode: StringName) -> void: visible = mode == &"base")
     visible = city_map.get_view_mode() == &"base"
