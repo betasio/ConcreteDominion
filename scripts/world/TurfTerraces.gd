@@ -109,13 +109,17 @@ func _draw_estate_landform() -> void:
 		var a: Vector2 = outline[i]
 		var b: Vector2 = outline[i + 1]
 		# Uneven basal outline creates an eroded cliff rather than a rectangular wall.
-		var fractured := PackedVector2Array([a, b])
-		for notch in range(9, -1, -1):
-			var t := float(notch) / 9.0
-			var crest := a.lerp(b, t)
-			var drop := 61.0 + 14.0 * sin(float(i * 13 + notch * 19)) + 8.0 * sin(float(notch * 7 + i))
-			fractured.append(crest + Vector2(4.0 * sin(float(notch * 11)), drop))
-		draw_colored_polygon(fractured, Color("#1d2a31") if i % 2 == 0 else Color("#26343a"))
+		# Triangulation-safe segmented cliff facets. Each quad has a simple winding.
+		for notch in range(9):
+			var t0 := float(notch) / 9.0
+			var t1 := float(notch + 1) / 9.0
+			var p0: Vector2 = a.lerp(b, t0)
+			var p1: Vector2 = a.lerp(b, t1)
+			var d0 := 64.0 + 8.0 * sin(float(i * 13 + notch * 19))
+			var d1 := 64.0 + 8.0 * sin(float(i * 13 + (notch + 1) * 19))
+			draw_colored_polygon(PackedVector2Array([
+				p0, p1, p1 + Vector2(0, d1), p0 + Vector2(0, d0)
+			]), Color("#1d2a31") if (i + notch) % 2 == 0 else Color("#26343a"))
 		# Narrow rock ridges and a muted sea-facing mineral highlight.
 		for fracture in range(1, 10):
 			var t := float(fracture) / 10.0
