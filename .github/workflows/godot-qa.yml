@@ -139,6 +139,20 @@ jobs:
           path: build/previews/coastal_estate_animated.png
           if-no-files-found: error
 
+      - name: Capture illustrated terrain alignment
+        run: |
+          set -o pipefail
+          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/IllustratedEstateScreenshot.tscn 2>&1 | tee godot-illustrated.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-illustrated.log
+          test -s build/previews/turf_illustrated_map_only.png
+
+      - name: Upload illustrated terrain comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-illustrated-terrain-preview
+          path: build/previews/turf_illustrated_*.png
+          if-no-files-found: error
+
       - name: Prepare export directories
         run: mkdir -p build/windows build/android
 
