@@ -176,6 +176,20 @@ func set_view_mode(mode: StringName) -> void:
 		effects_layer.visible = true
 		# Camera is moved after visibility changes.
 
+	# Estate camera stays close enough to the painted island that mouse drag,
+	# keyboard pan and mobile pinch cannot lose the entire playable compound.
+	# World mode retains the original unrestricted navigation behavior.
+	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
+	if mode == &"base" and illustrated:
+		camera.use_camera_limits = true
+		camera.camera_bounds = Rect2(Vector2(-265, 120), Vector2(675, 740))
+		camera.min_zoom = 0.73
+		camera.max_zoom = 1.6
+	else:
+		camera.use_camera_limits = false
+		camera.min_zoom = 0.45
+		camera.max_zoom = 2.0
+
 	if animate_camera:
 		var camera_tween := create_tween().set_parallel(true)
 		camera_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
