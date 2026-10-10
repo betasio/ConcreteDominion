@@ -83,6 +83,9 @@ func _ready() -> void:
 		lot_b.position = pad_origin + (Vector2(753, 777) - Vector2(470.5, 836)) * pad_scale
 		lot_c.position = pad_origin + (Vector2(733, 1213) - Vector2(470.5, 836)) * pad_scale
 		lot_d.position = pad_origin + (Vector2(606, 1008) - Vector2(470.5, 836)) * pad_scale
+		for build_site in [lot_a, lot_b, lot_c, lot_d]:
+			build_site.use_illustrated_pad = true
+			build_site.queue_redraw()
 		# The new PNG supplies roads, cliffs and planting: do not double-render
 		# their procedural versions in the artwork alignment preview.
 		for terrain_name in ["TurfTerraces", "TurfGround", "TurfEnvironmentArt",
