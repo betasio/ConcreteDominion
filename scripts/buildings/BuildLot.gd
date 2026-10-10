@@ -14,6 +14,7 @@ signal changed
 @export var max_level: int = 5
 @export_multiline var description: String = "An empty property ready for development."
 @export var art_texture: Texture2D
+@export var use_illustrated_pad: bool = false
 
 var is_selected := false
 var is_constructing := false
@@ -112,6 +113,21 @@ func _draw() -> void:
 		FACILITY_VISUALS.draw_facility(self, building_name, level)
 		if is_selected:
 			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color("#f4d078"), 5.0)
+		return
+
+	# The illustrated island already contains a dressed stone pad at each lot.
+	# Do not paint another opaque diamond/slab over that artwork.
+	if use_illustrated_pad and not is_built and not is_constructing:
+		if is_selected:
+			draw_arc(Vector2(0, -12), 58.0, 0.0, TAU, 48, Color("#f4d078", 0.9), 3.0)
+		# A compact marker says this is an interactive empty build site.
+		draw_circle(Vector2(0, -15), 15.0, Color("#18272c", 0.86))
+		draw_arc(Vector2(0, -15), 15.0, 0.0, TAU, 32, Color("#e5bb72", 0.85), 1.8)
+		draw_line(Vector2(-6, -15), Vector2(6, -15), Color("#f5d69c"), 2.0)
+		draw_line(Vector2(0, -21), Vector2(0, -9), Color("#f5d69c"), 2.0)
+		var small_name := ("%s SITE" % building_name).to_upper()
+		draw_string(ThemeDB.fallback_font, Vector2(-78, 39), small_name,
+				HORIZONTAL_ALIGNMENT_CENTER, 156, 14, Color("#f3dfb2"))
 		return
 
 	var diamond := PackedVector2Array([
