@@ -4,8 +4,17 @@
 
 [node name="CoastalEstatePreview" type="Node2D"]
 
+[node name="PreviewBackdrop" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="BackgroundColor" type="ColorRect" parent="PreviewBackdrop"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.066, 0.11, 0.15, 1.0)
+
 [node name="Scenery" parent="." instance=ExtResource("1")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(836, 318)
-zoom = Vector2(0.8, 0.8)
+zoom = Vector2(1.12, 1.12)
