@@ -68,6 +68,13 @@ jobs:
           timeout --signal=TERM --kill-after=10s 120s godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
+      - name: Audit estate camera limits
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/EstateCameraAudit.tscn 2>&1 | tee godot-camera-audit.log
+          grep -F "[CAMERA AUDIT] PASS" godot-camera-audit.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-camera-audit.log
+
       - name: Audit runtime art coverage
         run: |
           set -o pipefail
