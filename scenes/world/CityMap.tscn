@@ -1,7 +1,8 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/CityMap.gd" id="1_map"]
 [ext_resource type="Script" path="res://scripts/world/GoldenBayBackdrop.gd" id="25_golden_bay"]
+[ext_resource type="Script" path="res://scripts/world/CoastalShoreFX.gd" id="26_shore_fx"]
 [ext_resource type="Script" path="res://scripts/camera/StrategyCamera.gd" id="2_camera"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/Safehouse.tscn" id="3_safehouse"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/Hospital.tscn" id="4_hospital"]
@@ -36,6 +37,9 @@ script = ExtResource("1_map")
 
 [node name="GoldenBayBackdrop" type="Node2D" parent="."]
 script = ExtResource("25_golden_bay")
+
+[node name="CoastalShoreFX" type="Node2D" parent="."]
+script = ExtResource("26_shore_fx")
 
 [node name="Ground" type="Node2D" parent="."]
 
