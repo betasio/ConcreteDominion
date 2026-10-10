@@ -27,5 +27,12 @@ func _ready() -> void:
     city_map.view_mode_changed.connect(_on_view_mode_changed)
     _on_view_mode_changed(city_map.get_view_mode())
 
+func _draw() -> void:
+    # Fill beyond the finite panorama so 4X camera zoom/pan never reveals
+    # the viewport's default gray clear color below or beside the estate.
+    draw_rect(Rect2(Vector2(-3600, -2600), Vector2(7200, 5400)), Color("#101c29"))
+    # Water-depth bands are deliberately quiet; the panorama supplies detail.
+    draw_rect(Rect2(Vector2(-3600, 460), Vector2(7200, 2300)), Color("#102836", 0.62))
+
 func _on_view_mode_changed(mode: StringName) -> void:
     visible = mode == &"base"
