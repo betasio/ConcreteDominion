@@ -443,49 +443,48 @@ func _draw_terraced_surface_patina(outline: PackedVector2Array) -> void:
 						Color("#94a093", 0.12), 1.2)
 
 func _draw_landscape_surface(outline: PackedVector2Array) -> void:
-	# Layer a little soil, moss and natural stone inside unused parts of the
-	# compound. All elements are decorative and avoid interactive facilities.
+	# Broad irregular ground-cover islands, not repeated circular dots.
+	# Keep room around each selectable facility and terrace approach.
 	var hq: Vector2 = city_map.safehouse.position
 	var sites: Array[Vector2] = [
 		hq, city_map.hospital.position, city_map.barracks.position,
 		city_map.lot_a.position, city_map.lot_b.position,
 		city_map.lot_c.position, city_map.lot_d.position
 	]
-	for gx in range(-13, 15):
-		for gy in range(-8, 12):
-			var seed: int = absi(gx * 73 + gy * 137 + gx * gy * 29) % 19
-			if seed > 8:
+	for gx in range(-9, 11):
+		for gy in range(-5, 9):
+			var seed: int = absi(gx * 73 + gy * 137 + gx * gy * 29) % 23
+			if seed > 6:
 				continue
-			var point: Vector2 = hq + Vector2(float(gx) * 35.0 + float(seed % 3) * 5.0,
-					float(gy) * 29.0)
-			if not Geometry2D.is_point_in_polygon(point, outline):
-				continue
-			var clear := true
-			for site in sites:
-				if point.distance_to(site + Vector2(0, 25)) < 108.0:
-					clear = false
+			var center: Vector2 = hq + Vector2(float(gx) * 55.0,
+					float(gy) * 45.0 + float(seed % 3) * 7.0)
+			var radius_x: float = 20.0 + float(seed % 5) * 6.0
+			var radius_y: float = 10.0 + float(seed % 4) * 4.0
+			var vertices := PackedVector2Array([
+				center + Vector2(-radius_x, -radius_y * 0.2),
+				center + Vector2(-radius_x * 0.58, -radius_y),
+				center + Vector2(radius_x * 0.36, -radius_y * 0.84),
+				center + Vector2(radius_x, radius_y * 0.13),
+				center + Vector2(radius_x * 0.48, radius_y),
+				center + Vector2(-radius_x * 0.51, radius_y * 0.62)
+			])
+			var allowed := true
+			for vertex in vertices:
+				if not Geometry2D.is_point_in_polygon(vertex, outline):
+					allowed = false
 					break
-			if not clear:
+			if not allowed:
 				continue
-			var radius := 11.0 + float(seed % 5) * 4.5
-			if not Geometry2D.is_point_in_polygon(point + Vector2(radius, 0), outline):
+			for site in sites:
+				if center.distance_to(site + Vector2(0, 25)) < 120.0:
+					allowed = false
+					break
+			if not allowed:
 				continue
-			if not Geometry2D.is_point_in_polygon(point - Vector2(radius, 0), outline):
-				continue
-			if not Geometry2D.is_point_in_polygon(point + Vector2(0, radius), outline):
-				continue
-			if not Geometry2D.is_point_in_polygon(point - Vector2(0, radius), outline):
-				continue
-			var color := Color("#294a3d", 0.32) if seed % 3 == 0 else Color("#526154", 0.20)
-			draw_circle(point, radius, color)
-			draw_circle(point + Vector2(radius * 0.30, -radius * 0.19),
-					radius * 0.60, Color("#68705b", 0.12))
-			if seed % 3 == 0:
-				# Muted scrub detail: no artificial grid or large paving panels.
-				for sprig in range(3):
-					var pos := point + Vector2(float(sprig - 1) * 9.0, 3.0)
-					draw_line(pos, pos + Vector2(float(sprig - 1) * 2.0, -6.0),
-							Color("#4d7257", 0.60), 1.4)
-			elif seed % 4 == 0:
-				draw_line(point + Vector2(-6, 4), point + Vector2(7, 1),
-						Color("#a0a38c", 0.24), 1.6)
+			var soil := Color("#3e5145", 0.28) if seed % 3 == 0 else Color("#516052", 0.19)
+			draw_colored_polygon(vertices, soil)
+			# Fine gravel scratches follow the ground plane.
+			if seed % 2 == 0:
+				draw_line(center + Vector2(-radius_x * 0.48, 0),
+						center + Vector2(radius_x * 0.40, -radius_y * 0.22),
+						Color("#8b947d", 0.17), 1.1)
