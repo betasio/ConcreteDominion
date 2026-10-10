@@ -87,7 +87,7 @@ func _ready() -> void:
 		# their procedural versions in the artwork alignment preview.
 		for terrain_name in ["TurfTerraces", "TurfGround", "TurfEnvironmentArt",
 				"TurfDetailArt", "TurfEntranceArt", "EnvironmentDepth",
-				"DistrictScenery", "StreetLife"]:
+				"DistrictScenery", "StreetLife", "CoastalShoreFX"]:
 			var layer := get_node_or_null(terrain_name) as CanvasItem
 			if layer != null:
 				layer.visible = false
@@ -125,7 +125,7 @@ func _ready() -> void:
 
 func _base_composition_center() -> Vector2:
 	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
-		return Vector2(72, 440)
+		return Vector2(72, 350)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.
 	var sites: Array[Vector2] = [
@@ -155,7 +155,7 @@ func set_view_mode(mode: StringName) -> void:
 	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
 	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
-		destination_zoom = Vector2(0.60, 0.60)
+		destination_zoom = Vector2(0.94, 0.94)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
 	if camera.has_meta("view_tween"):
