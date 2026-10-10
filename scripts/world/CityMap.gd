@@ -76,7 +76,7 @@ func _ready() -> void:
 		var pad_origin := Vector2(72, 447)
 		# Coordinates below are measured in the 941x1672 terrain PNG.
 		# Center each existing clickable node on one empty illustrated pad.
-		safehouse.position = pad_origin + (Vector2(675, 347) - Vector2(470.5, 836)) * pad_scale
+		safehouse.position = pad_origin + (Vector2(683, 393) - Vector2(470.5, 836)) * pad_scale
 		hospital.position = pad_origin + (Vector2(429, 574) - Vector2(470.5, 836)) * pad_scale
 		barracks.position = pad_origin + (Vector2(254, 780) - Vector2(470.5, 836)) * pad_scale
 		lot_a.position = pad_origin + (Vector2(307, 1039) - Vector2(470.5, 836)) * pad_scale
