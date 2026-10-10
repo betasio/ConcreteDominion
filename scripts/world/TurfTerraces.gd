@@ -165,6 +165,7 @@ func _draw_estate_landform() -> void:
 		draw_circle(foot + Vector2(9, -18), 7.0, Color("#52715a"))
 	draw_colored_polygon(outline, Color("#303d42"))
 	_draw_terraced_surface_patina(outline)
+	_draw_landscape_surface(outline)
 	# Layered tree screens along the outer boundary. These are planted just
 	# inside the perimeter and leave all seven facility footprints open.
 	for segment_index in [0, 1, 2, 4, 6, 8, 9]:
@@ -440,3 +441,51 @@ func _draw_terraced_surface_patina(outline: PackedVector2Array) -> void:
 				draw_line(point + Vector2(-width * 0.55, 0),
 						point + Vector2(width * 0.35, -height * 0.4),
 						Color("#94a093", 0.12), 1.2)
+
+func _draw_landscape_surface(outline: PackedVector2Array) -> void:
+	# Layer a little soil, moss and natural stone inside unused parts of the
+	# compound. All elements are decorative and avoid interactive facilities.
+	var hq: Vector2 = city_map.safehouse.position
+	var sites: Array[Vector2] = [
+		hq, city_map.hospital.position, city_map.barracks.position,
+		city_map.lot_a.position, city_map.lot_b.position,
+		city_map.lot_c.position, city_map.lot_d.position
+	]
+	for gx in range(-13, 15):
+		for gy in range(-8, 12):
+			var seed: int = absi(gx * 73 + gy * 137 + gx * gy * 29) % 19
+			if seed > 8:
+				continue
+			var point: Vector2 = hq + Vector2(float(gx) * 35.0 + float(seed % 3) * 5.0,
+					float(gy) * 29.0)
+			if not Geometry2D.is_point_in_polygon(point, outline):
+				continue
+			var clear := true
+			for site in sites:
+				if point.distance_to(site + Vector2(0, 25)) < 108.0:
+					clear = false
+					break
+			if not clear:
+				continue
+			var radius := 11.0 + float(seed % 5) * 4.5
+			if not Geometry2D.is_point_in_polygon(point + Vector2(radius, 0), outline):
+				continue
+			if not Geometry2D.is_point_in_polygon(point - Vector2(radius, 0), outline):
+				continue
+			if not Geometry2D.is_point_in_polygon(point + Vector2(0, radius), outline):
+				continue
+			if not Geometry2D.is_point_in_polygon(point - Vector2(0, radius), outline):
+				continue
+			var color := Color("#294a3d", 0.32) if seed % 3 == 0 else Color("#526154", 0.20)
+			draw_circle(point, radius, color)
+			draw_circle(point + Vector2(radius * 0.30, -radius * 0.19),
+					radius * 0.60, Color("#68705b", 0.12))
+			if seed % 3 == 0:
+				# Muted scrub detail: no artificial grid or large paving panels.
+				for sprig in range(3):
+					var pos := point + Vector2(float(sprig - 1) * 9.0, 3.0)
+					draw_line(pos, pos + Vector2(float(sprig - 1) * 2.0, -6.0),
+							Color("#4d7257", 0.60), 1.4)
+			elif seed % 4 == 0:
+				draw_line(point + Vector2(-6, 4), point + Vector2(7, 1),
+						Color("#a0a38c", 0.24), 1.6)
