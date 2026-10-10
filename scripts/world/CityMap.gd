@@ -71,7 +71,7 @@ func _ready() -> void:
 
 	# Art alignment proof-of-concept only. Keep original save/node identities and
 	# normal production positions until the illustrated terrain is approved.
-	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		var pad_scale := 0.73
 		var pad_origin := Vector2(72, 447)
 		# Coordinates below are measured in the 941x1672 terrain PNG.
@@ -124,7 +124,7 @@ func _ready() -> void:
 
 
 func _base_composition_center() -> Vector2:
-	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		return Vector2(72, 350)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.
@@ -154,7 +154,7 @@ func set_view_mode(mode: StringName) -> void:
 	_clear_selection()
 	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
-	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false):
+	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		destination_zoom = Vector2(0.94, 0.94)
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
