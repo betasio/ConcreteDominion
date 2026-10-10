@@ -4,7 +4,7 @@ const IMAGE_PATH := "res://assets/environment/Black-and-Gold Isometric Estate Gr
 @onready var city_map: Node2D = get_parent()
 
 func _ready() -> void:
-    visible = bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", false))
+    visible = bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
     if not visible:
         return
     if not ResourceLoader.exists(IMAGE_PATH):
