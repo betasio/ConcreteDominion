@@ -35,6 +35,11 @@ func _style_recursive(node: Node) -> void:
 
 
 func _style_node(node: Node) -> void:
+	var ancestor := node
+	while ancestor != null:
+		if ancestor.has_meta("custom_ui_skin"):
+			return
+		ancestor = ancestor.get_parent()
 	if node is PanelContainer:
 		_style_panel(node as PanelContainer)
 	elif node is Button:

@@ -81,6 +81,20 @@ jobs:
           godot --headless --path . res://scenes/tests/ArtCoverageAudit.tscn 2>&1 | tee godot-art.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-art.log
 
+      - name: Audit illustrated estate interactions and construction
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/IllustratedEstateAudit.tscn 2>&1 | tee godot-estate.log
+          grep -F "[ESTATE AUDIT] PASS" godot-estate.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-estate.log
+
+      - name: Audit responsive estate interface
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/EstateHUDAudit.tscn 2>&1 | tee godot-estate-hud.log
+          grep -F "[ESTATE HUD AUDIT] PASS" godot-estate-hud.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-estate-hud.log
+
       - name: Run gameplay regression audit
         run: |
           set -o pipefail

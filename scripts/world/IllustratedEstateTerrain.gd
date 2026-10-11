@@ -1,5 +1,6 @@
 extends Node2D
-## Optional illustration-only terrain alignment test. No collision or input.
+## Illustrated estate foundation. Interactive sites share its artwork transform.
+const LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 const IMAGE_PATH := "res://assets/environment/Black-and-Gold Isometric Estate Grounds.png"
 @onready var city_map: Node2D = get_parent()
 
@@ -16,12 +17,22 @@ func _ready() -> void:
     image.name = "TerrainIllustration"
     image.texture = texture
     image.centered = true
-    image.position = Vector2(72, 447)
-    image.scale = Vector2(0.73, 0.73)
+    image.position = LAYOUT.ORIGIN
+    image.scale = Vector2.ONE * LAYOUT.ART_SCALE
     image.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
     var mat := ShaderMaterial.new()
     mat.shader = load("res://shaders/backgrounds/illustrated_estate_alpha.gdshader") as Shader
     image.material = mat
     add_child(image)
+    # The short entrance bridge must cross the cliff edge onto the existing
+    # drive, rather than disappearing behind the original island texture.
+    var annex := Sprite2D.new()
+    annex.name = "DataHubTerrace"
+    annex.texture = load(LAYOUT.ANNEX_PATH) as Texture2D
+    annex.centered = false
+    annex.position = LAYOUT.artwork_to_world(LAYOUT.PAD_CENTERS[&"BuildLotD"]) - LAYOUT.ANNEX_PAD_PIXEL * LAYOUT.ANNEX_SCALE
+    annex.scale = Vector2.ONE * LAYOUT.ANNEX_SCALE
+    annex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+    add_child(annex)
     city_map.view_mode_changed.connect(func(mode: StringName) -> void: visible = mode == &"base")
     visible = city_map.get_view_mode() == &"base"

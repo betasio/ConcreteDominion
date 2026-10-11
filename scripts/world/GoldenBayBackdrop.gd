@@ -3,6 +3,7 @@ extends Node2D
 const IMAGE_PATH := "res://assets/backgrounds/coastal_estate/ConcreteDominion_Golden_Bay_Background.png"
 const SHADER_PATH := "res://shaders/backgrounds/golden_bay_distance.gdshader"
 @onready var city_map: Node2D = get_parent()
+var panorama: Sprite2D
 
 func _ready() -> void:
     z_index = -90
@@ -24,8 +25,25 @@ func _ready() -> void:
     material.shader = load(SHADER_PATH) as Shader
     sprite.material = material
     add_child(sprite)
+    panorama = sprite
     city_map.view_mode_changed.connect(_on_view_mode_changed)
     _on_view_mode_changed(city_map.get_view_mode())
+
+func _process(_delta: float) -> void:
+    if not visible or panorama == null:
+        return
+    var camera := get_viewport().get_camera_2d()
+    if camera == null:
+        return
+    var center := camera.get_screen_center_position()
+    # Quiet parallax, with enough cover for phone aspect ratios and all legal
+    # camera positions. Never reveal a hard panorama edge during zoom or pan.
+    panorama.position = Vector2(0, 310) + (center - Vector2(118, 350)) * 0.85
+    var world_view := get_viewport_rect().size / camera.zoom
+    var required := world_view + (center - panorama.position).abs() * 2.0
+    var texture_size := panorama.texture.get_size()
+    var cover := maxf(1.35, maxf(required.x / texture_size.x, required.y / texture_size.y))
+    panorama.scale = Vector2.ONE * cover
 
 func _draw() -> void:
     # Fill beyond the finite panorama so 4X camera zoom/pan never reveals

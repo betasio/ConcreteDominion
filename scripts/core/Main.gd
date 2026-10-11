@@ -278,6 +278,7 @@ func _ready() -> void:
 	hud.focus_building_requested.connect(city_map.focus_building)
 	hud.view_mode_requested.connect(city_map.set_view_mode)
 	hud.focus_raid_target_requested.connect(city_map.focus_raid_target_by_id)
+	$EstateHUD.setup(self)
 
 
 func _on_building_selected(building: Building) -> void:

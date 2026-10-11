@@ -13,7 +13,8 @@ func _audit() -> void:
 	var map := packed.instantiate()
 	add_child(map)
 	var camera: Camera2D = map.get_node("StrategyCamera")
-	if not camera.use_camera_limits or absf(camera.min_zoom - 0.73) > 0.01:
+	# Zoom limits now fit the viewport, instead of assuming landscape forever.
+	if not camera.use_camera_limits or camera.min_zoom <= 0.0 or camera.max_zoom <= camera.min_zoom:
 		push_error("[CAMERA AUDIT] Illustrated base limits were not applied")
 		get_tree().quit(1)
 		return
@@ -33,10 +34,45 @@ func _audit() -> void:
 		push_error("[CAMERA AUDIT] Camera center escaped estate bounds")
 		get_tree().quit(1)
 		return
+	for size in [Vector2i(1280, 720), Vector2i(720, 1280), Vector2i(1080, 2340)]:
+		get_window().size = size
+		await get_tree().process_frame
+		map.set_view_mode(&"base")
+		camera.edge_pan_enabled = false
+		camera.reset_smoothing()
+		camera.force_update_scroll()
+		await get_tree().process_frame
+		var viewport_rect := get_viewport().get_visible_rect()
+		for site in map.get_persistent_buildings():
+			var screen_point: Vector2 = site.get_global_transform_with_canvas().origin
+			if not viewport_rect.grow(-20.0).has_point(screen_point):
+				push_error("[CAMERA AUDIT] Site clipped at %s: %s" % [size, site.name])
+				get_tree().quit(1)
+				return
+		# Exercise the actual two-finger input handler at each aspect ratio.
+		var old_zoom: float = camera.zoom.x
+		for index in range(2):
+			var touch := InputEventScreenTouch.new()
+			touch.index = index
+			touch.pressed = true
+			touch.position = Vector2(100 + index * 100, 100)
+			camera.call("_unhandled_input", touch)
+		var drag := InputEventScreenDrag.new()
+		drag.index = 1
+		drag.position = Vector2(400, 100)
+		camera.call("_unhandled_input", drag)
+		if camera.zoom.x <= old_zoom or camera.zoom.x > camera.max_zoom + 0.001:
+			push_error("[CAMERA AUDIT] Portrait/landscape pinch zoom failed")
+			get_tree().quit(1)
+			return
+		for index in range(2):
+			var release := InputEventScreenTouch.new()
+			release.index = index
+			camera.call("_unhandled_input", release)
 	map.set_view_mode(&"world")
 	if camera.use_camera_limits or camera.min_zoom > 0.5:
 		push_error("[CAMERA AUDIT] World mode did not restore camera freedom")
 		get_tree().quit(1)
 		return
-	print("[CAMERA AUDIT] PASS - estate bounds, zoom clamping, and world view reset")
+	print("[CAMERA AUDIT] PASS - three aspect ratios, all seven sites framed, pinch zoom, estate bounds and world view reset")
 	get_tree().quit(0)

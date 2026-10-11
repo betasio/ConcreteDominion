@@ -1,4 +1,4 @@
-[gd_scene load_steps=57 format=3]
+[gd_scene load_steps=58 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/CityMap.tscn" id="2_city"]
@@ -57,6 +57,7 @@
 [ext_resource type="Script" path="res://scripts/combat/BattleReportManager.gd" id="54_battle_reports"]
 
 [ext_resource type="Script" path="res://scripts/ui/SecondaryMenu.gd" id="56_secondary_menu"]
+[ext_resource type="Script" path="res://scripts/ui/EstateHUD.gd" id="57_estate_hud"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -209,3 +210,6 @@ script = ExtResource("48_ui_art")
 
 [node name="SecondaryMenu" type="CanvasLayer" parent="."]
 script = ExtResource("56_secondary_menu")
+
+[node name="EstateHUD" type="CanvasLayer" parent="."]
+script = ExtResource("57_estate_hud")

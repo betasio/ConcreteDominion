@@ -2,6 +2,7 @@ class_name BuildLot
 extends Area2D
 
 const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+const MAP_LABEL := preload("res://scripts/buildings/MapSiteLabel.gd")
 
 signal selected(lot: BuildLot)
 signal changed
@@ -21,6 +22,26 @@ var is_constructing := false
 var is_built := false
 var level := 0
 var pending_level := 0
+var illustrated_footprint := Vector2(78, 41)
+
+
+func configure_illustrated_pad(half_size: Vector2) -> void:
+	use_illustrated_pad = true
+	illustrated_footprint = half_size
+	# Replace this instance's oversized legacy rectangle, never the shared
+	# scene resource. The whole stone pad remains selectable in every state.
+	var collision := get_node("CollisionShape2D") as CollisionShape2D
+	var shape := ConvexPolygonShape2D.new()
+	shape.points = _illustrated_outline()
+	collision.shape = shape
+	queue_redraw()
+
+
+func _illustrated_outline() -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(0, -illustrated_footprint.y), Vector2(illustrated_footprint.x, 0),
+		Vector2(0, illustrated_footprint.y), Vector2(-illustrated_footprint.x, 0)
+	])
 
 
 func _ready() -> void:
@@ -98,6 +119,9 @@ func restore_progress(built: bool, saved_level: int = 1) -> void:
 
 
 func _draw() -> void:
+	if use_illustrated_pad:
+		_draw_illustrated_site()
+		return
 	if art_texture != null and is_built:
 		var size := art_texture.get_size()
 		var scale_factor := minf(168.0 / maxf(1.0, size.x), 146.0 / maxf(1.0, size.y))
@@ -113,21 +137,6 @@ func _draw() -> void:
 		FACILITY_VISUALS.draw_facility(self, building_name, level)
 		if is_selected:
 			draw_arc(Vector2(0, -18), 104.0, 0.0, TAU, 48, Color("#f4d078"), 5.0)
-		return
-
-	# The illustrated island already contains a dressed stone pad at each lot.
-	# Do not paint another opaque diamond/slab over that artwork.
-	if use_illustrated_pad and not is_built and not is_constructing:
-		if is_selected:
-			draw_arc(Vector2(0, -12), 58.0, 0.0, TAU, 48, Color("#f4d078", 0.9), 3.0)
-		# A compact marker says this is an interactive empty build site.
-		draw_circle(Vector2(0, -15), 15.0, Color("#18272c", 0.86))
-		draw_arc(Vector2(0, -15), 15.0, 0.0, TAU, 32, Color("#e5bb72", 0.85), 1.8)
-		draw_line(Vector2(-6, -15), Vector2(6, -15), Color("#f5d69c"), 2.0)
-		draw_line(Vector2(0, -21), Vector2(0, -9), Color("#f5d69c"), 2.0)
-		var small_name := ("%s SITE" % building_name).to_upper()
-		draw_string(ThemeDB.fallback_font, Vector2(-78, 39), small_name,
-				HORIZONTAL_ALIGNMENT_CENTER, 156, 14, Color("#f3dfb2"))
 		return
 
 	var diamond := PackedVector2Array([
@@ -189,6 +198,42 @@ func _draw() -> void:
 		label = "%s SITE" % building_name
 	var label_font_size := 14 if label.length() > 12 else 16
 	draw_string(ThemeDB.fallback_font, Vector2(-82, 58), label.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 164, label_font_size, Color(0.95, 0.91, 0.78))
+
+
+func _draw_illustrated_site() -> void:
+	# The painted terrain supplies the foundation in ALL construction states.
+	# Only the occupied building, a small action marker and labels belong here.
+	if is_selected:
+		var outline := _illustrated_outline()
+		outline.append(outline[0])
+		draw_polyline(outline, Color("#f4d078"), 2.5, true)
+	if is_built:
+		if art_texture != null:
+			var size := art_texture.get_size()
+			var factor := minf(168.0 / maxf(1.0, size.x), 146.0 / maxf(1.0, size.y))
+			var rendered := size * factor
+			draw_texture_rect(art_texture, Rect2(Vector2(-rendered.x * 0.5, 30.0 - rendered.y), rendered), false)
+		else:
+			FACILITY_VISUALS.draw_facility(self, building_name, level)
+	else:
+		var gold := Color("#f5d69c")
+		draw_circle(Vector2(0, -4), 18.0, Color("#14242b", 0.94))
+		draw_arc(Vector2(0, -4), 18.0, 0.0, TAU, 40, gold, 2.0, true)
+		if is_constructing:
+			# Hammer: a state indicator, not a fabricated progress percentage.
+			draw_line(Vector2(-5, 5), Vector2(5, -9), gold, 3.0, true)
+			draw_line(Vector2(0, -13), Vector2(10, -6), gold, 5.0, true)
+		else:
+			draw_line(Vector2(-7, -4), Vector2(7, -4), gold, 2.5, true)
+			draw_line(Vector2(0, -11), Vector2(0, 3), gold, 2.5, true)
+	var title := building_name.to_upper()
+	var label_top := 18.0 if not is_built else 32.0
+	MAP_LABEL.draw_badge(self, title, label_top, 18)
+	if is_built or is_constructing:
+		var status := "BUILDING" if not is_built else "LV.%d" % level
+		if is_built and is_constructing:
+			status += " → %d" % pending_level
+		MAP_LABEL.draw_badge(self, status, label_top + 27.0, 14)
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

@@ -8,6 +8,7 @@ signal view_mode_changed(mode: StringName)
 const CONVOY_SCENE := preload("res://scenes/world/ConvoyVisual.tscn")
 const RAID_IMPACT_SCENE := preload("res://scenes/effects/RaidImpactVFX.tscn")
 const HQ_HYBRID_SCRIPT := preload("res://scripts/world/HQHybridVisual.gd")
+const ESTATE_LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 
 @export var grid_width: int = 24
 @export var grid_height: int = 20
@@ -69,23 +70,17 @@ func _ready() -> void:
 	lot_c.position = iso_to_screen(Vector2i(7, 15))   # Scrapyard: outer service
 	lot_d.position = iso_to_screen(Vector2i(15, 15))  # Data Hub: lower flank
 
-	# Art alignment proof-of-concept only. Keep original save/node identities and
-	# normal production positions until the illustrated terrain is approved.
+	# Align interaction and art to the painted courtyards. The original nodes
+	# retain their construction state and save identities.
 	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
-		var pad_scale := 0.73
-		var pad_origin := Vector2(72, 447)
-		# Coordinates below are measured in the 941x1672 terrain PNG.
-		# Center each existing clickable node on one empty illustrated pad.
-		safehouse.position = pad_origin + (Vector2(683, 393) - Vector2(470.5, 836)) * pad_scale
-		hospital.position = pad_origin + (Vector2(429, 574) - Vector2(470.5, 836)) * pad_scale
-		barracks.position = pad_origin + (Vector2(254, 780) - Vector2(470.5, 836)) * pad_scale
-		lot_a.position = pad_origin + (Vector2(307, 1039) - Vector2(470.5, 836)) * pad_scale
-		lot_b.position = pad_origin + (Vector2(753, 777) - Vector2(470.5, 836)) * pad_scale
-		lot_c.position = pad_origin + (Vector2(733, 1213) - Vector2(470.5, 836)) * pad_scale
-		lot_d.position = pad_origin + (Vector2(606, 1008) - Vector2(470.5, 836)) * pad_scale
+		for site in get_persistent_buildings():
+			site.position = ESTATE_LAYOUT.artwork_to_world(ESTATE_LAYOUT.PAD_CENTERS[site.name])
+		for core in [safehouse, hospital, barracks]:
+			# Building art's ground contact lies above its node origin.
+			core.position.y += 12.0
+			core.use_illustrated_pad = true
 		for build_site in [lot_a, lot_b, lot_c, lot_d]:
-			build_site.use_illustrated_pad = true
-			build_site.queue_redraw()
+			build_site.configure_illustrated_pad(Vector2(78, 41))
 		# The new PNG supplies roads, cliffs and planting: do not double-render
 		# their procedural versions in the artwork alignment preview.
 		for terrain_name in ["TurfTerraces", "TurfGround", "TurfEnvironmentArt",
@@ -123,12 +118,41 @@ func _ready() -> void:
 		target.selected.connect(_select_raid_target)
 
 	set_view_mode(&"base")
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	queue_redraw()
+
+
+func _estate_default_zoom() -> float:
+	# Fit the actual island, including the new eastern terrace, to either a
+	# landscape or portrait viewport. The rest of the window is reserved for UI.
+	var available: Rect2 = get_meta("estate_content_rect",get_viewport_rect())
+	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
+	var horizontal_fill := 1.08 if portrait and has_meta("estate_content_rect") else 0.85
+	return minf(available.size.x * horizontal_fill / 860.0, available.size.y * 0.90 / 975.0)
+
+
+func set_estate_content_rect(rect: Rect2) -> void:
+	set_meta("estate_content_rect",rect)
+	if view_mode == &"base":
+		set_view_mode(&"base")
+
+
+func _on_viewport_size_changed() -> void:
+	if view_mode != &"base" or not ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
+		return
+	var relative_zoom: float = camera.zoom.x / camera.min_zoom
+	var factor := _estate_default_zoom() / 0.94
+	camera.min_zoom = 0.73 * factor
+	camera.max_zoom = 1.6 * factor
+	camera.call("_set_camera_zoom", relative_zoom * camera.min_zoom)
 
 
 func _base_composition_center() -> Vector2:
 	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
-		return Vector2(72, 350)
+		if has_meta("estate_content_rect"):
+			var content: Rect2 = get_meta("estate_content_rect")
+			return Vector2(118,440) + (get_viewport_rect().get_center()-content.get_center())/_estate_default_zoom()
+		return Vector2(118, 350)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.
 	var sites: Array[Vector2] = [
@@ -158,7 +182,7 @@ func set_view_mode(mode: StringName) -> void:
 	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
 	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
 	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
-		destination_zoom = Vector2(0.94, 0.94)
+		destination_zoom = Vector2.ONE * _estate_default_zoom()
 	# Preserve immediate initialization and save restoration; animate user switches.
 	var animate_camera: bool = is_inside_tree() and previous_mode != mode
 	if camera.has_meta("view_tween"):
@@ -185,9 +209,10 @@ func set_view_mode(mode: StringName) -> void:
 	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
 	if mode == &"base" and illustrated:
 		camera.use_camera_limits = true
-		camera.camera_bounds = Rect2(Vector2(-265, 120), Vector2(675, 740))
-		camera.min_zoom = 0.73
-		camera.max_zoom = 1.6
+		camera.camera_bounds = Rect2(Vector2(-265, 120), Vector2(835, 740))
+		var factor := _estate_default_zoom() / 0.94
+		camera.min_zoom = 0.73 * factor
+		camera.max_zoom = 1.6 * factor
 	else:
 		camera.use_camera_limits = false
 		camera.min_zoom = 0.45

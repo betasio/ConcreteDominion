@@ -2,6 +2,7 @@ class_name Building
 extends Area2D
 
 const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+const MAP_LABEL := preload("res://scripts/buildings/MapSiteLabel.gd")
 
 signal selected(building: Building)
 signal changed
@@ -16,6 +17,7 @@ signal changed
 @export var base_upgrade_duration: float = 15.0
 @export var render_3d_art: bool = false
 @export var art_texture: Texture2D
+@export var use_illustrated_pad: bool = false
 
 var is_selected := false
 var is_constructing := false
@@ -92,6 +94,9 @@ func _draw() -> void:
 		elif level >= max_level:
 			art_level_text += " MAX"
 		var map_label := "BARRACKS" if building_type == &"barracks" else ("CLINIC" if building_type == &"hospital" else display_name.to_upper())
+		if use_illustrated_pad:
+			MAP_LABEL.draw_badge(self, "%s · %s" % [map_label, art_level_text], 35.0, 18)
+			return
 		draw_string(ThemeDB.fallback_font, Vector2(-86, 62), map_label, HORIZONTAL_ALIGNMENT_CENTER, 172, 17, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)
 		return
