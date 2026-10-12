@@ -226,13 +226,12 @@ func _draw_illustrated_site() -> void:
 			draw_line(Vector2(-7, -4), Vector2(7, -4), gold, 2.5, true)
 			draw_line(Vector2(0, -11), Vector2(0, 3), gold, 2.5, true)
 	var title := building_name.to_upper()
-	var label_top := 18.0 if not is_built else illustrated_footprint.y+3.0
-	MAP_LABEL.draw_badge(self, title, label_top, 16)
 	if is_built or is_constructing:
 		var status := "BUILDING" if not is_built else "LV.%d" % level
 		if is_built and is_constructing:
 			status += " → %d" % pending_level
-		MAP_LABEL.draw_badge(self, status, label_top + 27.0, 14)
+		title += " · " + status
+	MAP_LABEL.draw_badge(self,title,18.0 if not is_built else illustrated_footprint.y*0.45,16)
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

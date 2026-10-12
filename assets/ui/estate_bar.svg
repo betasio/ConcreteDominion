@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128">
+<defs><linearGradient id="metal" x1="0" y1="0" x2="0.35" y2="1"><stop stop-color="#fff0b1"/><stop offset=".17" stop-color="#aa752b"/><stop offset=".46" stop-color="#ead08a"/><stop offset=".53" stop-color="#59421e"/><stop offset=".84" stop-color="#cb9745"/><stop offset="1" stop-color="#f6d792"/></linearGradient>
+<linearGradient id="face" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#34373b"/><stop offset=".45" stop-color="#17191c"/><stop offset="1" stop-color="#080b0e"/></linearGradient></defs>
+<polygon points="15,1 497,1 511,15 511,113 497,127 15,127 1,113 1,15" fill="#040506" stroke="#090909" stroke-width="2"/>
+<polygon points="16,3 496,3 509,16 509,112 496,125 16,125 3,112 3,16" fill="url(#metal)"/>
+<polygon points="18,7 494,7 505,18 505,110 494,121 18,121 7,110 7,18" fill="#15171a" stroke="#ffe6a0" stroke-width="1"/>
+<polygon points="19,10 493,10 502,19 502,109 493,118 19,118 10,109 10,19" fill="url(#face)" stroke="#806439" stroke-width="1"/>
+<path d="M7,27 L7,18 L18,7 L27,7" fill="none" stroke="url(#metal)" stroke-width="4"/><path d="M505,27 L505,18 L494,7 L485,7" fill="none" stroke="url(#metal)" stroke-width="4"/><path d="M7,101 L7,110 L18,121 L27,121" fill="none" stroke="url(#metal)" stroke-width="4"/><path d="M505,101 L505,110 L494,121 L485,121" fill="none" stroke="url(#metal)" stroke-width="4"/></svg>

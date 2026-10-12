@@ -161,3 +161,25 @@ HUD captures were reviewed, including `turf_illustrated_portrait_built.png`.
 A two-frame shader probe at animation times 0 and 12 seconds measured changed
 sky/water pixels and exactly unchanged pixels across the skyline region.
 Backend logic was unchanged, so the Python suite was not rerun for this pass.
+
+## Illustrated black-and-gold interface
+
+The estate HUD now uses an original generated 16-icon atlas, shared through
+`EstateSkin.gd`, and six small SVG textures for scalable metallic frames.
+The resource strip, circular side controls, chapter bar, illustrated bottom
+navigation and portrait faction shortcut follow the supplied visual references.
+Resource amounts and notifications remain live game data. Existing dialogs use
+the same charcoal-and-gold frames and buttons, preserving their scrolling and
+gameplay handlers. The atlas is cached, mipmapped and reused across controls.
+
+Building names and levels share one framed badge. Portrait camera framing is
+slightly closer, but this pass retains the existing terrain and calibrated
+seven-site layout. Matching the reference's continuous cliffside estate will
+require a separate terrain artwork pass; this UI update does not provide it.
+
+Validation: ProjectResourceAudit (154 resources), SmokeTest, EstateCameraAudit,
+IllustratedEstateAudit and EstateHUDAudit passed. Actual graphical captures were
+reviewed for portrait HUD, dialogs and small landscape presentation. The capture
+scene also saves `turf_illustrated_portrait_built_hud.png` for inspection of all
+facilities with the interface visible. Rendering was tested using desktop
+OpenGL with software rendering; physical mobile performance remains unmeasured.

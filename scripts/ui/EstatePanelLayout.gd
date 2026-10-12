@@ -1,5 +1,6 @@
 extends Node
 ## Keep legacy panel names and signals while presenting readable, scrollable dialogs.
+const SKIN := preload("res://scripts/ui/EstateSkin.gd")
 var game: Node
 var panels: Array[PanelContainer] = []
 var construction_bar: PanelContainer
@@ -65,10 +66,14 @@ func _make_scrollable(panel: PanelContainer) -> void:
 
 func _style_content(node: Node) -> void:
 	var extra := 3 if game.settings.large_text else 0
+	if node is PanelContainer:
+		node.set_meta("custom_ui_skin",true)
+		node.add_theme_stylebox_override("panel",SKIN.frame("panel"))
 	if node is Label:
 		node.add_theme_font_size_override("font_size",(26 if node.name == "Title" else 22)+extra)
 		node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	elif node is Button:
+		SKIN.style_button(node)
 		node.custom_minimum_size.y = maxf(node.custom_minimum_size.y,68)
 		node.add_theme_font_size_override("font_size",22+extra)
 		node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -102,13 +107,13 @@ func fit() -> void:
 		tutorial_panel.scale = Vector2.ONE*factor
 		tutorial_panel.size = Vector2(width,minf(300.0,(available.y-320.0*game.get_node("EstateHUD").ui_scale)/factor))
 		var chrome: float = game.get_node("EstateHUD").ui_scale
-		tutorial_panel.position = Vector2(inset.x+(available.x-width*factor)*0.5,viewport_size.y-inset.w-194*chrome-tutorial_panel.size.y*factor)-tutorial_panel.get_parent().position
+		tutorial_panel.position = Vector2(inset.x+(available.x-width*factor)*0.5,viewport_size.y-inset.w-206*chrome-tutorial_panel.size.y*factor)-tutorial_panel.get_parent().position
 	if construction_bar != null:
 		construction_bar.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		construction_bar.scale = Vector2.ONE * factor
 		construction_bar.size = Vector2(width,116)
 		var chrome_scale: float = game.get_node("EstateHUD").ui_scale
-		construction_bar.position = Vector2(inset.x+(available.x-width*factor)*0.5,viewport_size.y-inset.w-108*chrome_scale-116*factor)-construction_bar.get_parent().position
+		construction_bar.position = Vector2(inset.x+(available.x-width*factor)*0.5,viewport_size.y-inset.w-124*chrome_scale-116*factor)-construction_bar.get_parent().position
 
 
 func _fit_dialog(panel: Control, dimensions: Vector2, factor: float, available: Vector2, inset: Vector4) -> void:

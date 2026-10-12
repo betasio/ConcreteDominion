@@ -1,5 +1,6 @@
 extends CanvasLayer
 ## Responsive presentation over the existing game systems and panel actions.
+const SKIN := preload("res://scripts/ui/EstateSkin.gd")
 const ICON := preload("res://scripts/ui/EstateIcon.gd")
 const GOLD := Color("#e3be73")
 const IVORY := Color("#f4ecd9")
@@ -9,6 +10,8 @@ var top: Panel
 var profile_button: Button
 var identity: Label
 var resources: Array[Label] = []
+var resource_cells: Array[Panel] = []
+var faction_banner: Button
 var navigation: Array[Button] = []
 var left_actions: Array[Button] = []
 var right_actions: Array[Button] = []
@@ -39,7 +42,7 @@ func setup(game_root: Node) -> void:
 	add_child(root)
 	top = Panel.new()
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_theme_stylebox_override("panel", _box(Color("#0c1115", 0.97)))
+	top.add_theme_stylebox_override("panel", SKIN.frame("tab"))
 	root.add_child(top)
 	profile_button = _button("Profile", "", func(): _open_panel("ProfileUI"))
 	var portrait := TextureRect.new()
@@ -50,14 +53,27 @@ func setup(game_root: Node) -> void:
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	profile_button.add_child(portrait)
-	_place(portrait, Rect2(4,4,80,76))
+	_place(portrait, Rect2(6,6,68,62))
 	identity = _label(profile_button, "", 20, GOLD)
-	_place(identity, Rect2(0,79,88,25))
+	_place(identity, Rect2(0,64,80,24))
 	identity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	for key in ["Cash", "Gold", "Parts", "Intel"]:
-		var value := _label(top, key, 24)
+		var slot := Panel.new()
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_theme_stylebox_override("panel",SKIN.frame("bar"))
+		slot.tooltip_text = key
+		top.add_child(slot)
+		resource_cells.append(slot)
+		var glyph := TextureRect.new()
+		glyph.name = "ResourceIcon"
+		glyph.texture = SKIN.icon(key.to_lower())
+		glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_child(glyph)
+		var value := _label(slot, key, 24)
 		value.name = key
-		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		resources.append(value)
 	var wordmark := _label(top, "CONCRETE DOMINION", 18, GOLD)
 	wordmark.name = "Wordmark"
@@ -74,7 +90,22 @@ func setup(game_root: Node) -> void:
 	right_actions.append(_button("More", "more", _open_more, true))
 	for entry in [["World","world"],["Tasks","tasks"],["Inventory","inventory"],["Crew","crew"],["Mail","mail"],["Faction","faction"]]:
 		var action: String = entry[0]
-		navigation.append(_button(action, entry[1], func(): _navigate(action)))
+		var destination := _button(action, entry[1], func(): _navigate(action))
+		destination.add_theme_stylebox_override("normal",SKIN.frame("tab"))
+		navigation.append(destination)
+	faction_banner = _button("FactionBanner","",func(): _open_panel("FactionUI"))
+	var faction_art := TextureRect.new()
+	faction_art.name = "Art"
+	faction_art.texture = SKIN.icon("faction")
+	faction_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	faction_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	faction_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	faction_banner.add_child(faction_art)
+	_place(faction_art,Rect2(8,8,100,68))
+	var faction_title := _label(faction_banner,"FACTION",21,GOLD)
+	_place(faction_title,Rect2(106,18,124,26))
+	var faction_hint := _label(faction_banner,"Build your influence  ›",13)
+	_place(faction_hint,Rect2(106,46,130,22))
 	mail_badge = _label(navigation[4], "", 20)
 	mail_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var badge_style := _box(Color("#a82e2b"), Color("#e9b89a"))
@@ -82,6 +113,9 @@ func setup(game_root: Node) -> void:
 	mail_badge.add_theme_stylebox_override("normal", badge_style)
 
 	mission_button = _button("Mission", "", func(): _open_panel("ProgressionUI"))
+	var chapter_icon := _label(mission_button,"!",38,GOLD)
+	chapter_icon.name = "ChapterIcon"
+	chapter_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mission_title = _label(mission_button, "", 24, GOLD)
 	mission_detail = _label(mission_button, "", 20)
 	mission_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -127,41 +161,50 @@ func _layout() -> void:
 	var inset: Vector4 = game.safe_area_manager._get_viewport_safe_insets() / ui_scale
 	safe_rect = Rect2(Vector2(inset.x,inset.y), root.size - Vector2(inset.x+inset.z,inset.y+inset.w))
 	var area := safe_rect
-	_place(top, Rect2(area.position, Vector2(area.size.x, 112)))
-	_place(profile_button, Rect2(area.position + Vector2(10,4), Vector2(88,104)))
-	var cell := (area.size.x - 116.0) / 4.0
+	_place(top, Rect2(area.position, Vector2(area.size.x, 92)))
+	_place(profile_button, Rect2(area.position + Vector2(10,4), Vector2(80,88)))
+	var cell := (area.size.x - 108.0) / 4.0
 	for i in range(resources.size()):
-		_place(resources[i], Rect2(108+i*cell, 10, cell, 62))
-	_place(top.get_node("Wordmark"), Rect2(112,80,area.size.x*0.55,25))
-	_place(top.get_node("Power"), Rect2(area.size.x*0.62,80,area.size.x*0.36-12,25))
+		_place(resource_cells[i],Rect2(100+i*cell,7,cell-3,49))
+		_place(resource_cells[i].get_node("ResourceIcon"),Rect2(7,8,36,33))
+		_place(resources[i],Rect2(43,9,cell-58,32))
+	_place(top.get_node("Wordmark"), Rect2(108,61,area.size.x*0.55,25))
+	_place(top.get_node("Power"), Rect2(area.size.x*0.62,61,area.size.x*0.36-12,25))
 	for i in range(left_actions.size()):
-		_place(left_actions[i], Rect2(area.position + Vector2(12,124+i*102),Vector2(88,96)))
+		_place(left_actions[i], Rect2(area.position + Vector2(10,106+i*102),Vector2(88,96)))
+	faction_banner.visible = area.size.y > area.size.x
+	_place(faction_banner,Rect2(area.position+Vector2(area.size.x-250,104),Vector2(240,84)))
+	var right_top := 198.0 if faction_banner.visible else 106.0
 	for i in range(right_actions.size()):
-		_place(right_actions[i], Rect2(area.position + Vector2(area.size.x-100,124+i*102),Vector2(88,96)))
+		_place(right_actions[i], Rect2(area.position + Vector2(area.size.x-98,right_top+i*102),Vector2(88,96)))
 	var nav_width := area.size.x / 6.0
 	for i in range(navigation.size()):
-		_place(navigation[i], Rect2(area.position+Vector2(i*nav_width,area.size.y-100),Vector2(nav_width,100)))
+		_place(navigation[i], Rect2(area.position+Vector2(i*nav_width,area.size.y-116),Vector2(nav_width,116)))
 	_place(mail_badge,Rect2(nav_width*0.5+10,4,32,28))
-	_place(mission_button,Rect2(area.position+Vector2(12,area.size.y-186),Vector2(area.size.x-24,78)))
-	_place(mission_title,Rect2(18,9,mission_button.size.x-66,30))
-	_place(mission_detail,Rect2(18,42,mission_button.size.x-66,28))
+	_place(mission_button,Rect2(area.position+Vector2(12,area.size.y-196),Vector2(area.size.x-24,70)))
+	_place(mission_title,Rect2(58,7,mission_button.size.x-110,28))
+	_place(mission_detail,Rect2(58,35,mission_button.size.x-110,26))
+	_place(mission_button.get_node("ChapterIcon"),Rect2(14,10,36,48))
 	_place(mission_button.get_node("Arrow"),Rect2(mission_button.size.x-42,8,32,54))
 	_place(modal_shade,Rect2(Vector2.ZERO,root.size))
 	_place(inventory,Rect2(area.position+Vector2(24,area.size.y*0.3),Vector2(area.size.x-48,320)))
-	for button in navigation+left_actions+right_actions:
-		_place(button.get_node("Icon"),Rect2((button.size.x-58)*0.5,5,58,58))
-		_place(button.get_node("Caption"),Rect2(0,66,button.size.x,28))
+	for button in navigation:
+		_place(button.get_node("Icon"),Rect2((button.size.x-78)*0.5,7,78,78))
+		_place(button.get_node("Caption"),Rect2(2,84,button.size.x-4,28))
+	for button in left_actions+right_actions:
+		_place(button.get_node("Icon"),Rect2((button.size.x-74)*0.5,0,74,74))
+		_place(button.get_node("Caption"),Rect2(0,72,button.size.x,24))
 	panel_layout.fit()
 	# Give the playable estate the space between the resource and mission bars.
-	game.city_map.set_estate_content_rect(Rect2((area.position+Vector2(0,116))*ui_scale,Vector2(area.size.x,area.size.y-306)*ui_scale))
+	game.city_map.set_estate_content_rect(Rect2((area.position+Vector2(0,96))*ui_scale,Vector2(area.size.x,area.size.y-296)*ui_scale))
 
 
 func _refresh() -> void:
 	identity.text = "LV. %d" % game.progression.account_level
-	resources[0].text = "$ %s\nCASH" % _compact(game.economy.cash)
-	resources[1].text = "◆ %s\nGOLD" % _compact(game.economy.gold)
-	resources[2].text = "%s\nPARTS" % _compact(game.loot_inventory.get_count("Parts"))
-	resources[3].text = "%s\nINTEL" % _compact(game.loot_inventory.get_count("Intel"))
+	resources[0].text = "%s" % _compact(game.economy.cash)
+	resources[1].text = "%s" % _compact(game.economy.gold)
+	resources[2].text = "%s" % _compact(game.loot_inventory.get_count("Parts"))
+	resources[3].text = "%s" % _compact(game.loot_inventory.get_count("Intel"))
 	top.get_node("Power").text = "POWER  %s" % _compact(game.player_profile.get_power_rating())
 	var chapter: Dictionary = game.mission_tracker.get_story_chapter_status()
 	mission_title.text = "Chapter %d · %s" % [chapter.chapter,chapter.title]
@@ -260,13 +303,13 @@ func _apply_text_size() -> void:
 	for label in resources:
 		label.add_theme_font_size_override("font_size",24+size_delta)
 	for button in navigation+left_actions+right_actions:
-		button.get_node("Caption").add_theme_font_size_override("font_size",22+size_delta)
+		button.get_node("Caption").add_theme_font_size_override("font_size",(20 if button in navigation else 18)+size_delta)
 
 
 func _create_inventory() -> void:
 	inventory = PanelContainer.new()
 	inventory.name = "Inventory"
-	inventory.add_theme_stylebox_override("panel",_box(Color("#11191f",0.98)))
+	inventory.add_theme_stylebox_override("panel",SKIN.frame("panel"))
 	root.add_child(inventory)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation",16)
@@ -276,6 +319,7 @@ func _create_inventory() -> void:
 	inventory_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var close := Button.new()
 	close.text = "Close"
+	SKIN.style_button(close)
 	close.custom_minimum_size.y = 68
 	close.add_theme_font_size_override("font_size",24)
 	column.add_child(close)
@@ -288,9 +332,11 @@ func _button(title: String, icon: String, action: Callable, circular: bool = fal
 	button.name = title
 	button.tooltip_text = title
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal",StyleBoxEmpty.new() if circular else _box(Color("#101619",0.96)))
-	button.add_theme_stylebox_override("hover",_box(Color("#3b3020",0.95)))
-	button.add_theme_stylebox_override("pressed",_box(Color("#614c29",0.96)))
+	SKIN.style_button(button)
+	if circular:
+		button.add_theme_stylebox_override("normal",StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover",SKIN.frame("button_gold"))
+	button.add_theme_stylebox_override("pressed",SKIN.frame("button_gold"))
 	button.add_theme_stylebox_override("focus",_box(Color(0,0,0,0),Color("#fff0b6")))
 	root.add_child(button)
 	if not icon.is_empty():
@@ -301,7 +347,7 @@ func _button(title: String, icon: String, action: Callable, circular: bool = fal
 		glyph.name = "Icon"
 		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(glyph)
-		var caption := _label(button,title,22,IVORY)
+		var caption := _label(button,title,20,GOLD if not circular else IVORY)
 		caption.name = "Caption"
 		if circular:
 			var backing := _box(Color("#101619",0.78),Color(0,0,0,0))

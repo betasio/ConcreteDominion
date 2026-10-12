@@ -116,7 +116,7 @@ func _draw() -> void:
 			art_level_text += " MAX"
 		var map_label := "BARRACKS" if building_type == &"barracks" else ("CLINIC" if building_type == &"hospital" else display_name.to_upper())
 		if use_illustrated_pad:
-			MAP_LABEL.draw_badge(self, "%s · %s" % [map_label, art_level_text], illustrated_footprint.y*0.65, 16)
+			MAP_LABEL.draw_badge(self, "%s · %s" % [map_label, art_level_text], 10.0, 16)
 			return
 		draw_string(ThemeDB.fallback_font, Vector2(-86, 62), map_label, HORIZONTAL_ALIGNMENT_CENTER, 172, 17, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)

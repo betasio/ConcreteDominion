@@ -125,7 +125,7 @@ func _estate_default_zoom() -> float:
 	# landscape or portrait viewport. The rest of the window is reserved for UI.
 	var available: Rect2 = get_meta("estate_content_rect",get_viewport_rect())
 	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
-	var horizontal_fill := 1.08 if portrait and has_meta("estate_content_rect") else 0.85
+	var horizontal_fill := 1.13 if portrait and has_meta("estate_content_rect") else 0.85
 	return minf(available.size.x * horizontal_fill / 860.0, available.size.y * 0.90 / 975.0)
 
 

@@ -79,6 +79,11 @@ func _capture() -> void:
 	city.set_view_mode(&"base")
 	city.camera.reset_smoothing()
 	await _save_frame("turf_illustrated_portrait_built")
+	for layer in visible_layers:
+		layer.visible = true
+	await _save_frame("turf_illustrated_portrait_built_hud")
+	for layer in visible_layers:
+		layer.visible = false
 	for lot in lots:
 		lot.restore_progress(false)
 		lot.set_selected(false)

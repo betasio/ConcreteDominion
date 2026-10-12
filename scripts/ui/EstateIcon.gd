@@ -1,16 +1,24 @@
 extends Control
 ## Resolution-independent navigation symbols; no external icon font required.
+const ROUND := preload("res://assets/ui/estate_round.svg")
+const SKIN := preload("res://scripts/ui/EstateSkin.gd")
 var symbol := "world"
 var ring := false
 const GOLD := Color("#e3be73")
 
 
 func _draw() -> void:
+	if ring:
+		draw_texture_rect(ROUND,Rect2(Vector2.ZERO,size),false)
+	var art := SKIN.icon(symbol)
+	if art != null:
+		var available := size*(0.72 if ring else 1.0)
+		var art_size := art.get_size()
+		var fitted := art_size*minf(available.x/art_size.x,available.y/art_size.y)
+		draw_texture_rect(art,Rect2((size-fitted)*0.5,fitted),false)
+		return
 	var unit := minf(size.x, size.y) / 64.0
 	draw_set_transform(size * 0.5, 0.0, Vector2.ONE * unit)
-	if ring:
-		draw_circle(Vector2.ZERO, 30, Color("#101716", 0.96))
-		draw_arc(Vector2.ZERO, 30, 0, TAU, 48, GOLD, 1.3, true)
 	match symbol:
 		"build":
 			draw_line(Vector2(-14, 17), Vector2(11, -13), GOLD, 6, true)
