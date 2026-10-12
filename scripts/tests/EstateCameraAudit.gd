@@ -69,6 +69,38 @@ func _audit() -> void:
 			var release := InputEventScreenTouch.new()
 			release.index = index
 			camera.call("_unhandled_input", release)
+	# Cursor zoom preserves the world point under the cursor away from limits.
+	camera.position = Vector2(118,350)
+	var pivot := get_viewport().get_visible_rect().size*0.5+Vector2(60,40)
+	var offset := pivot-get_viewport().get_visible_rect().size*0.5
+	camera.call("_set_camera_zoom",camera.min_zoom*1.2)
+	var anchor: Vector2 = camera.position+offset/camera.zoom.x
+	camera.call("_zoom_at_screen_point",camera.min_zoom*1.5,pivot)
+	if (camera.position+offset/camera.zoom.x).distance_to(anchor) > 0.01:
+		push_error("[CAMERA AUDIT] Cursor zoom drifts")
+		get_tree().quit(1)
+		return
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	touch.position = pivot
+	camera.call("_unhandled_input",touch)
+	touch.pressed = false
+	camera.call("_input",touch)
+	if not camera._active_touches.is_empty():
+		push_error("[CAMERA AUDIT] Gesture release over UI was lost")
+		get_tree().quit(1)
+		return
+	camera.set_controls_blocked(true)
+	var blocked_zoom: Vector2 = camera.zoom
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	camera.call("_unhandled_input",wheel)
+	if camera.zoom != blocked_zoom:
+		push_error("[CAMERA AUDIT] Blocked camera still zooms")
+		get_tree().quit(1)
+		return
+	camera.set_controls_blocked(false)
 	map.set_view_mode(&"world")
 	if camera.use_camera_limits or camera.min_zoom > 0.5:
 		push_error("[CAMERA AUDIT] World mode did not restore camera freedom")

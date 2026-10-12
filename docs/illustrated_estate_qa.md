@@ -125,3 +125,39 @@ levels of detail. Physical Android rendering, safe-area cutouts, touch scrolling
 and memory/performance need device testing. Headless touch injection verifies
 routing but does not substitute for that testing. The GitHub QA API retry still
 returned Forbidden; all results reported here are local.
+
+## Footprint, camera and atmosphere refinement
+
+Keep the current 2.5D pipeline: transparent PNG facilities plus the existing
+single-render 3D HQ. For a fixed isometric camera this avoids rebuilding the game
+in 3D. Future buildings can be authored in 3D and rendered to PNG using a shared
+camera/light rig; runtime 3D is useful if camera rotation or animated structures
+become an actual requirement.
+
+`PAD_HALF_SIZES` now records each courtyard's usable footprint. PNG width fits
+94% of that footprint and a normalized ground anchor (0.5, 0.74) places the base
+on its site, preserving the source aspect ratio and exposed access stairs.
+The HQ render has a separate calibrated scale. Core buildings now use matching
+courtyard collision diamonds rather than the old oversized selection boxes.
+Map badges use distance-field text; mipmaps and linear filtering remove the
+sparkling high-frequency edges on downscaled buildings and terrain. Mipmaps add
+texture memory, so physical-device profiling remains necessary.
+
+The live Golden Bay shader now uses cooler distance grading, horizon haze,
+open-water/reflection motion and high-cloud drift in one pass. Its animation
+clock stops with Reduced Motion. The backdrop's parallax and higher horizon
+reinforce the separation between the estate and distant city. It remains an
+illustrated panorama, not a 3D environment or a simulated ocean.
+
+The camera ignores menu interactions, stops stale gestures when a release lands
+over UI, and zooms around the cursor or pinch midpoint. Side captions have dark
+backing for contrast; Events uses a calendar icon distinct from Rewards.
+
+Validation for this refinement: resource audit, smoke test, camera audit,
+illustrated-estate audit and responsive-HUD audit passed. Added checks cover
+core footprint hits, cursor zoom stability, gesture release, modal camera lock,
+and Reduced Motion stopping/resuming the scenery clock. Actual empty/built and
+HUD captures were reviewed, including `turf_illustrated_portrait_built.png`.
+A two-frame shader probe at animation times 0 and 12 seconds measured changed
+sky/water pixels and exactly unchanged pixels across the skyline region.
+Backend logic was unchanged, so the Python suite was not rerun for this pass.

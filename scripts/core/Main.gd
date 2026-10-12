@@ -298,6 +298,9 @@ func _apply_runtime_settings() -> void:
 	settings.apply_runtime_settings()
 	if city_map != null and city_map.camera != null:
 		city_map.camera.edge_pan_enabled = settings.edge_pan_enabled
+	var backdrop := city_map.get_node_or_null("GoldenBayBackdrop")
+	if backdrop != null:
+		backdrop.set_reduced_motion(settings.reduced_motion)
 
 
 func _on_raid_resolved_feedback(result: Dictionary) -> void:

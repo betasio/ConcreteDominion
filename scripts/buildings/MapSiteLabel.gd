@@ -1,9 +1,13 @@
 extends RefCounted
 ## Small, high-contrast map labels shared by the illustrated estate's sites.
 
+static var badge_font: FontFile
 
 static func draw_badge(item: CanvasItem, text: String, top: float, font_size: int = 18) -> void:
-	var font := ThemeDB.fallback_font
+	if badge_font == null:
+		badge_font = ThemeDB.fallback_font.duplicate() as FontFile
+		badge_font.multichannel_signed_distance_field = true
+	var font := badge_font
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 16.0
 	var height := float(font_size) + 10.0
 	var box := StyleBoxFlat.new()

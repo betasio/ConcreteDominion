@@ -29,6 +29,17 @@ func _audit() -> void:
 	_check(annex.texture != null, "Data Hub terrace artwork missing")
 	_check(annex.to_global(layout.ANNEX_PAD_PIXEL).distance_to(city.lot_d.global_position) < 0.1,
 			"Data Hub interaction no longer aligns with the annex pad")
+	for core in [city.safehouse,city.hospital,city.barracks]:
+		_check(core.position.distance_to(layout.artwork_to_world(layout.PAD_CENTERS[core.name])) < 0.1,"Core ground anchor drifted")
+		var shape: ConvexPolygonShape2D = core.get_node("CollisionShape2D").shape
+		_check(shape.points.size() == 4, "Core selection does not follow its courtyard")
+		var query := PhysicsPointQueryParameters2D.new()
+		query.position = core.global_position
+		query.collide_with_areas = true
+		query.collide_with_bodies = false
+		var hits: Array = city.get_world_2d().direct_space_state.intersect_point(query)
+		hits = hits.filter(func(hit: Dictionary) -> bool: return hit["collider"].is_visible_in_tree())
+		_check(hits.size() == 1 and hits[0]["collider"] == core,"Core footprint overlaps another site")
 	var ids := ["lot_garage", "lot_intel", "lot_scrapyard", "lot_datahub"]
 	for id in ids:
 		var lot := city.get_persistent_target(id) as BuildLot
@@ -92,7 +103,7 @@ func _check_pad_hit(city: Node2D, lot: BuildLot) -> void:
 		query.position = lot.to_global(offset)
 		query.collide_with_areas = true
 		query.collide_with_bodies = false
-		var hits := city.get_world_2d().direct_space_state.intersect_point(query)
+		var hits: Array = city.get_world_2d().direct_space_state.intersect_point(query)
 		# Physics queries include hidden raid targets; viewport input picking
 		# excludes them in base view. Compare the visible interactive sites.
 		hits = hits.filter(func(hit: Dictionary) -> bool: return hit["collider"].is_visible_in_tree())

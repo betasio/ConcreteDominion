@@ -76,11 +76,9 @@ func _ready() -> void:
 		for site in get_persistent_buildings():
 			site.position = ESTATE_LAYOUT.artwork_to_world(ESTATE_LAYOUT.PAD_CENTERS[site.name])
 		for core in [safehouse, hospital, barracks]:
-			# Building art's ground contact lies above its node origin.
-			core.position.y += 12.0
-			core.use_illustrated_pad = true
+			core.configure_illustrated_pad(ESTATE_LAYOUT.PAD_HALF_SIZES[core.name])
 		for build_site in [lot_a, lot_b, lot_c, lot_d]:
-			build_site.configure_illustrated_pad(Vector2(78, 41))
+			build_site.configure_illustrated_pad(ESTATE_LAYOUT.PAD_HALF_SIZES[build_site.name])
 		# The new PNG supplies roads, cliffs and planting: do not double-render
 		# their procedural versions in the artwork alignment preview.
 		for terrain_name in ["TurfTerraces", "TurfGround", "TurfEnvironmentArt",

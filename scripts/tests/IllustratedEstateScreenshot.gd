@@ -74,6 +74,11 @@ func _capture() -> void:
 		lot.complete_construction(1)
 	city.lot_d.begin_construction(2)
 	await _save_frame("turf_illustrated_built")
+	get_window().size = Vector2i(720,1280)
+	await get_tree().process_frame
+	city.set_view_mode(&"base")
+	city.camera.reset_smoothing()
+	await _save_frame("turf_illustrated_portrait_built")
 	for lot in lots:
 		lot.restore_progress(false)
 		lot.set_selected(false)

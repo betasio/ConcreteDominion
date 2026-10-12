@@ -240,6 +240,7 @@ func _sync_modals() -> void:
 	for panel in panel_layout.panels:
 		showing = showing or panel.visible
 	modal_shade.visible = showing
+	game.city_map.camera.set_controls_blocked(showing)
 	game.hud.construction_bar.visible = game.construction_queue.is_busy() and not showing
 	game.tutorial_ui.visible = not showing
 
@@ -302,6 +303,11 @@ func _button(title: String, icon: String, action: Callable, circular: bool = fal
 		button.add_child(glyph)
 		var caption := _label(button,title,22,IVORY)
 		caption.name = "Caption"
+		if circular:
+			var backing := _box(Color("#101619",0.78),Color(0,0,0,0))
+			backing.set_content_margin_all(0)
+			backing.set_corner_radius_all(4)
+			caption.add_theme_stylebox_override("normal",backing)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.pressed.connect(action)
 	return button

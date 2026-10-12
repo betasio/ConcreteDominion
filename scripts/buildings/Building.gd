@@ -2,6 +2,7 @@ class_name Building
 extends Area2D
 
 const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+const ESTATE_LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 const MAP_LABEL := preload("res://scripts/buildings/MapSiteLabel.gd")
 
 signal selected(building: Building)
@@ -22,9 +23,24 @@ signal changed
 var is_selected := false
 var is_constructing := false
 var pending_level := 0
+var illustrated_footprint := Vector2(94,46)
+
+
+func configure_illustrated_pad(half_size: Vector2) -> void:
+	use_illustrated_pad = true
+	illustrated_footprint = half_size
+	var shape := ConvexPolygonShape2D.new()
+	shape.points = _pad_outline()
+	$CollisionShape2D.shape = shape
+	queue_redraw()
+
+
+func _pad_outline() -> PackedVector2Array:
+	return PackedVector2Array([Vector2(0,-illustrated_footprint.y),Vector2(illustrated_footprint.x,0),Vector2(0,illustrated_footprint.y),Vector2(-illustrated_footprint.x,0)])
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	# Optional premium art pack: preserve the original visual when assets are absent.
 	var premium_path := "res://assets/premium/buildings/%s.png" % String(building_type)
 	if ResourceLoader.exists(premium_path, "Texture2D"):
@@ -83,10 +99,15 @@ func _draw() -> void:
 		# rather than drifting when different source aspect ratios are imported.
 		var rendered_size := size * scale_factor
 		if not render_3d_art:
-			draw_texture_rect(art_texture, Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size), false)
-		if is_constructing:
+			var rect := ESTATE_LAYOUT.building_rect(size,illustrated_footprint) if use_illustrated_pad else Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size)
+			draw_texture_rect(art_texture, rect, false)
+		if use_illustrated_pad and (is_selected or is_constructing):
+			var outline := _pad_outline()
+			outline.append(outline[0])
+			draw_polyline(outline,Color("#f4d078"),2.5,true)
+		if is_constructing and not use_illustrated_pad:
 			draw_arc(Vector2(0, -35), 108.0, 0.0, TAU, 48, Color(0.90, 0.68, 0.20), 4.0)
-		if is_selected:
+		if is_selected and not use_illustrated_pad:
 			draw_arc(Vector2(0, -35), 112.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 		var art_level_text := "Lv.%d" % level
 		if is_constructing:
@@ -95,7 +116,7 @@ func _draw() -> void:
 			art_level_text += " MAX"
 		var map_label := "BARRACKS" if building_type == &"barracks" else ("CLINIC" if building_type == &"hospital" else display_name.to_upper())
 		if use_illustrated_pad:
-			MAP_LABEL.draw_badge(self, "%s · %s" % [map_label, art_level_text], 35.0, 18)
+			MAP_LABEL.draw_badge(self, "%s · %s" % [map_label, art_level_text], illustrated_footprint.y*0.65, 16)
 			return
 		draw_string(ThemeDB.fallback_font, Vector2(-86, 62), map_label, HORIZONTAL_ALIGNMENT_CENTER, 172, 17, Color(0.95, 0.91, 0.78))
 		draw_string(ThemeDB.fallback_font, Vector2(-42, 84), art_level_text, HORIZONTAL_ALIGNMENT_CENTER, 84, 16, accent_color)

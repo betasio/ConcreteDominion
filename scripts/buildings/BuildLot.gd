@@ -45,6 +45,7 @@ func _illustrated_outline() -> PackedVector2Array:
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	# Once built, the optional premium image is used instead of vector scaffolding.
 	var premium_path := "res://assets/premium/buildings/%s.png" % building_name.to_snake_case()
 	if ResourceLoader.exists(premium_path, "Texture2D"):
@@ -209,10 +210,8 @@ func _draw_illustrated_site() -> void:
 		draw_polyline(outline, Color("#f4d078"), 2.5, true)
 	if is_built:
 		if art_texture != null:
-			var size := art_texture.get_size()
-			var factor := minf(168.0 / maxf(1.0, size.x), 146.0 / maxf(1.0, size.y))
-			var rendered := size * factor
-			draw_texture_rect(art_texture, Rect2(Vector2(-rendered.x * 0.5, 30.0 - rendered.y), rendered), false)
+			var rect := preload("res://scripts/world/IllustratedEstateLayout.gd").building_rect(art_texture.get_size(),illustrated_footprint)
+			draw_texture_rect(art_texture,rect,false)
 		else:
 			FACILITY_VISUALS.draw_facility(self, building_name, level)
 	else:
@@ -227,8 +226,8 @@ func _draw_illustrated_site() -> void:
 			draw_line(Vector2(-7, -4), Vector2(7, -4), gold, 2.5, true)
 			draw_line(Vector2(0, -11), Vector2(0, 3), gold, 2.5, true)
 	var title := building_name.to_upper()
-	var label_top := 18.0 if not is_built else 32.0
-	MAP_LABEL.draw_badge(self, title, label_top, 18)
+	var label_top := 18.0 if not is_built else illustrated_footprint.y+3.0
+	MAP_LABEL.draw_badge(self, title, label_top, 16)
 	if is_built or is_constructing:
 		var status := "BUILDING" if not is_built else "LV.%d" % level
 		if is_built and is_constructing:

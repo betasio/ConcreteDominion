@@ -4,6 +4,8 @@ const IMAGE_PATH := "res://assets/backgrounds/coastal_estate/ConcreteDominion_Go
 const SHADER_PATH := "res://shaders/backgrounds/golden_bay_distance.gdshader"
 @onready var city_map: Node2D = get_parent()
 var panorama: Sprite2D
+var motion_enabled := true
+var animation_time := 0.0
 
 func _ready() -> void:
     z_index = -90
@@ -29,17 +31,21 @@ func _ready() -> void:
     city_map.view_mode_changed.connect(_on_view_mode_changed)
     _on_view_mode_changed(city_map.get_view_mode())
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     if not visible or panorama == null:
         return
+    if motion_enabled:
+        animation_time += delta
+        panorama.material.set_shader_parameter("animation_time",animation_time)
     var camera := get_viewport().get_camera_2d()
     if camera == null:
         return
     var center := camera.get_screen_center_position()
     # Quiet parallax, with enough cover for phone aspect ratios and all legal
     # camera positions. Never reveal a hard panorama edge during zoom or pan.
-    panorama.position = Vector2(0, 310) + (center - Vector2(118, 350)) * 0.85
     var world_view := get_viewport_rect().size / camera.zoom
+    var parallax := 0.06 if motion_enabled else 0.0
+    panorama.position = center - (center-Vector2(118,350))*parallax - Vector2(0,world_view.y*0.08)
     var required := world_view + (center - panorama.position).abs() * 2.0
     var texture_size := panorama.texture.get_size()
     var cover := maxf(1.35, maxf(required.x / texture_size.x, required.y / texture_size.y))
@@ -54,3 +60,6 @@ func _draw() -> void:
 
 func _on_view_mode_changed(mode: StringName) -> void:
     visible = mode == &"base"
+
+func set_reduced_motion(enabled: bool) -> void:
+    motion_enabled = not enabled

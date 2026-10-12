@@ -59,8 +59,8 @@ func _ready() -> void:
 	var sprite := Sprite2D.new()
 	sprite.name = "RenderedHQ"
 	sprite.texture = viewport.get_texture()
-	sprite.position = Vector2(0, -55)
-	sprite.scale = Vector2(0.43, 0.43)
+	sprite.position = Vector2(0, -54) if get_parent().use_illustrated_pad else Vector2(0,-55)
+	sprite.scale = Vector2.ONE * (0.49 if get_parent().use_illustrated_pad else 0.43)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sprite.show_behind_parent = true
 	add_child(sprite)

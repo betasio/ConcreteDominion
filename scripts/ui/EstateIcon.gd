@@ -41,7 +41,15 @@ func _draw() -> void:
 			_line([Vector2(-21,-23), Vector2(21,-23), Vector2(19,7), Vector2(0,27), Vector2(-19,7), Vector2(-21,-23)])
 			_line([Vector2(-11,3), Vector2(0,-9), Vector2(11,3)])
 			_line([Vector2(-11,13), Vector2(0,1), Vector2(11,13)])
-		"rewards", "events":
+		"events":
+			draw_rect(Rect2(-21,-19,42,42), GOLD, false, 2.5)
+			draw_line(Vector2(-21,-7),Vector2(21,-7),GOLD,2.5,true)
+			for x in [-11,11]:
+				draw_line(Vector2(x,-25),Vector2(x,-14),GOLD,3,true)
+			for y in [2,13]:
+				for x in [-11,0,11]:
+					draw_circle(Vector2(x,y),2.0,GOLD)
+		"rewards":
 			draw_rect(Rect2(-21,-3,42,25), GOLD, false, 2.5)
 			draw_rect(Rect2(-25,-10,50,9), GOLD, false, 2.5)
 			draw_line(Vector2(0,-10), Vector2(0,23), GOLD, 3, true)

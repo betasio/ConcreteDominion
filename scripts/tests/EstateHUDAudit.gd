@@ -42,11 +42,13 @@ func _audit() -> void:
 			hud.navigation[entry[0]].pressed.emit()
 			await get_tree().process_frame
 			var panel: Control = game.get_node(entry[1])
+			_check(game.city_map.camera.controls_blocked, "Open modal does not block camera")
 			_check(panel.visible and hud.modal_shade.visible, "Navigation did not open modal: %s" % entry[1])
 			var bounds := panel.get_global_transform_with_canvas()*Rect2(Vector2.ZERO,panel.size)
 			_check(viewport.grow(1).encloses(bounds), "Dialog clipped at %s: %s (%s)" % [dimensions,entry[1],bounds])
 			_check(panel.get_node("Margin") is ScrollContainer or panel.get_node_or_null("Margin/Scroll") is ScrollContainer, "Dialog has no accessible scrolling: %s" % entry[1])
 			hud._close_panels()
+		_check(not game.city_map.camera.controls_blocked, "Camera remains blocked after close")
 		_check(not hud.modal_shade.visible, "Closing dialogs left input blocked")
 		hud.right_actions[2].pressed.emit()
 		await get_tree().process_frame
@@ -91,6 +93,16 @@ func _audit() -> void:
 	_check(game.hud.recruit_enforcer_button.get_theme_font_size("font_size") == 25, "Large text did not reach legacy dialogs")
 	_check(hud.resources[0].get_theme_font_size("font_size") == 27, "Large text did not reach header")
 	game.settings.set_large_text(false)
+	var backdrop = game.city_map.get_node("GoldenBayBackdrop")
+	game.settings.set_reduced_motion(true)
+	var clock_before: float = backdrop.animation_time
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(backdrop.animation_time == clock_before, "Reduced Motion does not freeze scenery")
+	game.settings.set_reduced_motion(false)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(backdrop.animation_time > clock_before, "Scenery clock did not resume")
 	game.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():
