@@ -38,8 +38,10 @@ replace device-store export testing or a real multi-device playtest.
 
 ## Recommended next work
 
-1. Integrate the online faction/rally path with a server-owned player progression
-   model before competitive multiplayer or purchases can affect the main economy.
+1. The online faction/rally path now settles a server-owned faction war chest and
+   personal Command XP, with earned Rally Hall upgrades (see server/README.md).
+   Next, establish verified sign-in and a server-owned estate progression model
+   before competitive multiplayer or purchases affect the main estate economy.
    Keep solo NPC progress available.
 2. Give city operations and faction wars a clearer strategic overview: ownership,
    pending attacks, preparation time and the consequences of committing troops.

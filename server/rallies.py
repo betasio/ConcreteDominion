@@ -7,7 +7,7 @@ combat records, independently of editable offline estate saves.
 import hashlib
 import secrets
 import time
-from server import pvp
+from server import pvp, progression
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS rallies (
@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS rally_members (
 """
 
 def hall_level(store, fid):
-    victories = store.execute("SELECT COUNT(*) FROM pvp_matches WHERE winner_id=?", (fid,)).fetchone()[0]
-    return min(5, 1 + victories)
+    return progression.hall_level(store, fid)
 
 
 def settle_due(store):

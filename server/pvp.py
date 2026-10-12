@@ -243,6 +243,8 @@ def route(store, method, path, data, actor):
                         "INSERT INTO pvp_ledger(match_id,faction_id,points,reason,created_at) VALUES(?,?,?,'pvp_settlement',unixepoch())",
                         (war["id"],candidate,earned)
                     )
+                from server import progression
+                progression.award_match(store, final, winner)
         return 200, {"replayed":False,"match_id":war["id"],"points":points,
                      "defense":defense,"state":_snapshot(store,fid)}
     raise ApiError(404,"Unknown PvP endpoint")

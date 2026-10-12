@@ -26,6 +26,7 @@ func set_session(token: String) -> void:
 	# Keep bearer tokens in memory only; never write to the unencrypted game save.
 	var next_token := token.strip_edges()
 	if next_token != session_token:
+		_cancel_inflight()
 		_rally_receipt = ""
 		_retry_id = ""
 		_retry_strategy = ""
@@ -34,10 +35,15 @@ func set_session(token: String) -> void:
 
 
 func clear_session() -> void:
-	_rally_receipt = ""
-	session_token = ""
-	_retry_id = ""
-	_retry_strategy = ""
+	_cancel_inflight()
+	set_session("")
+
+
+func _cancel_inflight() -> void:
+	if _busy and _http != null:
+		_http.cancel_request()
+	_busy = false
+	_pending_action = ""
 
 
 func is_busy() -> bool:
@@ -257,6 +263,8 @@ func _request(action: String, method: int, path: String, body: Dictionary, authe
 
 
 func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if _pending_action.is_empty():
+		return
 	_busy = false
 	var action := _pending_action
 	_pending_action = ""
@@ -294,3 +302,12 @@ func join_rally(id: String) -> bool:
 
 func cancel_rally(id: String) -> bool:
 	return _request("rallies",HTTPClient.METHOD_POST,"/v1/rallies/%s/cancel" % id,{},true)
+
+
+func get_progression() -> bool:
+	return _request("progression", HTTPClient.METHOD_GET, "/v1/progression", {}, true)
+
+
+func upgrade_online_hall(expected_level: int) -> bool:
+	return _request("hall_upgrade", HTTPClient.METHOD_POST, "/v1/progression/hall",
+		{"expected_level":expected_level}, true)

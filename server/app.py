@@ -9,7 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from server import pvp, seasons, profiles, rivalries, challenges, rallies
+from server import pvp, seasons, profiles, rivalries, challenges, rallies, progression
 from server.security import RateLimiter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -77,6 +77,7 @@ class Store:
         if "created_at" not in columns:
             self.db.execute("ALTER TABLE pvp_matches ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
             self.db.execute("UPDATE pvp_matches SET created_at=unixepoch() WHERE created_at=0")
+        progression.initialize(self)
         self.db.commit()
 
     def execute(self, query, params=()):
@@ -261,6 +262,9 @@ class Store:
         profile_result = profiles.route(self, method, path, data, actor)
         if profile_result is not None:
             return profile_result
+        progression_result = progression.route(self, method, path, data, actor)
+        if progression_result is not None:
+            return progression_result
         rally_result = rallies.route(self, method, path, data, actor)
         if rally_result is not None:
             return rally_result

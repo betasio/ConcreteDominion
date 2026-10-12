@@ -63,6 +63,21 @@ func setup(
 	economy = player_economy
 	missions = mission_tracker
 
+	var online_button := Button.new()
+	online_button.name = "OnlineFactionHub"
+	online_button.text = "Online Faction Hub · Wars & Rally Hall"
+	online_button.custom_minimum_size.y = 64
+	online_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var body := $Root/Panel/Margin/Scroll/VBox
+	body.add_child(online_button)
+	body.move_child(online_button, summary_label.get_index()+1)
+	online_button.pressed.connect(func():
+		panel.hide()
+		var hub := get_parent().get_node("OnlineFactionUI") as OnlineFactionUI
+		hub.panel.show()
+		hub._select_hub_section("Wars" if not hub.client.session_token.is_empty() else "Account")
+		hub._refresh())
+
 	faction.changed.connect(_refresh)
 	economy.changed.connect(_refresh)
 	missions.changed.connect(_refresh)

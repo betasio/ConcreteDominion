@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Test multiplayer API authorization and persistence
-        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency server.test_rallies tools.test_premium_assets -v
+        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency server.test_rallies server.test_progression tools.test_premium_assets -v
 
       - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
@@ -67,6 +67,9 @@ jobs:
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 120s godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
+
+      - name: Test live online progression client and server
+        run: python3 tools/online_progression_probe.py
 
       - name: Audit estate camera limits
         run: |

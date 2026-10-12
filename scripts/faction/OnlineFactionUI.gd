@@ -8,6 +8,11 @@ var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
 var online_rallies: Dictionary = {}
+var online_progression: Dictionary = {}
+var progression_text: Label
+var hall_upgrade_button: Button
+var progression_refresh_button: Button
+var upgrade_uncertain := false
 var preparation: OptionButton
 var rally_list: VBoxContainer
 var rally_clock := 0.0
@@ -27,7 +32,7 @@ const HUB_GROUPS := {
 		"Invitations", "Accept", "Refresh"],
 	"Wars": ["WarTitle", "StartWar", "RefreshWar", "AttackPlans", "WarStatus",
 		"PvPMatchup", "PvPHeader", "QueuePvP", "CancelPvP", "RefreshPvP",
-		"PvPPlans", "PvPStatus", "RallyPreparation", "RallyList"],
+		"PvPPlans", "PvPStatus", "RallyPreparation", "RallyList", "WarProgression"],
 	"Rivals": ["ChallengeTitle", "RivalFactionId", "SendChallenge",
 		"RefreshChallenges", "AcceptChallenge", "DeclineChallenge",
 		"CancelChallenge", "ChallengeStatus", "RefreshTrophies",
@@ -47,6 +52,7 @@ const HUB_GROUPS := {
 
 func _ready() -> void:
 	_setup_rallies()
+	_setup_progression()
 	client = OnlineFactionClient.new()
 	add_child(client)
 	client.request_completed.connect(_on_completed)
@@ -168,7 +174,9 @@ func _toggle() -> void:
 
 
 func _connect_session() -> void:
-	client.set_session(token_edit.text)
+	var session := token_edit.text
+	_disconnect()
+	client.set_session(session)
 	token_edit.clear()
 	client.get_me()
 	_refresh()
@@ -204,6 +212,8 @@ func _disconnect() -> void:
 	online_pvp.clear()
 	pvp_history.clear()
 	online_rallies.clear()
+	online_progression.clear()
+	upgrade_uncertain = false
 	alert_button.hide()
 	trophy_case.clear()
 	rival_challenges.clear()
@@ -233,12 +243,16 @@ func _accept_first() -> void:
 
 func _on_completed(action: String, code: int, data: Dictionary) -> void:
 	if code < 200 or code >= 300:
+		if action == "hall_upgrade":
+			upgrade_uncertain = true
+			client.get_progression()
 		status_message = "%s (%d): %s" % [action, code, String(data.get("error", "Request rejected"))]
 		_refresh()
 		return
 	status_message = "%s succeeded" % action
 	match action:
 		"register":
+			_disconnect()
 			var session := String(data.get("session_token", ""))
 			client.set_session(session)
 			# Show the token exactly once for developer backup; never persist it.
@@ -248,6 +262,7 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			$Root/Panel/Margin/Scroll/VBox/RecoveryKey.text = String(data.get("recovery_key", ""))
 			status_message = "Player created. Securely copy both your hidden session token and one-time recovery key."
 		"recover":
+			_disconnect()
 			var session := String(data.get("session_token", ""))
 			client.set_session(session)
 			token_edit.text = session
@@ -276,6 +291,12 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			client.get_pvp()
 		"pvp":
 			online_pvp = data.duplicate(true)
+			client.get_progression()
+		"progression", "hall_upgrade":
+			online_progression = data.duplicate(true)
+			upgrade_uncertain = false
+			if action == "hall_upgrade":
+				client.get_rallies()
 		"pvp_history":
 			pvp_history = data.duplicate(true)
 		"rivalry_trophies":
@@ -312,6 +333,8 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 
 
 func _on_failed(action: String, reason: String) -> void:
+	if action == "hall_upgrade":
+		upgrade_uncertain = true
 	status_message = "%s: %s" % [action, reason]
 	_refresh()
 
@@ -319,6 +342,7 @@ func _on_failed(action: String, reason: String) -> void:
 func _refresh() -> void:
 	if client == null:
 		return
+	_refresh_progression()
 	var account := String(online_player.get("display_name", online_player.get("player_id", "No account")))
 	var lines := PackedStringArray([
 		"Server: %s" % client.base_url,
@@ -658,7 +682,7 @@ func _refresh_rallies() -> void:
 		child.queue_free()
 	var heading := Label.new()
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	heading.text = "Online Rally Hall Lv.%d · %d members. Win faction matches to upgrade. Select a plan to prepare; joined members depart automatically." % [int(online_rallies.get("hall_level",1)),int(online_rallies.get("capacity",4))]
+	heading.text = "Online Rally Hall Lv.%d · %d members. Use the war chest to upgrade. Select a plan to prepare; joined members depart automatically." % [int(online_rallies.get("hall_level",1)),int(online_rallies.get("capacity",4))]
 	rally_list.add_child(heading)
 	var radar_level := 0
 	var city = get_parent().get_node_or_null("CityMap")
@@ -694,3 +718,64 @@ func _refresh_rallies() -> void:
 			rally_list.add_child(cancel)
 	alert_button.position = Vector2(maxf(16,(get_viewport().get_visible_rect().size.x-320)/2),100)
 	alert_button.visible = incoming and not panel.visible
+
+
+func _setup_progression() -> void:
+	var body := $Root/Panel/Margin/Scroll/VBox
+	var box := VBoxContainer.new()
+	box.name = "WarProgression"
+	box.add_theme_constant_override("separation", 12)
+	body.add_child(box)
+	body.move_child(box, body.get_node("PvPHeader").get_index()+1)
+	progression_text = Label.new()
+	progression_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(progression_text)
+	hall_upgrade_button = Button.new()
+	hall_upgrade_button.custom_minimum_size.y = 64
+	hall_upgrade_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hall_upgrade_button.pressed.connect(func():
+		if online_progression.is_empty() or upgrade_uncertain:
+			return
+		if client.upgrade_online_hall(int(online_progression.get("hall_level", 1))):
+			upgrade_uncertain = true
+			_refresh_progression())
+	box.add_child(hall_upgrade_button)
+	progression_refresh_button = Button.new()
+	progression_refresh_button.text = "Refresh war chest & command progress"
+	progression_refresh_button.custom_minimum_size.y = 64
+	progression_refresh_button.pressed.connect(func(): client.get_progression())
+	box.add_child(progression_refresh_button)
+
+
+func _refresh_progression() -> void:
+	if progression_text == null:
+		return
+	progression_refresh_button.disabled = client.session_token.is_empty() or client.is_busy()
+	hall_upgrade_button.disabled = true
+	hall_upgrade_button.text = "Upgrade online Rally Hall"
+	if online_progression.is_empty():
+		progression_text.text = "FACTION WAR CHEST\nConnect your online faction to view shared resources and command progress. Completed PvP matches fund upgrades; solo NPC progress stays in your estate."
+		return
+	var state := online_progression
+	var treasury: Dictionary = state.get("treasury", {})
+	var cost: Dictionary = state.get("upgrade_cost", {})
+	var lines := PackedStringArray([
+		"FACTION WAR CHEST · Cash $%d · Supplies %d · Intel %d" % [int(treasury.get("cash",0)),int(treasury.get("supplies",0)),int(treasury.get("intel",0))],
+		"Your Command Rank %d · %d/%d XP to next rank" % [int(state.get("command_rank",1)),int(state.get("rank_xp",0)),int(state.get("rank_xp_required",150))],
+		"Command rank records participation; it adds no combat power.",
+		"Online Rally Hall Lv.%d · %d rally members · 6 faction attacks per match" % [int(state.get("hall_level",1)),int(state.get("capacity",4))],
+		"Today: %d faction payouts and %d personal XP payouts remaining. Resets at 00:00 UTC." % [int(state.get("rewards_remaining",0)),int(state.get("command_rewards_remaining",0))],
+		"Wins, draws and defeats pay after both factions complete the match. Timeouts do not pay."
+	])
+	for reward in state.get("recent_rewards", []):
+		lines.append("%s · $%d / %d Supplies / %d Intel%s" % [String(reward.get("result","")).capitalize(),int(reward.get("cash",0)),int(reward.get("supplies",0)),int(reward.get("intel",0)), " (daily limit reached)" if int(reward.get("cash",0)) == 0 else ""])
+	var blocker := "Refresh progress to confirm the previous upgrade." if upgrade_uncertain else String(state.get("upgrade_blocker",""))
+	if not blocker.is_empty():
+		lines.append(blocker)
+	progression_text.text = "\n".join(lines)
+	if not cost.is_empty():
+		hall_upgrade_button.text = "Upgrade Hall to Lv.%d · $%d + %d Supplies + %d Intel" % [int(state.get("hall_level",1))+1,int(cost.get("cash",0)),int(cost.get("supplies",0)),int(cost.get("intel",0))]
+	else:
+		hall_upgrade_button.text = "Rally Hall fully upgraded"
+	hall_upgrade_button.disabled = client.is_busy() or upgrade_uncertain or not bool(state.get("can_upgrade",false)) or client.session_token.is_empty()
+	hall_upgrade_button.tooltip_text = blocker

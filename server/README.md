@@ -1,6 +1,6 @@
 # Multiplayer foundation (developer preview)
 
-The game currently ships **local Faction simulation**. This folder is the first, **opt-in** backend slice and does not activate live multiplayer in the shipped Windows or Android builds.
+The main estate uses **local Faction simulation**. The **opt-in Faction Hub** connects to this private development backend for shared PvP, timed rallies, a persistent faction war chest, Rally Hall upgrades and personal command XP. It does not automatically activate public multiplayer in shipped builds. Open it from **Faction → Online Faction Hub**; connect a development account in the Account tab.
 
 ## Run locally
 
@@ -15,7 +15,7 @@ The backend uses SQLite and the Python standard library. Session bearer tokens a
 
 Godot adapter: `scripts/faction/OnlineFactionClient.gd`. The game has a separate **Online • Dev** button and screen (`OnlineFactionUI`), connected to this adapter. Run the server locally before opening that screen. Use **Create developer player**, copy the one-time token from the masked session field (the field can be selected/copied), and then refresh your server Faction. You can create a Faction or invite another registered player by their server player ID. On a second game session, paste that player's developer token into **Connect session** and refresh invitations to accept. Sessions remain **memory-only**; the game does not write them into normal saves, so you must keep the token outside the game for future development sessions.
 
-`OnlineFactionUI` is deliberately isolated from the existing `FactionManager`: it shows authoritative server membership, while campaign, offline Faction progress, wars, and resources remain local prototype systems. This is **not a conversion** of existing local Factions.
+`OnlineFactionUI` is deliberately isolated from the existing `FactionManager`: it shows authoritative server membership, while campaign, estate resources and offline Faction progress remain local systems. Online PvP settlement now funds a separate server-owned war chest and command XP. This is **not a conversion** of existing local Factions.
 
 The default API URL is `http://127.0.0.1:8765`, which works only when Godot and the backend run on the same computer. To connect from a phone or another device, deploy a private **HTTPS** development endpoint and configure the client URL; never expose the built-in Python server directly on the internet.
 
@@ -30,9 +30,9 @@ curl -s -X POST http://127.0.0.1:8765/v1/factions -H 'Content-Type: application/
 
 **Do not expose this development server to the public internet.** It lacks TLS termination, an external identity provider, account recovery, brute-force/rate limiting, audited session revocation, monitoring, and database migrations. The player-creation endpoint issues anonymous development identities; this is not a verified identity system. For deployment, use HTTPS/TLS, proper account authentication, request quotas, scalable transactions and migrations, privacy controls, and server-side game state validation.
 
-The API does **not** yet host real-time wars, donations, territory, seasonal rankings, or rewards. None of those local values should be trusted by a future multiplayer server. The local Godot Faction and Dominion managers continue functioning unchanged while this foundation is developed.
+Online wars use HTTP polling and server settlement. Local estate balances, donations, territory and Dominion state are not imported or trusted by the online economy. The local Godot Faction and Dominion managers continue functioning independently.
 
-Next integration: add authenticated sign-in/account recovery, decide how users switch from local to online Faction state, then move war attacks, contribution accounting and season rewards to server-validated transactions before enabling online gameplay.
+Next integration: verified sign-in, production hosting and a server-owned estate progression model before any migration of local estate balances or real-money purchases. Development bearer-key recovery is described below.
 
 ## Shared server-side war prototype
 
@@ -122,6 +122,70 @@ The opt-in Python development API now applies bounded, **per-process** IP reques
 
 `GET /v1/rallies` returns your faction's recent rallies, preparing incoming rallies, and server-derived Rally Hall level/capacity. `POST /v1/rallies` takes `request_id` (32 lowercase hex characters), `strategy` (`muscle`, `convoy`, `intel`) and `preparation` (60, 180 or 300 seconds). The actor must belong to a matched faction. One rally can prepare per faction. `POST /v1/rallies/{id}/join` admits an authenticated member once; `.../cancel` is leader-only.
 
-`python3 -m server.app` runs a one-second departure worker even without connected clients. Rally polling also settles overdue records, so development servers restart safely. Each participant uses an idempotent combat receipt and the existing attack budgets; members who left the faction are skipped. Faction wins upgrade online command capacity separately from offline building saves. This feature is available in the opt-in Online development panel, not a deployed production service. See `docs/estate_districts.md` for gameplay boundaries.
+`python3 -m server.app` runs a one-second departure worker even without connected clients. Rally polling also settles overdue records, so development servers restart safely. Each participant uses an idempotent combat receipt and the existing attack budgets; members who left the faction are skipped. New faction halls start at level 1. Completed faction matches fund the online war chest; the faction leader spends earned resources to upgrade command capacity, separately from offline building saves. This feature is available in the opt-in Online development panel, not a deployed production service. See `docs/estate_districts.md` for gameplay boundaries.
 
 Run the full backend suite with `python3 -m unittest discover -s server -p 'test_*.py'`.
+
+
+## Earned faction progression and Rally Hall upgrades
+
+Completed PvP matches now award a **shared, server-owned war chest** to each
+faction and personal **Command XP** to actual contributors, including attacks
+launched by the timed rally worker. The first **three completed matches per UTC
+day** pay each faction; each player independently has three XP payouts per day.
+After that, matches still count for competition but award no additional resources
+or XP that day. Timeouts and the separate NPC war endpoint do not pay. Diamonds
+are neither awarded nor spent here.
+
+| Result | Faction Cash | Supplies | Intel |
+| --- | ---: | ---: | ---: |
+| Victory | 3,000 | 3 | 2 |
+| Draw | 2,500 | 2 | 2 |
+| Defeat | 2,000 | 2 | 1 |
+
+A contributing player earns 25 XP plus 10 per accepted attack (maximum 55 per
+match). Nonparticipants receive no XP. Each 150 XP adds a Command Rank, a record
+of participation with no damage bonus. The faction treasury is shared; it is not
+credited to each member's offline wallet. The existing season ledger is separate.
+
+| Upgrade | Cost | New rally capacity |
+| --- | --- | ---: |
+| Hall 1 → 2 | 6,000 Cash, 6 Supplies, 2 Intel | 5 |
+| Hall 2 → 3 | 12,000 Cash, 12 Supplies, 4 Intel | 6 |
+
+The base capacity is four. Only the faction leader can spend the chest. The
+six-attack faction and three-attack player limits remain; larger halls let more
+members join one departure. Preparing rallies retain their original capacity.
+Existing development factions retain their previously earned useful capacity,
+capped at six members, on migration. Old matches do not mint historical money.
+
+`GET /v1/progression` returns the authenticated member's faction treasury, hall,
+upgrade cost/blocker, personal rank, daily payout counts and five recent faction
+reward receipts. `POST /v1/progression/hall` accepts only an `expected_level`
+(1 or 2). A stale retry gets HTTP 409 and cannot buy a second level. Clients cannot
+upload balances, XP, rewards, or damage. Upgrades have a persistent audit record.
+
+Settlement, rewards and the final attack commit together in SQLite. Unique
+match/faction and match/player reward keys prevent duplicate payouts, including
+rally retries and server restarts. This uses the existing single-process store
+lock; it is not a multi-worker deployment design. Daily limits constrain earning
+pace but do not replace verified identities or anti-collusion controls.
+
+The Faction Hub **Wars** tab displays the chest, command rank, remaining rewards,
+exact upgrade costs and permission/funds blockers. It reconciles an uncertain
+upgrade by refreshing server state. Disconnecting cancels in-flight requests and
+clears displayed account progress. Automatic rally polling refreshes progression.
+
+Validation:
+
+```sh
+python3 -m unittest server.test_progression -v
+python3 tools/online_progression_probe.py
+# Optional real rendered screenshot with a display server:
+python3 tools/online_progression_probe.py --render
+```
+
+The probe creates two real completed matches in a disposable database, starts a
+loopback HTTP server, and exercises the Godot account → chest → upgrade → rally
+capacity path. It checks retry reconciliation and that offline balances do not
+change. It never prints fixture credentials or uses an existing player save.
