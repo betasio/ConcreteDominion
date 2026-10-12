@@ -70,7 +70,7 @@ text = "Event Marks: 0"
 [node name="Description" type="Label" parent="Root/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 90)
 layout_mode = 2
-text = "Win raids during Blackout Week to earn Event Marks. Harder districts award more Marks. Claim milestone rewards before the event ends."
+text = "Win raids to earn Marks. Harder districts award more. Claim rewards before time runs out."
 autowrap_mode = 2
 
 [node name="MilestonesTitle" type="Label" parent="Root/Panel/Margin/VBox"]

@@ -183,3 +183,34 @@ reviewed for portrait HUD, dialogs and small landscape presentation. The capture
 scene also saves `turf_illustrated_portrait_built_hud.png` for inspection of all
 facilities with the interface visible. Rendering was tested using desktop
 OpenGL with software rendering; physical mobile performance remains unmeasured.
+
+
+## Distinct resources, events and rewards
+
+The resource header now uses thin counters with item names, restrained material
+colours and original illustrated cash, bullion, mechanical parts and intel art.
+Tapping a counter opens inventory with all five actual balances. The second
+shared atlas also supplies a red event gift, an open reward chest, training
+busts and a faction crest, removing the repeated character portrait across
+unrelated shortcuts. Its mipmaps keep the small icons readable. The faction
+banner and chapter strip have separate, lighter frame treatments; circular
+controls retain understated hover feedback instead of rectangular gold plates.
+
+Events now has its own header, live progress track and readable milestone rows.
+Gold highlights an available claim; locked and claimed rows use quieter cards.
+New rows inherit the dialog theme, including large-text changes. Red dots on
+Events and Rewards reflect claimable game state, and the event tooltip shows
+its actual remaining time. No store offers or event availability are invented.
+
+The responsive HUD audit also exercises resource routing and a real event reward
+claim, including removal of the notification and disabling the claimed row.
+Event dialog bounds are covered at all five viewport sizes. New graphical
+captures include `turf_illustrated_portrait_events.png` and
+`turf_illustrated_portrait_rewards.png`. Terrain and building placement are
+unchanged in this interface pass.
+
+Validation for this pass: ProjectResourceAudit (154 resources), SmokeTest,
+GameplayRegressionAudit and the expanded EstateHUDAudit passed. Portrait HUD,
+events, rewards and small-landscape captures were reviewed. Disabled actions
+across dialogs use quieter cards with brighter text, avoiding the repeated
+heavy gold frames while keeping unavailable actions distinguishable.

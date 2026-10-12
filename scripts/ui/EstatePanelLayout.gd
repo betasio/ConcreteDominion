@@ -9,6 +9,18 @@ var tutorial_panel: PanelContainer
 
 func setup(game_root: Node, visibility_callback: Callable, chrome_theme: Theme) -> void:
 	game = game_root
+	# Dynamic rows created after setup inherit the same readable button skin.
+	chrome_theme.set_stylebox("normal","Button",SKIN.frame("button"))
+	chrome_theme.set_stylebox("hover","Button",SKIN.frame("button_gold"))
+	chrome_theme.set_stylebox("pressed","Button",SKIN.frame("button_gold"))
+	var disabled := SKIN.frame("reward").duplicate() as StyleBoxTexture
+	disabled.modulate_color = Color(0.85,0.85,0.85,1.0)
+	chrome_theme.set_stylebox("disabled","Button",disabled)
+	chrome_theme.set_color("font_color","Button",Color("#f4e6c7"))
+	chrome_theme.set_color("font_disabled_color","Button",Color("#a7b0bc"))
+	chrome_theme.set_color("font_hover_color","Button",Color("#17100a"))
+	chrome_theme.set_color("font_pressed_color","Button",Color("#17100a"))
+	chrome_theme.set_font_size("font_size","Button",22 + (3 if game.settings.large_text else 0))
 	for owner_ui in game.get_children():
 		if not owner_ui is CanvasLayer or owner_ui.name in ["EstateHUD","TutorialUI","SecondaryMenu"]:
 			continue
@@ -68,10 +80,12 @@ func _style_content(node: Node) -> void:
 	var extra := 3 if game.settings.large_text else 0
 	if node is PanelContainer:
 		node.set_meta("custom_ui_skin",true)
-		node.add_theme_stylebox_override("panel",SKIN.frame("panel"))
+		node.add_theme_stylebox_override("panel",SKIN.frame("event" if node.has_meta("estate_hero") else "panel"))
 	if node is Label:
 		node.add_theme_font_size_override("font_size",(26 if node.name == "Title" else 22)+extra)
 		node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if node.name == "Title":
+			node.add_theme_color_override("font_color",Color("#e3be73"))
 	elif node is Button:
 		SKIN.style_button(node)
 		node.custom_minimum_size.y = maxf(node.custom_minimum_size.y,68)
@@ -124,6 +138,7 @@ func _fit_dialog(panel: Control, dimensions: Vector2, factor: float, available: 
 
 
 func _refresh_text() -> void:
+	game.get_node("EstateHUD").root.theme.set_font_size("font_size","Button",22 + (3 if game.settings.large_text else 0))
 	for panel in panels:
 		_style_content(panel)
 	_style_content(tutorial_panel)

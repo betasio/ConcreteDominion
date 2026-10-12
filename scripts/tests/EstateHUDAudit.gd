@@ -16,6 +16,25 @@ func _audit() -> void:
 	_check(hud.resources[2].text.begins_with(str(game.loot_inventory.get_count("Parts"))), "Resource header did not update")
 	game.mailbox.add_mail("HUD audit", "Test reward", {"cash": 1})
 	_check(hud.mail_badge.visible and hud.mail_badge.text == str(game.mailbox.get_unclaimed_count()), "Mail count did not update")
+	# Resource counters open the actual balances, and event badges follow claims.
+	hud.resource_cells[0].pressed.emit()
+	_check(hud.inventory.visible and hud.inventory_text.text.contains(str(game.economy.cash)), "Resource counter did not open live balances")
+	hud._close_panels()
+	game.event_manager.event_marks = 5
+	game.event_manager.changed.emit()
+	_check(hud.event_badge.visible, "Earned milestone did not show event badge")
+	hud.right_actions[0].pressed.emit()
+	await get_tree().process_frame
+	_check(game.event_ui.panel.visible, "Events shortcut did not open event panel")
+	var milestone_button: Button = game.event_ui.milestones_box.get_child(0)
+	_check(milestone_button.get_theme_stylebox("normal") is StyleBoxTexture, "Dynamic event row lost its skin")
+	var cash_before: int = game.economy.cash
+	milestone_button.pressed.emit()
+	await get_tree().process_frame
+	_check(game.economy.cash == cash_before+2500 and game.event_manager.claimed_milestones.has(5), "Event row did not claim its actual reward")
+	_check(not hud.event_badge.visible, "Claimed milestone left a stale event badge")
+	_check(game.event_ui.milestones_box.get_child(0).disabled, "Claimed event reward is still enabled")
+	hud._close_panels()
 	game.construction_queue.set_process(false)
 	_check(game.construction_queue.start_upgrade(game.city_map.safehouse), "Could not start live construction for HUD audit")
 	for dimensions in [Vector2i(1280,720), Vector2i(720,1280), Vector2i(360,640), Vector2i(640,360), Vector2i(1080,2340)]:
@@ -38,8 +57,11 @@ func _audit() -> void:
 			var bounds: Rect2 = button.get_global_transform_with_canvas() * Rect2(Vector2.ZERO,button.size)
 			_check(viewport.grow(1).encloses(bounds), "Chrome outside viewport at %s: %s" % [dimensions,button.name])
 			_check(bounds.size.x*physical_scale.x >= 43.9 and bounds.size.y*physical_scale.y >= 43.9, "Touch target smaller than 44px: %s at %s" % [button.name,dimensions])
-		for entry in [[1,"ProgressionUI/Root/Panel"],[3,"HUD/Root/BarracksPanel"],[4,"ProfileUI/Root/Panel"],[5,"FactionUI/Root/Panel"]]:
-			hud.navigation[entry[0]].pressed.emit()
+		for entry in [[1,"ProgressionUI/Root/Panel"],[3,"HUD/Root/BarracksPanel"],[4,"ProfileUI/Root/Panel"],[5,"FactionUI/Root/Panel"],[6,"EventUI/Root/Panel"]]:
+			if entry[0] == 6:
+				hud.right_actions[0].pressed.emit()
+			else:
+				hud.navigation[entry[0]].pressed.emit()
 			await get_tree().process_frame
 			var panel: Control = game.get_node(entry[1])
 			_check(game.city_map.camera.controls_blocked, "Open modal does not block camera")
