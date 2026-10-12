@@ -100,6 +100,14 @@ func _capture() -> void:
 	await _save_frame("turf_illustrated_portrait_built_hud")
 	for layer in visible_layers:
 		layer.visible = false
+	city.camera.call("_set_camera_zoom",city.camera.max_zoom)
+	city.camera.position = Vector2(118,160)
+	city.camera.reset_smoothing()
+	await _save_frame("turf_illustrated_command_close")
+	city.set_view_mode(&"base")
+	city.camera.reset_smoothing()
+	for layer in visible_layers:
+		layer.visible = false
 	for lot in lots:
 		lot.restore_progress(false)
 		lot.set_selected(false)

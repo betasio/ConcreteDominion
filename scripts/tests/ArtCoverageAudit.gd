@@ -74,6 +74,9 @@ func _check_city_art(presentation: PresentationCatalog, city: Node) -> void:
 		if lot == null or lot.art_texture == null:
 			_fail("A buildable facility did not receive approved art at runtime.")
 
+	if city.safehouse.use_illustrated_pad and (city.safehouse.render_3d_art or city.safehouse.has_node("HQHybridVisual")):
+		_fail("The illustrated HQ is obscured by a mismatched 3D foundation.")
+
 	# Verify the in-game texture survived PresentationCatalog.apply_to_city;
 	# existence checks alone failed to catch the old atlas replacing premium art.
 	for building in [city.safehouse, city.hospital, city.barracks]:

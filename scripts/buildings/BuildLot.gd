@@ -2,6 +2,7 @@ class_name BuildLot
 extends Area2D
 
 const FACILITY_VISUALS := preload("res://scripts/buildings/FacilityVisuals.gd")
+const ESTATE_LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 const MAP_LABEL := preload("res://scripts/buildings/MapSiteLabel.gd")
 
 signal selected(lot: BuildLot)
@@ -41,10 +42,7 @@ func configure_illustrated_pad(half_size: Vector2) -> void:
 
 
 func _illustrated_outline() -> PackedVector2Array:
-	return PackedVector2Array([
-		Vector2(0, -illustrated_footprint.y), Vector2(illustrated_footprint.x, 0),
-		Vector2(0, illustrated_footprint.y), Vector2(-illustrated_footprint.x, 0)
-	])
+	return ESTATE_LAYOUT.pad_outline(self,illustrated_footprint)
 
 
 func _ready() -> void:
@@ -212,11 +210,13 @@ func _draw_illustrated_site() -> void:
 		outline.append(outline[0])
 		draw_polyline(outline, Color("#f4d078"), 2.5, true)
 	if is_built:
-		if art_texture != null:
-			var rect := preload("res://scripts/world/IllustratedEstateLayout.gd").building_rect(art_texture.get_size(),illustrated_footprint)
-			draw_texture_rect(art_texture,rect,false)
-		else:
-			FACILITY_VISUALS.draw_facility(self, building_name, level)
+		# The terrain already contains the gate joined exactly to its wall.
+		# Keep its live selection/upgrade state without drawing a second gate.
+		if building_name != "Estate Gate":
+			if art_texture != null:
+				ESTATE_LAYOUT.draw_building(self,art_texture,illustrated_footprint)
+			else:
+				FACILITY_VISUALS.draw_facility(self,building_name,level)
 	else:
 		var gold := Color("#f5d69c")
 		draw_circle(Vector2(0, -4), 18.0, Color("#14242b", 0.94))
@@ -236,7 +236,11 @@ func _draw_illustrated_site() -> void:
 		title += " · " + status
 	var badge_y := 18.0 if not is_built else illustrated_footprint.y*0.45
 	if building_name == "Estate Gate":
-		badge_y = -156.0
+		badge_y = -120.0
+	elif name == &"RallyHall":
+		badge_y = -26.0
+	elif name == &"BuildLotA" and is_built:
+		badge_y = -22.0
 	MAP_LABEL.draw_badge(self,title,badge_y,16)
 
 

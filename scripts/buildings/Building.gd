@@ -39,7 +39,7 @@ func configure_illustrated_pad(half_size: Vector2) -> void:
 
 
 func _pad_outline() -> PackedVector2Array:
-	return PackedVector2Array([Vector2(0,-illustrated_footprint.y),Vector2(illustrated_footprint.x,0),Vector2(0,illustrated_footprint.y),Vector2(-illustrated_footprint.x,0)])
+	return ESTATE_LAYOUT.pad_outline(self,illustrated_footprint)
 
 
 func _ready() -> void:
@@ -102,8 +102,10 @@ func _draw() -> void:
 		# rather than drifting when different source aspect ratios are imported.
 		var rendered_size := size * scale_factor
 		if not render_3d_art:
-			var rect := ESTATE_LAYOUT.building_rect(size,illustrated_footprint) if use_illustrated_pad else Rect2(Vector2(-rendered_size.x * 0.5, 38.0 - rendered_size.y), rendered_size)
-			draw_texture_rect(art_texture, rect, false)
+			if use_illustrated_pad:
+				ESTATE_LAYOUT.draw_building(self,art_texture,illustrated_footprint)
+			else:
+				draw_texture_rect(art_texture,Rect2(Vector2(-rendered_size.x * 0.5,38.0-rendered_size.y),rendered_size),false)
 		if use_illustrated_pad and (is_selected or is_constructing):
 			var outline := _pad_outline()
 			outline.append(outline[0])

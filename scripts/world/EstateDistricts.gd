@@ -57,7 +57,7 @@ func configure(lot: BuildLot, kind: String, restoring: bool = false) -> bool:
 	lot.base_upgrade_duration = 90
 	lot.description = effect_summary(kind,1)
 	var art: String = {"cash":"garage","supplies":"scrapyard","intel":"data_hub"}.get(kind,kind)
-	lot.art_texture = preload("res://scripts/buildings/EstateFacadeArt.gd").texture(art)
+	lot.art_texture = preload("res://scripts/buildings/EstateFacadeArt.gd").texture(art,kind == "rally")
 	lot.queue_redraw()
 	return true
 

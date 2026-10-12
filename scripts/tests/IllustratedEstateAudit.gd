@@ -101,8 +101,17 @@ func _audit() -> void:
 
 
 func _check_pad_hit(city: Node2D, lot: BuildLot) -> void:
-	# Include the edge of the stone pad, well outside the small plus marker.
-	for offset in [Vector2.ZERO, Vector2(lot.illustrated_footprint.x * 0.7, 0), Vector2(0, -lot.illustrated_footprint.y * 0.7)]:
+	# Independent samples measured inside the painted courtyards. A rotated
+	# plot does not contain the tips of the former axis-aligned diamond.
+	var samples := {
+		&"BuildLotA": [Vector2(775,270),Vector2(735,266),Vector2(815,270),Vector2(781,247)],
+		&"BuildLotB": [Vector2(346,406),Vector2(291,407),Vector2(414,415),Vector2(320,388)],
+		&"BuildLotC": [Vector2(831,697),Vector2(770,680),Vector2(901,723)],
+		&"BuildLotD": [Vector2(815,418),Vector2(755,408),Vector2(870,419),Vector2(831,391)],
+	}
+	var layout = preload("res://scripts/world/IllustratedEstateLayout.gd")
+	for pixel in samples[lot.name]:
+		var offset: Vector2 = layout.artwork_to_world(pixel) - lot.position
 		var query := PhysicsPointQueryParameters2D.new()
 		query.position = lot.to_global(offset)
 		query.collide_with_areas = true

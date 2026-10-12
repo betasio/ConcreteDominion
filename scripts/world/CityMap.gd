@@ -107,7 +107,9 @@ func _ready() -> void:
 	midtown_exchange.position = iso_to_screen(Vector2i(4, 10))
 	industrial_depot.position = iso_to_screen(Vector2i(22, 17))
 
-	if ProjectSettings.get_setting("concrete_dominion/enable_3d_safehouse", true):
+	# The illustrated HQ uses the matching terrace art; keep the 3D model for
+	# the legacy map, where its original viewing angle and foundation belong.
+	if ProjectSettings.get_setting("concrete_dominion/enable_3d_safehouse", true) and not safehouse.use_illustrated_pad:
 		var hybrid := Node2D.new()
 		hybrid.name = "HQHybridVisual"
 		hybrid.set_script(HQ_HYBRID_SCRIPT)
