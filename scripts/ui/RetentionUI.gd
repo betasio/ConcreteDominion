@@ -3,6 +3,8 @@ extends CanvasLayer
 
 var retention: RetentionManager
 var text_catalog: LocalizedText
+var production: ResourceProductionManager
+const REWARD_CHOICES := ["cash","supplies","intel"]
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -10,6 +12,10 @@ var text_catalog: LocalizedText
 @onready var login_button: Button = $Root/Panel/Margin/VBox/ClaimLogin
 @onready var comeback_button: Button = $Root/Panel/Margin/VBox/ClaimComeback
 @onready var daily_label: Label = $Root/Panel/Margin/VBox/Daily
+@onready var daily_choice: OptionButton = $Root/Panel/Margin/VBox/DailyChoice
+@onready var daily_preview: Label = $Root/Panel/Margin/VBox/DailyPreview
+@onready var collect_button: Button = $Root/Panel/Margin/VBox/CollectProduction
+@onready var collection_result: Label = $Root/Panel/Margin/VBox/CollectionResult
 @onready var daily_button: Button = $Root/Panel/Margin/VBox/ClaimDaily
 @onready var weekly_label: Label = $Root/Panel/Margin/VBox/Weekly
 @onready var weekly_button: Button = $Root/Panel/Margin/VBox/ClaimWeekly
@@ -19,9 +25,16 @@ var text_catalog: LocalizedText
 @onready var tutorial_label: Label = $Root/TutorialBanner/Label
 
 
-func setup(retention_manager: RetentionManager, localized_text: LocalizedText) -> void:
+func setup(retention_manager: RetentionManager, localized_text: LocalizedText, resource_production: ResourceProductionManager = null) -> void:
 	retention = retention_manager
 	text_catalog = localized_text
+	production = resource_production
+	for title in ["Cash reserve","Supply shipment","Intel dossier"]:
+		daily_choice.add_item(title)
+	daily_choice.item_selected.connect(func(_index): _refresh())
+	collect_button.pressed.connect(_collect_production)
+	if production != null:
+		production.changed.connect(_refresh)
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	retention.changed.connect(_refresh)
 
@@ -55,7 +68,7 @@ func _claim_comeback() -> void:
 func _claim_daily() -> void:
 	var daily := retention.get_daily_status()
 	if not bool(daily["claimed"]):
-		retention.claim_daily_objective_reward()
+		retention.claim_daily_objective_reward(REWARD_CHOICES[daily_choice.selected])
 	elif not bool(daily["mastery_claimed"]):
 		retention.claim_daily_mastery_reward()
 	_refresh()
@@ -104,41 +117,37 @@ func _refresh() -> void:
 			int(reward.get("xp", 0))
 		]
 
-	daily_label.text = "DAILY CONTRACTS • complete any %d of 3\nRecruit: %d/%d   Raid win: %d/%d   Build/Upgrade: %d/%d\nContracts complete: %d/3" % [
-		int(daily["required_contracts"]),
-		int(daily["recruit"]),
-		int(daily["recruit_goal"]),
-		int(daily["raid_win"]),
-		int(daily["raid_goal"]),
-		int(daily["construction"]),
-		int(daily["construction_goal"]),
-		int(daily["completed_contracts"])
-	]
+	daily_label.text = "DAILY CONTRACTS • %d/4 completed\nRecruit troops: %d/%d\nWin NPC raids: %d/%d\nBuild or upgrade: %d/%d\nCollect Supplies / Intel: %d/%d\nAny 2 unlock the reward; any 3 unlock the bonus.\nResets at 00:00 UTC." % [
+		int(daily.completed_contracts),int(daily.recruit),int(daily.recruit_goal),
+		int(daily.raid_win),int(daily.raid_goal),int(daily.construction),int(daily.construction_goal),
+		int(daily.production),int(daily.production_goal)]
+	daily_choice.disabled = bool(daily.claimed)
+	if bool(daily.claimed):
+		daily_choice.select(REWARD_CHOICES.find(str(daily.reward_choice)))
+	var reward := retention.get_daily_reward(REWARD_CHOICES[daily_choice.selected])
+	var reward_loot: Dictionary = reward.loot
+	daily_preview.text = ("Claimed package" if bool(daily.claimed) else "Choose your reward") + ": $%s + %s\nEvery choice includes 3 Diamonds + 50 XP.\n3-contract bonus: $1,500 + 2 Diamonds + 25 XP." % [
+		_format_number(int(reward.cash)),("%d Supplies" % int(reward_loot.Parts)) if reward_loot.has("Parts") else ("%d Intel" % int(reward_loot.Intel))]
+	collect_button.disabled = production == null or (floori(production.parts_bank) + floori(production.intel_bank) == 0 and (production.districts == null or floori(production.districts.cash_bank) == 0))
 	if not bool(daily["claimed"]):
 		daily_button.text = "Claim Daily Contract Reward"
 		daily_button.disabled = not bool(daily["complete"])
 	elif not bool(daily["mastery_claimed"]):
-		daily_button.text = "Claim 3/3 Mastery Bonus"
+		daily_button.text = "Claim 3-contract Bonus"
 		daily_button.disabled = not bool(daily["mastery_complete"])
 	else:
 		daily_button.text = "Daily Rewards Claimed"
 		daily_button.disabled = true
 
-	weekly_label.text = "WEEKLY CONTRACTS • complete any %d of 3\nRecruit: %d/%d   Raid wins: %d/%d   Build/Upgrade: %d/%d\nContracts complete: %d/3" % [
-		int(weekly["required_contracts"]),
-		int(weekly["recruit"]),
-		int(weekly["recruit_goal"]),
-		int(weekly["raid_win"]),
-		int(weekly["raid_goal"]),
-		int(weekly["construction"]),
-		int(weekly["construction_goal"]),
-		int(weekly["completed_contracts"])
-	]
+	weekly_label.text = "WEEKLY CONTRACTS • %d/4 completed\nRecruit troops: %d/%d\nWin NPC raids: %d/%d\nBuild or upgrade: %d/%d\nCollect Supplies / Intel: %d/%d\nAny 2: $10,000 + 15 Diamonds + 200 XP\n+ 3 Supplies, 2 Intel, 1 Contraband.\nAny 3 bonus: $5,000 + 5 Diamonds + 100 XP + 1 Intel." % [
+		int(weekly.completed_contracts),int(weekly.recruit),int(weekly.recruit_goal),
+		int(weekly.raid_win),int(weekly.raid_goal),int(weekly.construction),int(weekly.construction_goal),
+		int(weekly.production),int(weekly.production_goal)]
 	if not bool(weekly["claimed"]):
 		weekly_button.text = "Claim Weekly Contract Reward"
 		weekly_button.disabled = not bool(weekly["complete"])
 	elif not bool(weekly["mastery_claimed"]):
-		weekly_button.text = "Claim Weekly 3/3 Mastery Bonus"
+		weekly_button.text = "Claim Weekly 3-contract Bonus"
 		weekly_button.disabled = not bool(weekly["mastery_complete"])
 	else:
 		weekly_button.text = "Weekly Rewards Claimed"
@@ -152,6 +161,17 @@ func _refresh() -> void:
 
 	achievements_label.text = "ACHIEVEMENTS\n" + "\n".join(retention.get_achievement_lines())
 	tutorial_label.text = retention.get_tutorial_hint()
+
+
+func _collect_production() -> void:
+	if production == null:
+		return
+	var collected := production.collect()
+	if collected.is_empty():
+		collection_result.text = "No production stored yet. Scrapyards, Data Hubs and resource districts produce while you are away."
+	else:
+		collection_result.text = "Collected $%s • %d Supplies • %d Intel" % [_format_number(int(collected.get("Cash",0))),int(collected.get("Parts",0)),int(collected.get("Intel",0))]
+	_refresh()
 
 
 func _format_number(value: int) -> String:

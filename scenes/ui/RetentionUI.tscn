@@ -90,6 +90,22 @@ text = "Welcome Back Reward"
 layout_mode = 2
 text = "DAILY OBJECTIVES"
 
+[node name="DailyChoice" type="OptionButton" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="DailyPreview" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+
+[node name="CollectProduction" type="Button" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+text = "Collect estate production"
+
+[node name="CollectionResult" type="Label" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = "Scrapyard, Data Hub and resource districts produce Supplies and Intel while you are away. Collect stored goods to progress."
+
 [node name="ClaimDaily" type="Button" parent="Root/Panel/Margin/VBox"]
 layout_mode = 2
 text = "Claim Daily Reward"

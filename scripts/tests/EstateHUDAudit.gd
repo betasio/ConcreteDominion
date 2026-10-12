@@ -36,6 +36,18 @@ func _audit() -> void:
 	_check(not hud.event_badge.visible, "Claimed milestone left a stale event badge")
 	_check(game.event_ui.milestones_box.get_child(0).disabled, "Claimed event reward is still enabled")
 	hud._close_panels()
+	# Exercise the live production → contract → chosen payout wiring.
+	game.retention.daily_claimed = false
+	game.retention.daily_progress = {"recruit":3,"raid_win":0,"construction":0,"production":0}
+	game.resource_production.parts_bank = 2
+	game.resource_production.changed.emit()
+	game.retention_ui.daily_choice.select(1)
+	game.retention_ui.daily_choice.item_selected.emit(1)
+	game.retention_ui.collect_button.pressed.emit()
+	_check(game.retention.get_daily_status().production == 2 and not game.retention_ui.daily_button.disabled,"Production contract did not update the live claim button")
+	var supplies_before: int = game.loot_inventory.get_count("Parts")
+	game.retention_ui.daily_button.pressed.emit()
+	_check(game.loot_inventory.get_count("Parts") == supplies_before+3 and game.retention_ui.daily_choice.disabled,"Chosen supply shipment was not paid or locked after claiming")
 	game.construction_queue.set_process(false)
 	_check(game.construction_queue.start_upgrade(game.city_map.safehouse), "Could not start live construction for HUD audit")
 	for dimensions in [Vector2i(1280,720), Vector2i(720,1280), Vector2i(360,640), Vector2i(640,360), Vector2i(1080,2340)]:

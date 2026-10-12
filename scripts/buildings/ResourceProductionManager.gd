@@ -2,6 +2,7 @@ class_name ResourceProductionManager
 extends Node
 
 signal changed
+signal collected(resources: Dictionary)
 
 const CAP_SECONDS := 6.0 * 60.0 * 60.0
 
@@ -67,7 +68,9 @@ func collect() -> Dictionary:
 	intel_bank -= intel
 	elapsed = 0.0
 	changed.emit()
-	return {"Parts": parts, "Intel": intel, "Cash":cash}
+	var resources := {"Parts":parts,"Intel":intel,"Cash":cash}
+	collected.emit(resources)
+	return resources
 
 
 func get_summary() -> String:

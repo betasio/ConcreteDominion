@@ -45,3 +45,31 @@ production wallet. Do not connect real payments to a client-only balance.
 `ResourceEconomyAudit` verifies legacy balances, display mapping, free login,
 daily and weekly rewards, duplicate-claim prevention, crafting payouts and
 billing remaining disabled. It runs in CI.
+
+## Flexible empire contracts
+
+Daily and weekly rewards now count four activities: recruitment, NPC raid wins,
+construction, and collecting produced Supplies/Intel. Complete **any two** for
+the main reward or **any three** for the mastery bonus. Production requires two
+collected goods daily and ten weekly, combined across Supplies and Intel from
+core facilities or expansion districts. Collection works after offline income;
+empty taps, Cash collections, raid loot and reward grants do not count. This
+provides a peaceful route and an alternative once construction is exhausted.
+
+The daily reward offers one fixed package, shown before claiming:
+
+| Choice | Cash | Supplies | Intel | Diamonds | XP |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cash reserve (original payout) | 2,500 | 1 | 0 | 3 | 50 |
+| Supply shipment | 1,000 | 3 | 0 | 3 | 50 |
+| Intel dossier | 1,000 | 0 | 2 | 3 | 50 |
+
+The choice trades Cash for ordinary materials. No paid rerolls or random rewards
+are involved. The mastery and weekly payouts, login schedule and maximum free
+Diamond budget remain unchanged. Rewards exposes the full payout and an estate
+collection button. Claims refresh their period immediately, preserve the chosen
+package in saves, and reject duplicate or invalid claims. Old saves default to
+the original Cash package and zero production progress.
+
+This is a local prototype economy. Real-money billing remains disabled; these
+changes improve free-player choice without adding a paid progression gate.

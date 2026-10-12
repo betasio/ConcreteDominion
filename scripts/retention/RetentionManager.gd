@@ -19,15 +19,18 @@ var weekly_period: int = -1
 var daily_progress: Dictionary = {
 	"recruit": 0,
 	"raid_win": 0,
-	"construction": 0
+	"construction": 0,
+	"production": 0
 }
 
 var weekly_progress: Dictionary = {
 	"recruit": 0,
 	"raid_win": 0,
-	"construction": 0
+	"construction": 0,
+	"production": 0
 }
 
+var daily_reward_choice := "cash"
 var daily_claimed := false
 var weekly_claimed := false
 var daily_mastery_claimed := false
@@ -55,7 +58,8 @@ func setup(
 	player_progression: PlayerProgression,
 	recruitment: RecruitmentQueue,
 	raid_battle: RaidBattle,
-	construction: ConstructionQueue = null
+	construction: ConstructionQueue = null,
+	production: ResourceProductionManager = null
 ) -> void:
 	economy = player_economy
 	loot = loot_inventory
@@ -65,6 +69,8 @@ func setup(
 	raid_battle.battle_resolved.connect(_on_battle_resolved)
 	if construction != null:
 		construction.construction_completed.connect(_on_construction_completed)
+	if production != null:
+		production.collected.connect(_on_production_collected)
 	progression.specialist_upgraded.connect(_on_specialist_upgraded)
 	progression.leveled_up.connect(_on_level_up)
 
@@ -100,6 +106,8 @@ func _refresh_periods() -> void:
 		daily_progress["recruit"] = 0
 		daily_progress["raid_win"] = 0
 		daily_progress["construction"] = 0
+		daily_progress["production"] = 0
+		daily_reward_choice = "cash"
 		daily_claimed = false
 		daily_mastery_claimed = false
 		did_change = true
@@ -109,6 +117,7 @@ func _refresh_periods() -> void:
 		weekly_progress["recruit"] = 0
 		weekly_progress["raid_win"] = 0
 		weekly_progress["construction"] = 0
+		weekly_progress["production"] = 0
 		weekly_claimed = false
 		weekly_mastery_claimed = false
 		did_change = true
@@ -217,6 +226,7 @@ func _get_login_reward(cycle_day: int) -> Dictionary:
 
 
 func get_daily_status() -> Dictionary:
+	_refresh_periods()
 	var completed := _daily_completed_contracts()
 	return {
 		"recruit": int(daily_progress["recruit"]),
@@ -225,6 +235,10 @@ func get_daily_status() -> Dictionary:
 		"raid_goal": 1,
 		"construction": int(daily_progress["construction"]),
 		"construction_goal": 1,
+		"production": int(daily_progress.get("production",0)),
+		"production_goal": 2,
+		"reward_choice": daily_reward_choice,
+		"total_contracts": 4,
 		"completed_contracts": completed,
 		"required_contracts": 2,
 		"complete": completed >= 2,
@@ -235,6 +249,7 @@ func get_daily_status() -> Dictionary:
 
 
 func get_weekly_status() -> Dictionary:
+	_refresh_periods()
 	var completed := _weekly_completed_contracts()
 	return {
 		"recruit": int(weekly_progress["recruit"]),
@@ -243,6 +258,9 @@ func get_weekly_status() -> Dictionary:
 		"raid_goal": 5,
 		"construction": int(weekly_progress["construction"]),
 		"construction_goal": 3,
+		"production": int(weekly_progress.get("production",0)),
+		"production_goal": 10,
+		"total_contracts": 4,
 		"completed_contracts": completed,
 		"required_contracts": 2,
 		"complete": completed >= 2,
@@ -260,6 +278,8 @@ func _daily_completed_contracts() -> int:
 		count += 1
 	if int(daily_progress["construction"]) >= 1:
 		count += 1
+	if int(daily_progress.get("production",0)) >= 2:
+		count += 1
 	return count
 
 
@@ -271,25 +291,34 @@ func _weekly_completed_contracts() -> int:
 		count += 1
 	if int(weekly_progress["construction"]) >= 3:
 		count += 1
+	if int(weekly_progress.get("production",0)) >= 10:
+		count += 1
 	return count
 
 
-func claim_daily_objective_reward() -> bool:
-	if daily_claimed or _daily_completed_contracts() < 2:
-		return false
+func get_daily_reward(choice: String = "cash") -> Dictionary:
+	# Fixed packages: no random drops, rerolls or premium spending requirement.
+	match choice:
+		"cash": return {"cash":2500,"gold":3,"xp":50,"loot":{"Parts":1}}
+		"supplies": return {"cash":1000,"gold":3,"xp":50,"loot":{"Parts":3}}
+		"intel": return {"cash":1000,"gold":3,"xp":50,"loot":{"Intel":2}}
+	return {}
 
+
+func claim_daily_objective_reward(choice: String = "cash") -> bool:
+	_refresh_periods()
+	var reward := get_daily_reward(choice)
+	if daily_claimed or _daily_completed_contracts() < 2 or reward.is_empty():
+		return false
 	daily_claimed = true
-	_apply_reward({
-		"cash": 2500,
-		"gold": 3,
-		"xp": 50,
-		"loot": {"Parts": 1}
-	})
+	daily_reward_choice = choice
+	_apply_reward(reward)
 	changed.emit()
 	return true
 
 
 func claim_daily_mastery_reward() -> bool:
+	_refresh_periods()
 	if daily_mastery_claimed or _daily_completed_contracts() < 3:
 		return false
 
@@ -304,6 +333,7 @@ func claim_daily_mastery_reward() -> bool:
 
 
 func claim_weekly_objective_reward() -> bool:
+	_refresh_periods()
 	if weekly_claimed or _weekly_completed_contracts() < 2:
 		return false
 
@@ -319,6 +349,7 @@ func claim_weekly_objective_reward() -> bool:
 
 
 func claim_weekly_mastery_reward() -> bool:
+	_refresh_periods()
 	if weekly_mastery_claimed or _weekly_completed_contracts() < 3:
 		return false
 
@@ -365,6 +396,16 @@ func craft_syndicate_crate() -> bool:
 	_apply_reward({"cash": 12500, "xp": 150})
 	changed.emit()
 	return true
+
+
+func _on_production_collected(resources: Dictionary) -> void:
+	_refresh_periods()
+	var amount := maxi(0,int(resources.get("Parts",0))) + maxi(0,int(resources.get("Intel",0)))
+	if amount == 0:
+		return
+	daily_progress["production"] = mini(2,int(daily_progress.get("production",0))+amount)
+	weekly_progress["production"] = mini(10,int(weekly_progress.get("production",0))+amount)
+	changed.emit()
 
 
 func _on_recruitment_completed(_troop_type: StringName, amount: int) -> void:
@@ -497,6 +538,7 @@ func get_save_data() -> Dictionary:
 		"weekly_period": weekly_period,
 		"daily_progress": daily_progress.duplicate(true),
 		"weekly_progress": weekly_progress.duplicate(true),
+		"daily_reward_choice": daily_reward_choice,
 		"daily_claimed": daily_claimed,
 		"weekly_claimed": weekly_claimed,
 		"daily_mastery_claimed": daily_mastery_claimed,
@@ -517,6 +559,9 @@ func load_save_data(data: Dictionary) -> void:
 	daily_period = int(data.get("daily_period", daily_period))
 	weekly_period = int(data.get("weekly_period", weekly_period))
 	daily_claimed = bool(data.get("daily_claimed", daily_claimed))
+	daily_reward_choice = str(data.get("daily_reward_choice","cash"))
+	if get_daily_reward(daily_reward_choice).is_empty():
+		daily_reward_choice = "cash"
 	weekly_claimed = bool(data.get("weekly_claimed", weekly_claimed))
 	daily_mastery_claimed = bool(data.get("daily_mastery_claimed", daily_mastery_claimed))
 	weekly_mastery_claimed = bool(data.get("weekly_mastery_claimed", weekly_mastery_claimed))
@@ -533,12 +578,14 @@ func load_save_data(data: Dictionary) -> void:
 		daily_progress["recruit"] = int(saved_daily.get("recruit", 0))
 		daily_progress["raid_win"] = int(saved_daily.get("raid_win", 0))
 		daily_progress["construction"] = int(saved_daily.get("construction", 0))
+		daily_progress["production"] = clampi(int(saved_daily.get("production",0)),0,2)
 
 	var saved_weekly = data.get("weekly_progress", {})
 	if saved_weekly is Dictionary:
 		weekly_progress["recruit"] = int(saved_weekly.get("recruit", 0))
 		weekly_progress["raid_win"] = int(saved_weekly.get("raid_win", 0))
 		weekly_progress["construction"] = int(saved_weekly.get("construction", 0))
+		weekly_progress["production"] = clampi(int(saved_weekly.get("production",0)),0,10)
 
 	var saved_achievements = data.get("achievements", {})
 	if saved_achievements is Dictionary:
