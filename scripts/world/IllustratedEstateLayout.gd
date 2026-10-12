@@ -56,14 +56,15 @@ const PAD_CORNERS := {
 	&"EstateGate": [Vector2(514,534),Vector2(646,534),Vector2(646,598),Vector2(514,598)],
 }
 # Width in world units, vertical ground anchor in sprite UV, local offset, mirror.
-# Mirroring turns left-bank entrances toward their east-side stairs.
+# Optional final Vector2 sets ground-plane shear and elevation scale while
+# retaining upright walls. It matches each upper courtyard edge direction.
 const ART_FITS := {
 	&"Safehouse": [245.0, 0.86, Vector2(0,4), false],
-	&"RallyHall": [244.0, 0.76, Vector2(-3,4), true],
-	&"BuildLotA": [239.0, 0.76, Vector2(0,14), false],
-	&"BuildLotB": [242.0, 0.79, Vector2(1,14), true],
-	&"BuildLotD": [232.0, 0.79, Vector2(-5,10), false],
-	&"Hospital": [204.0, 0.82, Vector2(0,8), false],
+	&"RallyHall": [208.0, 0.64, Vector2(-5,10), false, Vector2(-0.30,1.0)],
+	&"BuildLotA": [204.0, 0.62, Vector2(-14,18), false, Vector2(0.30,1.0)],
+	&"BuildLotB": [218.0, 0.70, Vector2(8,10), false, Vector2(-0.35,1.15)],
+	&"BuildLotD": [226.0, 0.675, Vector2(-8,-6), false, Vector2(0.34,1.1)],
+	&"Hospital": [194.0, 0.82, Vector2(8,18), false],
 	&"Barracks": [208.0, 0.78, Vector2(0,8), false],
 	&"BuildLotC": [208.0, 0.78, Vector2(0,8), false],
 }
@@ -83,6 +84,10 @@ static func draw_building(site: Node2D, texture: Texture2D, half_size: Vector2) 
 	var fit: Array = ART_FITS[site.name]
 	var rendered := texture.get_size() * (float(fit[0]) / texture.get_width())
 	var rect := Rect2(-rendered * Vector2(0.5,float(fit[1])),rendered)
-	site.draw_set_transform(fit[2],0.0,Vector2(-1,1) if fit[3] else Vector2.ONE)
-	site.draw_texture_rect(texture,rect,false)
+	if fit.size() > 4:
+		var projection: Vector2 = fit[4]
+		site.draw_set_transform_matrix(Transform2D(Vector2(1,projection.x),Vector2(0,projection.y),fit[2]))
+	else:
+		site.draw_set_transform(fit[2],0.0,Vector2(-1,1) if fit[3] else Vector2.ONE)
+	preload("res://scripts/buildings/EstateFacadeArt.gd").draw_fitted(site,texture,rect)
 	site.draw_set_transform(Vector2.ZERO)
