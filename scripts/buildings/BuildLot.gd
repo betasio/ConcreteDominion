@@ -105,7 +105,7 @@ func get_effect_summary() -> String:
 		"Scrapyard":
 			return "Supplies production +%d/hr" % (level * 2)
 		"Data Hub":
-			return "Intel production +%d/hr" % level
+			return "Intel +%d/hr • Radar: %s" % [level,"incoming faction identity" if level == 1 else "incoming faction, strategy and members"]
 		_:
 			return "Facility Lv.%d operational." % level
 

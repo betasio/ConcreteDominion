@@ -147,6 +147,27 @@ func _capture() -> void:
 	city.camera.position = city.lot_d.position
 	city.camera.reset_smoothing()
 	await _save_frame("turf_illustrated_portrait_close")
+	for layer in visible_layers:
+		layer.visible = true
+	game.tutorial_ui.visible = false
+	city.set_view_mode(&"base")
+	city.camera.reset_smoothing()
+	game.get_node("DistrictUI").open_panel()
+	await _save_frame("turf_illustrated_district_menu")
+	estate_hud._close_panels()
+	game.mission_tracker.missions["chapter_2_complete"]["completed"] = true
+	game.mission_tracker.changed.emit()
+	game.tutorial.skip_tutorial()
+	game.construction_queue._process(10000)
+	var districts = city.get_node("EstateDistricts")
+	for i in range(3):
+		var plot = districts.plots[i+2]
+		districts.configure(plot,["cash","hospital","barracks"][i])
+		plot.restore_progress(true,2)
+	await _save_frame("turf_illustrated_district_developed")
+	game.get_node("DistrictUI").open_plot(districts.plots[3])
+	await _save_frame("turf_illustrated_district_upgrade")
+	estate_hud._close_panels()
 	# State changes can trigger reward tones; stop their generator playback
 	# before tearing down the screenshot scene, even with the Dummy driver.
 	for player in game.find_children("*", "AudioStreamPlayer", true, false):

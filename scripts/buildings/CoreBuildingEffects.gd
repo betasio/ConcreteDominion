@@ -3,6 +3,7 @@ extends Node
 
 signal changed
 
+var districts: Node
 var safehouse: Building
 var clinic: Building
 var barracks: Building
@@ -20,6 +21,9 @@ func setup(
 	barracks = barracks_building
 	balance = game_balance
 
+	if districts != null:
+		for plot in districts.plots:
+			plot.changed.connect(_emit_changed)
 	for building in [safehouse, clinic, barracks]:
 		if building != null:
 			building.changed.connect(_emit_changed)
@@ -46,22 +50,27 @@ func get_clinic_time_multiplier() -> float:
 
 func get_clinic_slots() -> int:
 	var level := clinic.level if clinic != null else 1
-	return clampi(1 + int(floor(float(level - 1) / 2.0)), 1, 3)
+	return clampi(1 + int(floor(float(level - 1) / 2.0)), 1, 3) + (districts.built_count("hospital") if districts != null else 0)
 
 
 func get_enforcer_training_multiplier() -> float:
 	var level := barracks.level if barracks != null else 1
 	var step := _value("barracks_enforcer_training_reduction_per_level", 0.05)
-	return maxf(_value("barracks_min_training_multiplier", 0.70), 1.0 - float(level - 1) * step)
+	return maxf(_value("barracks_min_training_multiplier", 0.70), 1.0 - float(level - 1) * step - (0.03*districts.total_levels("barracks") if districts != null else 0.0))
 
 
 func get_recruitment_queue_capacity() -> int:
 	var level := barracks.level if barracks != null else 1
-	if level >= 5:
-		return 3
-	if level >= 3:
-		return 2
-	return 1
+	return (3 if level >= 5 else (2 if level >= 3 else 1)) + (districts.built_count("barracks") if districts != null else 0)
+
+func get_hospital_capacity() -> int:
+	return 25*((clinic.level if clinic != null else 1) + (districts.total_levels("hospital") if districts != null else 0))
+
+func get_training_capacity() -> int:
+	return 10*((barracks.level if barracks != null else 1) + (districts.total_levels("barracks") if districts != null else 0))
+
+func get_gate_defence() -> float:
+	return 0.04*districts.gate.level if districts != null else 0.0
 
 
 func get_building_effect_summary(building: Building) -> String:

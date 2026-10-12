@@ -144,6 +144,10 @@ func setup(
 	$Root/HospitalPanel/Margin/VBox/Close.pressed.connect(_close_hospital)
 	finish_button.pressed.connect(_finish_construction)
 
+	var batch := Button.new()
+	batch.name = "RecruitBatch"
+	recruit_enforcer_button.get_parent().add_child(batch)
+	batch.pressed.connect(func(): _recruit(&"Enforcer",core_effects.get_training_capacity()))
 	recruit_enforcer_button.pressed.connect(func(): _recruit(&"Enforcer", 5))
 	recruit_driver_button.pressed.connect(func(): _recruit(&"Driver", 3))
 	recruit_spy_button.pressed.connect(func(): _recruit(&"Spy", 3))
@@ -388,7 +392,7 @@ func _refresh_hospital() -> void:
 
 	if hospital_queue.wounded_queue.is_empty():
 		var slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
-		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d" % slots
+		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d • Beds: %d\nOverflow casualties lost: %d" % [slots,core_effects.get_hospital_capacity() if core_effects != null else 25,hospital_queue.overflow_losses]
 		cost_label.text = "Instant heal cost: 0 Diamonds"
 		instant_button.disabled = true
 		return
@@ -405,7 +409,7 @@ func _refresh_hospital() -> void:
 		])
 
 	var clinic_slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
-	queue_label.text = "Treatment slots: %d\n%s" % [clinic_slots, "\n".join(lines)]
+	queue_label.text = "Treatment slots: %d • Beds: %d/%d\nOverflow casualties lost: %d\n%s" % [clinic_slots,hospital_queue.get_occupied_beds(),core_effects.get_hospital_capacity() if core_effects != null else 25,hospital_queue.overflow_losses,"\n".join(lines)]
 	var cost := hospital_queue.get_instant_heal_cost()
 	cost_label.text = "Instant heal cost: %d Diamonds" % cost
 	instant_button.disabled = economy.gold < cost
@@ -449,6 +453,11 @@ func _refresh_recruitment() -> void:
 		troop_roster.get_count(&"Spy")
 	]
 
+	var batch := recruit_enforcer_button.get_parent().get_node_or_null("RecruitBatch") as Button
+	if batch != null and core_effects != null:
+		var capacity := core_effects.get_training_capacity()
+		batch.text = "Recruit full batch: %d Enforcers — $%s" % [capacity,_format_number(recruitment_queue.get_cash_cost(&"Enforcer",capacity))]
+		batch.disabled = recruitment_queue.get_queue_size() >= recruitment_queue.get_queue_capacity() or economy.cash < recruitment_queue.get_cash_cost(&"Enforcer",capacity)
 	var queue_full := recruitment_queue.get_queue_size() >= recruitment_queue.get_queue_capacity()
 	recruit_enforcer_button.text = "Recruit 5 Enforcers — $%s" % _format_number(recruitment_queue.get_cash_cost(&"Enforcer", 5))
 	recruit_driver_button.text = "Recruit 3 Drivers — $%s" % _format_number(recruitment_queue.get_cash_cost(&"Driver", 3))

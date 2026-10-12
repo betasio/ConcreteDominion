@@ -1,6 +1,6 @@
 extends Node2D
 ## Isometric coastal surroundings, fixed in the same world as the estate.
-const IMAGE_PATH := "res://assets/backgrounds/coastal_estate/isometric_bay.png"
+const IMAGE_PATH := "res://assets/backgrounds/coastal_estate/estate_hinterland.png"
 const SHADER_PATH := "res://shaders/backgrounds/golden_bay_distance.gdshader"
 @onready var city_map: Node2D = get_parent()
 var panorama: Sprite2D
@@ -21,11 +21,11 @@ func _ready() -> void:
 	panorama = Sprite2D.new()
 	panorama.name = "GoldenBayPanorama"
 	panorama.texture = load(IMAGE_PATH)
-	panorama.position = Vector2(118,560)
-	panorama.scale = Vector2.ONE*1.8
+	panorama.position = Vector2(118,1050)
+	panorama.scale = Vector2.ONE*2.4
 	panorama.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var coast := ShaderMaterial.new()
-	coast.shader = load(SHADER_PATH)
+	coast.shader = load("res://shaders/backgrounds/estate_water.gdshader")
 	panorama.material = coast
 	add_child(panorama)
 	city_map.view_mode_changed.connect(_on_view_mode_changed)

@@ -82,6 +82,8 @@ func start_facility_upgrade(lot: BuildLot) -> bool:
 
 
 func start_lot_build(lot: BuildLot) -> bool:
+	if lot.has_method("can_develop") and (not lot.can_develop() or lot.facility_kind == "empty"):
+		return false
 	if is_busy() or lot.is_built:
 		return false
 	if economy == null or not economy.spend_cash(lot.build_cash_cost):

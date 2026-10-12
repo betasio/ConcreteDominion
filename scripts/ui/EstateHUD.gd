@@ -92,7 +92,7 @@ func setup(game_root: Node) -> void:
 	left_actions.append(_button("Build", "build", _focus_build_site, true))
 	left_actions.append(_button("Train", "training", func(): _hud_action("BarracksShortcut"), true))
 	left_actions.append(_button("Clinic", "clinic", func(): _hud_action("HospitalShortcut"), true))
-	left_actions.append(_button("Support", "support", func(): _hud_action("AllianceShortcut"), true))
+	left_actions.append(_button("Districts", "build", func(): _close_panels(); game.get_node("DistrictUI").open_panel(), true))
 	right_actions.append(_button("Events", "events", func(): _open_panel("EventUI"), true))
 	right_actions.append(_button("Rewards", "rewards", func(): _open_panel("RetentionUI"), true))
 	right_actions.append(_button("More", "more", _open_more, true))

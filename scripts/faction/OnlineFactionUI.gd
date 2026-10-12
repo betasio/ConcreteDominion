@@ -7,6 +7,11 @@ var online_faction: Dictionary = {}
 var invites: Array = []
 var online_war: Dictionary = {}
 var online_pvp: Dictionary = {}
+var online_rallies: Dictionary = {}
+var preparation: OptionButton
+var rally_list: VBoxContainer
+var rally_clock := 0.0
+var alert_button: Button
 var pvp_history: Dictionary = {}
 var trophy_case: Dictionary = {}
 var rival_challenges: Array = []
@@ -22,7 +27,7 @@ const HUB_GROUPS := {
 		"Invitations", "Accept", "Refresh"],
 	"Wars": ["WarTitle", "StartWar", "RefreshWar", "AttackPlans", "WarStatus",
 		"PvPMatchup", "PvPHeader", "QueuePvP", "CancelPvP", "RefreshPvP",
-		"PvPPlans", "PvPStatus"],
+		"PvPPlans", "PvPStatus", "RallyPreparation", "RallyList"],
 	"Rivals": ["ChallengeTitle", "RivalFactionId", "SendChallenge",
 		"RefreshChallenges", "AcceptChallenge", "DeclineChallenge",
 		"CancelChallenge", "ChallengeStatus", "RefreshTrophies",
@@ -41,6 +46,7 @@ const HUB_GROUPS := {
 
 
 func _ready() -> void:
+	_setup_rallies()
 	client = OnlineFactionClient.new()
 	add_child(client)
 	client.request_completed.connect(_on_completed)
@@ -88,9 +94,9 @@ func _ready() -> void:
 	$Root/Panel/Margin/Scroll/VBox/ViewMyProfile.pressed.connect(func():
 		client.get_player_profile(String(online_player.get("player_id", ""))))
 
-	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.attack_pvp("muscle"))
-	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.attack_pvp("convoy"))
-	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.attack_pvp("intel"))
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPMuscle.pressed.connect(func(): client.prepare_rally("muscle",int(preparation.get_selected_metadata())))
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPConvoy.pressed.connect(func(): client.prepare_rally("convoy",int(preparation.get_selected_metadata())))
+	$Root/Panel/Margin/Scroll/VBox/PvPPlans/PvPIntel.pressed.connect(func(): client.prepare_rally("intel",int(preparation.get_selected_metadata())))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Muscle.pressed.connect(func(): client.attack_war("muscle"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Convoy.pressed.connect(func(): client.attack_war("convoy"))
 	$Root/Panel/Margin/Scroll/VBox/AttackPlans/Intel.pressed.connect(func(): client.attack_war("intel"))
@@ -197,6 +203,8 @@ func _disconnect() -> void:
 	online_war.clear()
 	online_pvp.clear()
 	pvp_history.clear()
+	online_rallies.clear()
+	alert_button.hide()
 	trophy_case.clear()
 	rival_challenges.clear()
 	season_rankings.clear()
@@ -262,6 +270,10 @@ func _on_completed(action: String, code: int, data: Dictionary) -> void:
 			client.get_war()
 		"war":
 			online_war = data.duplicate(true)
+		"rallies", "rally_prepare":
+			online_rallies = data.duplicate(true)
+			_refresh_rallies()
+			client.get_pvp()
 		"pvp":
 			online_pvp = data.duplicate(true)
 		"pvp_history":
@@ -605,3 +617,80 @@ func _update_identity_card() -> void:
 	card.set_identity(displayed, badge, awards)
 	var rivalry_data = viewed_identity.get("rivalry_prestige", {})
 	card.set_rivalry_prestige(rivalry_data if rivalry_data is Dictionary else {})
+
+
+func _setup_rallies() -> void:
+	var body := $Root/Panel/Margin/Scroll/VBox
+	preparation = OptionButton.new()
+	preparation.name = "RallyPreparation"
+	for seconds in [60,180,300]:
+		preparation.add_item("Rally preparation: %d minutes" % (seconds/60))
+		preparation.set_item_metadata(preparation.item_count-1,seconds)
+	for button in body.get_node("PvPPlans").get_children():
+		if button is Button:
+			button.text = "Prepare "+button.text
+	body.add_child(preparation)
+	body.move_child(preparation,body.get_node("PvPPlans").get_index())
+	rally_list = VBoxContainer.new()
+	rally_list.name = "RallyList"
+	body.add_child(rally_list)
+	body.move_child(rally_list,body.get_node("PvPStatus").get_index()+1)
+	alert_button = Button.new()
+	alert_button.text = "Incoming faction rally · View radar"
+	alert_button.add_theme_color_override("font_color",Color("#ffb5a0"))
+	alert_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	alert_button.position = Vector2(110,100)
+	alert_button.size = Vector2(320,52)
+	$Root.add_child(alert_button)
+	alert_button.hide()
+	alert_button.pressed.connect(func(): panel.show(); _select_hub_section("Wars"))
+
+func _process(delta: float) -> void:
+	rally_clock += delta
+	if rally_clock < 5.0:
+		return
+	rally_clock = 0.0
+	if client != null and not client.session_token.is_empty() and not online_faction.is_empty() and not client.is_busy():
+		client.get_rallies()
+
+func _refresh_rallies() -> void:
+	for child in rally_list.get_children():
+		child.queue_free()
+	var heading := Label.new()
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.text = "Online Rally Hall Lv.%d · %d members. Win faction matches to upgrade. Select a plan to prepare; joined members depart automatically." % [int(online_rallies.get("hall_level",1)),int(online_rallies.get("capacity",4))]
+	rally_list.add_child(heading)
+	var radar_level := 0
+	var city = get_parent().get_node_or_null("CityMap")
+	if city != null and city.lot_d.is_built:
+		radar_level = city.lot_d.level
+	var incoming := false
+	for rally in online_rallies.get("rallies",[]):
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var members: Array = rally.get("members",[])
+		var preparing: bool = rally.get("status","") == "preparing"
+		var hostile: bool = rally.get("incoming",false)
+		incoming = incoming or (hostile and preparing)
+		label.text = "%s · %s · %d/%d members · %ds" % ["INCOMING: "+String(rally.get("faction_name","Faction")) if hostile else String(rally.get("strategy","")),String(rally.get("status","")),members.size(),int(rally.get("capacity",4)),int(rally.get("seconds_remaining",0))]
+		if hostile:
+			label.text = "INCOMING · %ds until departure\n" % int(rally.get("seconds_remaining",0))
+			label.text += String(rally.get("faction_name","Unknown faction")) if radar_level >= 1 else "Build the Data Hub to identify the attackers."
+			if radar_level >= 2:
+				label.text += " · %s · %d members" % [rally.get("strategy",""),members.size()]
+		for member in (members if not hostile or radar_level >= 2 else []):
+			label.text += "\n%s %s" % [member.get("display_name","Member"),member.get("outcome","")]
+		rally_list.add_child(label)
+		if preparing and not hostile:
+			var join := Button.new()
+			join.text = "Join rally"
+			join.custom_minimum_size.y = 68
+			join.pressed.connect(func(): client.join_rally(String(rally["id"])))
+			rally_list.add_child(join)
+			var cancel := Button.new()
+			cancel.text = "Cancel (rally leader)"
+			cancel.custom_minimum_size.y = 68
+			cancel.pressed.connect(func(): client.cancel_rally(String(rally["id"])))
+			rally_list.add_child(cancel)
+	alert_button.position = Vector2(maxf(16,(get_viewport().get_visible_rect().size.x-320)/2),100)
+	alert_button.visible = incoming and not panel.visible

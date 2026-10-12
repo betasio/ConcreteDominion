@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Test multiplayer API authorization and persistence
-        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency tools.test_premium_assets -v
+        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency server.test_rallies tools.test_premium_assets -v
 
       - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
@@ -166,6 +166,12 @@ jobs:
           name: concrete-dominion-coastal-animated-preview
           path: build/previews/coastal_estate_animated.png
           if-no-files-found: error
+
+      - name: Audit chapter districts and additive building effects
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/EstateDistrictAudit.tscn 2>&1 | tee godot-districts.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-districts.log
 
       - name: Capture illustrated terrain alignment
         run: |

@@ -140,6 +140,7 @@ var daily_tasks: Dictionary = {
 }
 
 var gift_charges := 0
+var districts: Node
 var active_rally: Dictionary = {}
 var active_war: Dictionary = {}
 var war_history: Array[Dictionary] = []
@@ -606,7 +607,7 @@ func get_construction_time_multiplier() -> float:
 
 
 func get_rally_power_multiplier() -> float:
-	return 1.0 + float(research["raid_coordination"]) * 0.02
+	return 1.0 + float(research["raid_coordination"]) * 0.02 + (0.03*districts.rally_hall.level if districts != null else 0.0)
 
 
 func get_territory_income_multiplier() -> float:
@@ -738,7 +739,7 @@ func start_rally(target_id: String, target_name: String) -> bool:
 		"target_id": target_id,
 		"target_name": target_name,
 		"seconds_remaining": RALLY_DURATION_SECONDS,
-		"capacity": 5 + int(research["raid_coordination"]),
+		"capacity": (3+districts.rally_hall.level if districts != null else 4) + int(research["raid_coordination"]),
 		"joined": [local_member_id],
 		"power_multiplier": get_rally_power_multiplier()
 	}
@@ -1215,6 +1216,8 @@ func perform_war_attack(strategy_id: String) -> Dictionary:
 	if defense_countered:
 		their_points = maxi(1, their_points - 28)
 
+	if districts != null:
+		their_points = maxi(1,roundi(their_points*(1.0-0.04*districts.gate.level)))
 	var result := {
 		"strategy_id":strategy_id,
 		"strategy_name":String(strategy.get("name", strategy_id)),

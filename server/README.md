@@ -117,3 +117,11 @@ The opt-in Python development API now applies bounded, **per-process** IP reques
 **Physical device checklist (manual, not covered by CI):** On Windows, confirm all six Faction Hub tabs, disconnect/reconnect, portrait-resized panel, and keyboard accessibility. On Android, install the CI APK on an actual phone; check small portrait screens, tab/button touch targets, scrolling, keyboard overlap with account fields, handling of screen rotation and sleep/resume, network loss, and reconnection. Use a private HTTPS test server, never the Python example exposed on a public interface. Ensure recovery keys cannot appear in screenshots or logs. Record model/OS, screenshots and issues separately before claiming device certification.
 
 **Still required for production:** verified sign-in, per-user account ownership and revocation, shared reverse-proxy throttling, TLS termination, durable DB migrations and backups, concurrent worker safety, audit logging without secrets, privacy/data removal controls, operational monitoring, and scheduled security/load reviews.
+
+## Prepared faction rallies
+
+`GET /v1/rallies` returns your faction's recent rallies, preparing incoming rallies, and server-derived Rally Hall level/capacity. `POST /v1/rallies` takes `request_id` (32 lowercase hex characters), `strategy` (`muscle`, `convoy`, `intel`) and `preparation` (60, 180 or 300 seconds). The actor must belong to a matched faction. One rally can prepare per faction. `POST /v1/rallies/{id}/join` admits an authenticated member once; `.../cancel` is leader-only.
+
+`python3 -m server.app` runs a one-second departure worker even without connected clients. Rally polling also settles overdue records, so development servers restart safely. Each participant uses an idempotent combat receipt and the existing attack budgets; members who left the faction are skipped. Faction wins upgrade online command capacity separately from offline building saves. This feature is available in the opt-in Online development panel, not a deployed production service. See `docs/estate_districts.md` for gameplay boundaries.
+
+Run the full backend suite with `python3 -m unittest discover -s server -p 'test_*.py'`.

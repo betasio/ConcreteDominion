@@ -2,8 +2,8 @@ extends Node2D
 ## Two small ambient vehicles on measured road lanes, never on building pads.
 const LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 const LANES := [
-	[Vector2(348,760),Vector2(424,711),Vector2(494,663),Vector2(535,621)],
-	[Vector2(456,919),Vector2(513,951),Vector2(574,990),Vector2(647,1030)]
+	[Vector2(530,300),Vector2(530,400),Vector2(530,510),Vector2(530,580)],
+	[Vector2(390,790),Vector2(390,910),Vector2(390,1070),Vector2(390,1250)]
 ]
 var clock := 0.0
 var refresh := 0.0

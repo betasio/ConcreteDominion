@@ -13,7 +13,14 @@ var economy: PlayerEconomy
 var balance: GameBalance
 var core_effects: CoreBuildingEffects
 var roster: TroopRoster
+var overflow_losses := 0
 var _last_displayed_second := -1
+
+func get_occupied_beds() -> int:
+	var total := 0
+	for entry in wounded_queue:
+		total += int(entry["amount"])
+	return total
 
 
 func setup(player_economy: PlayerEconomy, troop_roster: TroopRoster = null, game_balance: GameBalance = null, building_effects: CoreBuildingEffects = null) -> void:
@@ -55,6 +62,13 @@ func send_to_hospital(
 	if roster != null and not roster.remove_troops(troop_type, amount):
 		return false
 
+	var capacity := core_effects.get_hospital_capacity() if core_effects != null else 25
+	var admitted := mini(amount,maxi(0,capacity-get_occupied_beds()))
+	overflow_losses += amount-admitted
+	amount = admitted
+	if amount == 0:
+		queue_changed.emit()
+		return true
 	var severity := maxf(0.25, severity_multiplier)
 	wounded_queue.append({
 		"troop_type": troop_type,
@@ -123,11 +137,12 @@ func get_save_data() -> Dictionary:
 			"severity_multiplier": float(entry.get("severity_multiplier", 1.0)),
 			"seconds_remaining": float(entry["seconds_remaining"])
 		})
-	return {"queue": saved_queue}
+	return {"queue": saved_queue,"overflow_losses":overflow_losses}
 
 
 func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	wounded_queue.clear()
+	overflow_losses = maxi(0,int(data.get("overflow_losses",0)))
 
 	for raw_entry in data.get("queue", []):
 		if raw_entry is Dictionary:

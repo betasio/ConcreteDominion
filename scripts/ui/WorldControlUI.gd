@@ -184,7 +184,7 @@ func _refresh() -> void:
 	command_button.disabled = scan_remaining > 0 or not control.has_discoverable_target()
 
 	resource_label.text = text_catalog.text("UI_RESOURCE_FACILITIES") + "\n%s" % resources.get_summary()
-	collect_resources_button.disabled = resources.parts_bank < 1.0 and resources.intel_bank < 1.0
+	collect_resources_button.disabled = resources.parts_bank < 1.0 and resources.intel_bank < 1.0 and (resources.districts == null or resources.districts.cash_bank < 1.0)
 
 	if control.active_patrol.is_empty():
 		patrol_label.text = text_catalog.text("UI_RIVAL_ENCOUNTER") + "\n" + text_catalog.text("UI_NO_THREAT")

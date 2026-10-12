@@ -12,6 +12,8 @@ var _http: HTTPRequest
 var _pending_action := ""
 var _retry_id := ""
 var _retry_strategy := ""
+var _rally_receipt := ""
+var _rally_key := ""
 
 
 func _ready() -> void:
@@ -24,6 +26,7 @@ func set_session(token: String) -> void:
 	# Keep bearer tokens in memory only; never write to the unencrypted game save.
 	var next_token := token.strip_edges()
 	if next_token != session_token:
+		_rally_receipt = ""
 		_retry_id = ""
 		_retry_strategy = ""
 	session_token = next_token
@@ -31,6 +34,7 @@ func set_session(token: String) -> void:
 
 
 func clear_session() -> void:
+	_rally_receipt = ""
 	session_token = ""
 	_retry_id = ""
 	_retry_strategy = ""
@@ -265,6 +269,28 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 		return
 	# A registration session token is intentionally returned only to the caller.
 	# The caller must decide how to securely persist it; this node does not save it.
+	if action == "rally_prepare" and response_code >= 200 and response_code < 500:
+		_rally_receipt = ""
 	if action == "pvp_attack" and response_code >= 200 and response_code < 500:
 		_clear_retry_receipt()
 	request_completed.emit(action, response_code, parsed)
+
+
+func get_rallies() -> bool:
+	return _request("rallies",HTTPClient.METHOD_GET,"/v1/rallies",{},true)
+
+func prepare_rally(strategy: String, preparation: int) -> bool:
+	if _busy:
+		return false
+	# Reuse a receipt on transport retries, including the selected preparation.
+	var key := "rally:"+strategy+":"+str(preparation)
+	if _rally_key != key or _rally_receipt.is_empty():
+		_rally_receipt = Crypto.new().generate_random_bytes(16).hex_encode()
+		_rally_key = key
+	return _request("rally_prepare",HTTPClient.METHOD_POST,"/v1/rallies",{"request_id":_rally_receipt,"strategy":strategy,"preparation":preparation},true)
+
+func join_rally(id: String) -> bool:
+	return _request("rallies",HTTPClient.METHOD_POST,"/v1/rallies/%s/join" % id,{},true)
+
+func cancel_rally(id: String) -> bool:
+	return _request("rallies",HTTPClient.METHOD_POST,"/v1/rallies/%s/cancel" % id,{},true)

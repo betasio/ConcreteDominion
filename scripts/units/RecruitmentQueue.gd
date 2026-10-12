@@ -64,6 +64,8 @@ func get_duration(troop_type: StringName, amount: int) -> float:
 	var multiplier := facilities.get_training_time_multiplier(troop_type) if facilities != null else 1.0
 	if troop_type == &"Enforcer" and core_effects != null:
 		multiplier *= core_effects.get_enforcer_training_multiplier()
+	if troop_type != &"Enforcer" and core_effects != null and core_effects.districts != null:
+		multiplier *= maxf(0.70,1.0-0.03*core_effects.districts.total_levels("barracks"))
 	return base_duration * multiplier
 
 
@@ -76,6 +78,8 @@ func get_queue_size() -> int:
 
 
 func recruit(troop_type: StringName, amount: int) -> bool:
+	if core_effects != null and amount > core_effects.get_training_capacity():
+		return false
 	if amount <= 0 or not definitions.has(troop_type) or get_queue_size() >= get_queue_capacity():
 		return false
 	var cash_cost := get_cash_cost(troop_type, amount)

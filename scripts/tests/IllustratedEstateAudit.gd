@@ -24,11 +24,11 @@ func _audit() -> void:
 	await get_tree().physics_frame
 	await get_tree().process_frame
 
-	var annex := city.get_node("IllustratedEstateTerrain/DataHubTerrace") as Sprite2D
+	var terrain :=  city.get_node("IllustratedEstateTerrain/TerrainIllustration") as Sprite2D
 	var layout = preload("res://scripts/world/IllustratedEstateLayout.gd")
-	_check(annex.texture != null, "Data Hub terrace artwork missing")
-	_check(annex.to_global(layout.ANNEX_PAD_PIXEL).distance_to(city.lot_d.global_position) < 0.1,
-			"Data Hub interaction no longer aligns with the annex pad")
+	_check(terrain.texture != null, "Continuous estate artwork missing")
+	_check(terrain.to_global(layout.PAD_CENTERS[&"BuildLotD"]-layout.TEXTURE_SIZE*0.5).distance_to(city.lot_d.global_position) < 0.1,
+			"Data Hub interaction no longer aligns with the estate pad")
 	for core in [city.safehouse,city.hospital,city.barracks]:
 		_check(core.position.distance_to(layout.artwork_to_world(layout.PAD_CENTERS[core.name])) < 0.1,"Core ground anchor drifted")
 		var shape: ConvexPolygonShape2D = core.get_node("CollisionShape2D").shape
@@ -78,9 +78,9 @@ func _audit() -> void:
 		var lot := city.get_persistent_target(id) as BuildLot
 		_check(lot.is_built and lot.level == 2, "Built facility did not survive save restoration")
 	city.set_view_mode(&"world")
-	_check(not annex.is_visible_in_tree(), "Annex leaks into the raid map")
+	_check(not terrain.is_visible_in_tree(), "Terrain leaks into the raid map")
 	city.set_view_mode(&"base")
-	_check(annex.is_visible_in_tree(), "Annex missing after returning to the estate")
+	_check(terrain.is_visible_in_tree(), "Terrain missing after returning to the estate")
 
 	ProjectSettings.set_setting("concrete_dominion/preview_illustrated_terrain", false)
 	var fallback = packed.instantiate()
@@ -90,7 +90,7 @@ func _audit() -> void:
 	_check(fallback.get_node("TurfGround").visible, "Legacy ground fallback is hidden")
 	_check(fallback.lot_a.position != city.lot_a.position, "Legacy grid positions were lost")
 	if failures.is_empty():
-		print("[ESTATE AUDIT] PASS — four pad hitboxes, touch routing, construction/upgrade transactions, saves, annex and fallback")
+		print("[ESTATE AUDIT] PASS — four pad hitboxes, touch routing, construction/upgrade transactions, saves, continuous terrain and fallback")
 		get_tree().quit(0)
 	else:
 		get_tree().quit(1)

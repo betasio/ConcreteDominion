@@ -279,6 +279,7 @@ func _apply_local_wounds(victory: bool) -> Dictionary:
 
 	var severity_multiplier := float(active_battle.get("wound_multiplier", 1.0))
 	severity_multiplier *= difficulty_multiplier
+	severity_multiplier *= (1.0-core_effects.get_gate_defence()) if core_effects != null else 1.0
 	severity_multiplier *= 0.8 if victory else 1.25
 
 	var should_wound := not victory or difficulty_multiplier >= 1.25

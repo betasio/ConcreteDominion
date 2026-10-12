@@ -94,6 +94,11 @@ func _ready() -> void:
 		activity.set_script(preload("res://scripts/world/EstateActivity.gd"))
 		add_child(activity)
 
+	var districts := Node2D.new()
+	districts.name = "EstateDistricts"
+	districts.set_script(preload("res://scripts/world/EstateDistricts.gd"))
+	add_child(districts)
+
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
 	northside_hq.position = iso_to_screen(Vector2i(19, 15))
@@ -131,8 +136,7 @@ func _estate_default_zoom() -> float:
 	# landscape or portrait viewport. The rest of the window is reserved for UI.
 	var available: Rect2 = get_meta("estate_content_rect",get_viewport_rect())
 	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
-	var horizontal_fill := 1.13 if portrait and has_meta("estate_content_rect") else 0.85
-	return minf(available.size.x * horizontal_fill / 860.0, available.size.y * 0.90 / (975.0 if portrait else 800.0))
+	return minf(available.size.x / 1086.0, available.size.y * 0.94 / (1400.0 if portrait else 940.0))
 
 
 func set_estate_content_rect(rect: Rect2) -> void:
@@ -155,7 +159,7 @@ func _base_composition_center() -> Vector2:
 	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		if has_meta("estate_content_rect"):
 			var content: Rect2 = get_meta("estate_content_rect")
-			return Vector2(118,440 if get_viewport_rect().size.y > get_viewport_rect().size.x else 390) + (get_viewport_rect().get_center()-content.get_center())/_estate_default_zoom()
+			return Vector2(118,570 if get_viewport_rect().size.y > get_viewport_rect().size.x else 320) + (get_viewport_rect().get_center()-content.get_center())/_estate_default_zoom()
 		return Vector2(118, 350)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.
@@ -213,7 +217,7 @@ func set_view_mode(mode: StringName) -> void:
 	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
 	if mode == &"base" and illustrated:
 		camera.use_camera_limits = true
-		camera.camera_bounds = Rect2(Vector2(-265, 120), Vector2(835, 740))
+		camera.camera_bounds = Rect2(Vector2(-310, -80), Vector2(860, 1380))
 		var factor := _estate_default_zoom() / 0.94
 		camera.min_zoom = 0.73 * factor
 		camera.max_zoom = 1.6 * factor
@@ -331,6 +335,11 @@ func _get_convoy_route(target_id: String) -> PackedVector2Array:
 
 
 func get_persistent_target(target_id: String) -> Node:
+	if target_id.begins_with("district:"):
+		for plot in $EstateDistricts.plots:
+			if String(plot.name) == target_id.trim_prefix("district:"):
+				return plot
+		return null
 	match target_id:
 		"safehouse":
 			return safehouse
@@ -351,6 +360,8 @@ func get_persistent_target(target_id: String) -> Node:
 
 
 func get_target_id(target: Node) -> String:
+	if target in $EstateDistricts.plots:
+		return "district:"+String(target.name)
 	if target == safehouse:
 		return "safehouse"
 	if target == hospital:
@@ -374,6 +385,7 @@ func get_save_data() -> Dictionary:
 		raid_target_data[target.get_target_id()] = target.get_save_data()
 
 	return {
+		"districts": $EstateDistricts.get_save_data(),
 		"safehouse_level": safehouse.level,
 		"hospital_level": hospital.level,
 		"barracks_level": barracks.level,
@@ -399,6 +411,7 @@ func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
 	lot_c.restore_progress(bool(data.get("scrapyard_built", lot_c.is_built)), int(data.get("scrapyard_level", 1)))
 	lot_d.restore_progress(bool(data.get("datahub_built", lot_d.is_built)), int(data.get("datahub_level", 1)))
 
+	$EstateDistricts.load_save_data(data.get("districts",{}),offline_seconds)
 	var raid_target_data = data.get("raid_targets", {})
 	if raid_target_data is Dictionary:
 		for target in get_raid_targets():

@@ -57,6 +57,10 @@ extends Node
 
 
 func _ready() -> void:
+	city_map.get_node("EstateDistricts").setup(self)
+	core_building_effects.districts = city_map.get_node("EstateDistricts")
+	faction_manager.districts = city_map.get_node("EstateDistricts")
+	resource_production.districts = city_map.get_node("EstateDistricts")
 	progression.setup(loot_inventory, balance)
 	facility_effects.setup(city_map.lot_a, city_map.lot_b, balance)
 	core_building_effects.setup(city_map.safehouse, city_map.hospital, city_map.barracks, balance)
@@ -278,6 +282,11 @@ func _ready() -> void:
 	hud.focus_building_requested.connect(city_map.focus_building)
 	hud.view_mode_requested.connect(city_map.set_view_mode)
 	hud.focus_raid_target_requested.connect(city_map.focus_raid_target_by_id)
+	var districts_ui := CanvasLayer.new()
+	districts_ui.name = "DistrictUI"
+	districts_ui.set_script(preload("res://scripts/ui/DistrictUI.gd"))
+	add_child(districts_ui)
+	districts_ui.setup(self)
 	$EstateHUD.setup(self)
 
 

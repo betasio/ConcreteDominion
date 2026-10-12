@@ -5,6 +5,7 @@ signal changed
 
 const CAP_SECONDS := 6.0 * 60.0 * 60.0
 
+var districts: Node
 var scrap_yard: BuildLot
 var data_hub: BuildLot
 var loot: LootInventory
@@ -18,6 +19,8 @@ func setup(scrap: BuildLot, data: BuildLot, inventory: LootInventory) -> void:
 	scrap_yard = scrap
 	data_hub = data
 	loot = inventory
+	if districts != null:
+		districts.changed.connect(_emit_changed)
 	for lot in [scrap_yard, data_hub]:
 		if lot != null:
 			lot.changed.connect(_emit_changed)
@@ -41,17 +44,18 @@ func _process(delta: float) -> void:
 
 
 func get_parts_per_hour() -> int:
-	return 2 * scrap_yard.level if scrap_yard != null and scrap_yard.is_built else 0
+	return (2 * scrap_yard.level if scrap_yard != null and scrap_yard.is_built else 0) + (2 * districts.total_levels("supplies") if districts != null else 0)
 
 
 func get_intel_per_hour() -> int:
-	return data_hub.level if data_hub != null and data_hub.is_built else 0
+	return (data_hub.level if data_hub != null and data_hub.is_built else 0) + (districts.total_levels("intel") if districts != null else 0)
 
 
 func collect() -> Dictionary:
 	var parts := floori(parts_bank)
 	var intel := floori(intel_bank)
-	if parts <= 0 and intel <= 0:
+	var cash: int = districts.collect_cash() if districts != null else 0
+	if parts <= 0 and intel <= 0 and cash <= 0:
 		return {}
 
 	if parts > 0:
@@ -59,15 +63,15 @@ func collect() -> Dictionary:
 	if intel > 0:
 		loot.add_item("Intel", intel)
 
-	parts_bank = 0.0
-	intel_bank = 0.0
+	parts_bank -= parts
+	intel_bank -= intel
 	elapsed = 0.0
 	changed.emit()
-	return {"Parts": parts, "Intel": intel}
+	return {"Parts": parts, "Intel": intel, "Cash":cash}
 
 
 func get_summary() -> String:
-	return "Supplies +%d/hr • Intel +%d/hr • Bank S:%d I:%d" % [
+	return ("Cash +%d/hr • Bank $%d\n" % [districts.total_levels("cash")*1200,floori(districts.cash_bank)] if districts != null else "") + "Supplies +%d/hr • Intel +%d/hr • Bank S:%d I:%d" % [
 		get_parts_per_hour(),
 		get_intel_per_hour(),
 		floori(parts_bank),

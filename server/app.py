@@ -9,7 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from server import pvp, seasons, profiles, rivalries, challenges
+from server import pvp, seasons, profiles, rivalries, challenges, rallies
 from server.security import RateLimiter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -63,6 +63,7 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
         self.db.executescript(pvp.PVP_SCHEMA)
+        self.db.executescript(rallies.SCHEMA)
         self.db.executescript(seasons.ARCHIVE_SCHEMA)
         self.db.executescript(profiles.PROFILE_SCHEMA)
         self.db.executescript(challenges.CHALLENGE_SCHEMA)
@@ -260,6 +261,9 @@ class Store:
         profile_result = profiles.route(self, method, path, data, actor)
         if profile_result is not None:
             return profile_result
+        rally_result = rallies.route(self, method, path, data, actor)
+        if rally_result is not None:
+            return rally_result
         pvp_result = pvp.route(self, method, path, data, actor)
         if pvp_result is not None:
             return pvp_result
@@ -335,7 +339,19 @@ def main():
     store = Store(args.db)
     httpd = ThreadingHTTPServer((args.host,args.port),handler_factory(store))
     httpd.timeout = 10
-    httpd.serve_forever()
+    # Tick even with every client disconnected. Restart catches up durable timers.
+    stop = threading.Event()
+    def rally_clock():
+        while not stop.wait(1.0):
+            rallies.settle_due(store)
+    worker = threading.Thread(target=rally_clock, daemon=True)
+    worker.start()
+    try:
+        httpd.serve_forever()
+    finally:
+        stop.set()
+        worker.join(timeout=3)
+        httpd.server_close()
 
 
 if __name__ == "__main__":
