@@ -6,6 +6,7 @@ var missions: MissionTracker
 var loot: LootInventory
 var text_catalog: LocalizedText
 var presentation_catalog: PresentationCatalog
+var next_objective_button: Button
 
 @onready var shortcut: Button = $Root/Shortcut
 @onready var panel: PanelContainer = $Root/Panel
@@ -40,6 +41,12 @@ func setup(
 	presentation_catalog = get_parent().get_node_or_null("PresentationCatalog") as PresentationCatalog
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	_apply_portrait_art()
+	next_objective_button = Button.new()
+	next_objective_button.name = "NextObjective"
+	next_objective_button.custom_minimum_size.y = 48
+	chapter_label.get_parent().add_child(next_objective_button)
+	chapter_label.get_parent().move_child(next_objective_button, chapter_label.get_index()+1)
+	next_objective_button.pressed.connect(func(): get_parent().get_node("EstateHUD").navigate_objective())
 
 	progression.changed.connect(_refresh)
 	missions.changed.connect(_refresh)
@@ -100,6 +107,9 @@ func _refresh() -> void:
 	]
 
 	var chapter := missions.get_story_chapter_status()
+	var action := preload("res://scripts/progression/ObjectiveGuide.gd").action(String(chapter.get("next_id", "")))
+	next_objective_button.text = String(action.label)
+	next_objective_button.visible = String(action.get("target", "")) != "ProgressionUI"
 	_refresh_story_beat(chapter)
 	if bool(chapter["complete"]):
 		chapter_label.text = "CHAPTER %d • %s\nCOMPLETE — %d/%d operations. The city war is open.\nCompletion reward: %s" % [

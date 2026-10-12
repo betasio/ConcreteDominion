@@ -124,6 +124,7 @@ func setup(
 	alliance_manager.changed.connect(_on_alliance_changed)
 	alliance_social.changed.connect(_refresh_alliance_social)
 	raid_battle.changed.connect(_refresh_raid)
+	raid_battle.loadout.changed.connect(_refresh_raid)
 	raid_battle.battle_resolved.connect(_on_raid_resolved)
 
 	$Root/HospitalShortcut.pressed.connect(_on_hospital_shortcut)
@@ -646,7 +647,9 @@ func _refresh_raid() -> void:
 	add_driver_button.disabled = active or not target_available or troop_roster.get_count(&"Driver") <= 0 or raid_drivers > 0
 	add_spy_button.disabled = active or not target_available or troop_roster.get_count(&"Spy") <= 0 or raid_spies > 0
 	preview_raid_button.disabled = active or not target_available
-	launch_raid_button.disabled = active or not target_available
+	var launch_blocker := raid_battle.get_launch_blocker(selected_raid_target, raid_drivers, raid_spies)
+	launch_raid_button.disabled = not launch_blocker.is_empty()
+	launch_raid_button.tooltip_text = launch_blocker
 	$Root/RaidPanel/Margin/VBox/Reset.disabled = active or not target_available
 	$Root/RaidPanel/Margin/VBox/ToggleKira.disabled = active
 
@@ -671,6 +674,9 @@ func _refresh_raid() -> void:
 	elif not target_available:
 		raid_status_label.text = "Target respawning in %s" % _format_time(selected_raid_target.cooldown_remaining)
 		launch_raid_button.text = "Target Unavailable"
+	elif not launch_blocker.is_empty():
+		raid_status_label.text = launch_blocker
+		launch_raid_button.text = "Review Crew / Strategy"
 	else:
 		raid_status_label.text = "Ready to launch."
 		launch_raid_button.text = "Launch Crew Raid"
@@ -754,7 +760,7 @@ func _launch_raid() -> void:
 
 	if raid_battle.start_battle(selected_raid_target, raid_drivers, raid_spies):
 		raid_result_label.text = "Crew convoy moving on %s..." % selected_raid_target.get_display_name()
-		_refresh_raid()
+	_refresh_raid()
 
 
 func _on_raid_resolved(result: Dictionary) -> void:

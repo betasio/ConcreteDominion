@@ -123,6 +123,8 @@ func _capture() -> void:
 	var estate_hud = game.get_node("EstateHUD")
 	estate_hud.navigation[1].pressed.emit()
 	await _save_frame("turf_illustrated_portrait_tasks")
+	game.get_node("ProgressionUI").next_objective_button.pressed.emit()
+	await _save_frame("turf_illustrated_portrait_objective_action")
 	estate_hud._close_panels()
 	estate_hud.left_actions[1].pressed.emit()
 	await _save_frame("turf_illustrated_portrait_training")

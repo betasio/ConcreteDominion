@@ -128,12 +128,27 @@ func preview_battle(target: RaidTarget, local_driver_count: int, local_spy_count
 	}
 
 
-func start_battle(target: RaidTarget, local_driver_count: int, local_spy_count: int) -> bool:
-	if is_active() or target == null or not target.is_available() or not target.is_unlocked():
-		return false
+func get_launch_blocker(target: RaidTarget, local_driver_count: int, local_spy_count: int) -> String:
+	if is_active():
+		return "A raid is already underway."
+	if target == null:
+		return "Select a raid target on the city map."
+	if not target.is_unlocked():
+		return "Reach Account Lv.%d to unlock this target." % target.get_required_account_level()
+	if not target.is_available():
+		return "Target is recovering. Try again after its respawn timer."
 	if economy == null or roster == null or hospital == null or synergy == null or alliance == null or loadout == null:
-		return false
+		return "Raid systems are not ready."
 	if not loadout.can_use_selected_consumable():
+		var resource := "1 Intel" if loadout.selected_consumable == &"intel_boost" else "1 Supplies"
+		return "%s needs %s. Collect resources or choose no consumable in Strategy." % [loadout.get_consumable_name(), resource]
+	if preview_battle(target, local_driver_count, local_spy_count).is_empty():
+		return "Assign a frontline Enforcer in the crew slots before launching."
+	return ""
+
+
+func start_battle(target: RaidTarget, local_driver_count: int, local_spy_count: int) -> bool:
+	if not get_launch_blocker(target, local_driver_count, local_spy_count).is_empty():
 		return false
 
 	var target_data := target.get_battle_data()

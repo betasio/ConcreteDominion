@@ -128,14 +128,16 @@ func _process(delta: float) -> void:
 		return
 	_autosave_timer -= delta
 	if _autosave_timer <= 0.0:
-		save_game()
+		if not save_game():
+			_autosave_timer = maxf(1.0, autosave_delay)
 
 
 func mark_dirty() -> void:
 	if _is_loading:
 		return
+	if not _dirty:
+		_autosave_timer = autosave_delay
 	_dirty = true
-	_autosave_timer = autosave_delay
 
 
 func save_game() -> bool:
@@ -171,15 +173,9 @@ func save_game() -> bool:
 		"world": city_map.get_save_data()
 	}
 
-	_backup_current_save()
-
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		push_error("Could not open save file for writing: %s" % SAVE_PATH)
+	if not _backup_current_save() or not _write_save_dictionary(SAVE_PATH, data):
 		return false
 
-	file.store_string(JSON.stringify(data, "	"))
-	file.close()
 	_dirty = false
 	_autosave_timer = 0.0
 	save_completed.emit()
@@ -234,6 +230,8 @@ func load_game() -> bool:
 	_is_loading = false
 	_dirty = false
 	_autosave_timer = 0.0
+	# Persist offline settlement and migrations after all systems finish setup.
+	mark_dirty()
 	load_completed.emit(true)
 	return true
 
@@ -254,15 +252,29 @@ func _read_save_dictionary(path: String) -> Dictionary:
 	return {}
 
 
-func _backup_current_save() -> void:
+func _backup_current_save() -> bool:
 	var existing := _read_save_dictionary(SAVE_PATH)
-	if existing.is_empty():
-		return
+	# Never replace a recoverable backup with a corrupt primary.
+	return existing.is_empty() or _write_save_dictionary(BACKUP_PATH, existing)
 
-	var file := FileAccess.open(BACKUP_PATH, FileAccess.WRITE)
-	if file != null:
-		file.store_string(JSON.stringify(existing, "\t"))
-		file.close()
+
+func _write_save_dictionary(path: String, data: Dictionary) -> bool:
+	var temporary := path + ".tmp"
+	var file := FileAccess.open(temporary, FileAccess.WRITE)
+	if file == null:
+		push_error("Could not write temporary save: %s" % temporary)
+		return false
+	file.store_string(JSON.stringify(data, "\t"))
+	file.flush()
+	var error := file.get_error()
+	file.close()
+	if error == OK:
+		error = DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(path))
+	if error != OK:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
+		push_error("Could not commit save: %s (%s)" % [path, error_string(error)])
+		return false
+	return true
 
 
 func _migrate_save(raw: Dictionary) -> Dictionary:

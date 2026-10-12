@@ -129,7 +129,7 @@ func setup(game_root: Node) -> void:
 	badge_style.set_corner_radius_all(14)
 	mail_badge.add_theme_stylebox_override("normal", badge_style)
 
-	mission_button = _button("Mission", "", func(): _open_panel("ProgressionUI"))
+	mission_button = _button("Mission", "", navigate_objective)
 	mission_button.add_theme_stylebox_override("normal",SKIN.frame("chapter"))
 	var chapter_icon := _label(mission_button,"!",38,GOLD)
 	chapter_icon.name = "ChapterIcon"
@@ -271,6 +271,28 @@ func _focus_build_site() -> void:
 			game.city_map._select_lot(lot)
 			return
 	game.city_map._select_building(game.city_map.safehouse)
+
+
+func navigate_objective() -> void:
+	var chapter: Dictionary = game.mission_tracker.get_story_chapter_status()
+	var action: Dictionary = preload("res://scripts/progression/ObjectiveGuide.gd").action(String(chapter.get("next_id", "")))
+	match action.kind:
+		"training":
+			_hud_action("BarracksShortcut")
+			game.hud.selection_panel.hide()
+		"lot":
+			_close_panels()
+			game.city_map.focus_build_lot(String(action.target))
+		"raid":
+			_close_panels()
+			game.city_map.set_view_mode(&"world")
+			var target: RaidTarget = game.city_map.get_raid_target_by_id(String(action.target))
+			if target != null and target.visible:
+				game.city_map.focus_raid_target_by_id(String(action.target))
+			else:
+				_open_panel("WorldControlUI")
+		"panel":
+			_open_panel(String(action.target))
 
 
 func _hud_action(shortcut: String) -> void:

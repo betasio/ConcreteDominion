@@ -232,6 +232,7 @@ func set_view_mode(mode: StringName) -> void:
 		camera.max_zoom = 2.0
 
 	if animate_camera:
+		camera.set_meta("view_destination_zoom", destination_zoom)
 		var camera_tween := create_tween().set_parallel(true)
 		camera_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		camera_tween.tween_property(camera, "position", destination, 0.48)
@@ -522,6 +523,15 @@ func iso_to_screen(cell: Vector2i) -> Vector2:
 	)
 
 
+func focus_build_lot(target_id: String) -> void:
+	var lot := get_persistent_target(target_id) as BuildLot
+	if lot == null:
+		return
+	set_view_mode(&"base")
+	_select_lot(lot)
+	_focus_camera(lot.position)
+
+
 func focus_building(building_type: StringName) -> void:
 	if view_mode != &"base":
 		set_view_mode(&"base")
@@ -537,7 +547,7 @@ func focus_building(building_type: StringName) -> void:
 		return
 
 	_select_building(target)
-	camera.position = target.position + Vector2(0, -40)
+	_focus_camera(target.position)
 
 
 func focus_raid_target(target: RaidTarget) -> void:
@@ -545,7 +555,18 @@ func focus_raid_target(target: RaidTarget) -> void:
 		set_view_mode(&"world")
 
 	_select_raid_target(target)
-	camera.position = target.position + Vector2(0, -40)
+	_focus_camera(target.position)
+
+
+func _focus_camera(target_position: Vector2) -> void:
+	if camera.has_meta("view_tween"):
+		var transition: Tween = camera.get_meta("view_tween") as Tween
+		if transition != null and transition.is_valid():
+			transition.kill()
+			camera.zoom = camera.get_meta("view_destination_zoom", camera.zoom)
+	camera.position = target_position + Vector2(0, -40)
+	camera.call("_clamp_camera_to_world")
+	camera.reset_smoothing()
 
 
 func _clear_selection() -> void:
