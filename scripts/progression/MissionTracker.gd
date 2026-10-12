@@ -565,15 +565,15 @@ func _apply_bonus_reward(reward: Dictionary) -> void:
 
 func get_story_chapter_status() -> Dictionary:
 	if bool(missions["chapter_5_complete"]["completed"]):
-		return _build_chapter_status(6, "Roads of Iron", CHAPTER_6_TASKS, "chapter_6_complete", "$30,000 + 30 Gold + 700 XP")
+		return _build_chapter_status(6, "Roads of Iron", CHAPTER_6_TASKS, "chapter_6_complete", "$30,000 + 30 Diamonds + 700 XP")
 	if bool(missions["chapter_4_complete"]["completed"]):
-		return _build_chapter_status(5, "The Ledger Burns", CHAPTER_5_TASKS, "chapter_5_complete", "$22,000 + 25 Gold + 550 XP")
+		return _build_chapter_status(5, "The Ledger Burns", CHAPTER_5_TASKS, "chapter_5_complete", "$22,000 + 25 Diamonds + 550 XP")
 	if bool(missions["chapter_3_complete"]["completed"]):
-		return _build_chapter_status(4, "The Velvet Circle", CHAPTER_4_TASKS, "chapter_4_complete", "$16,000 + 20 Gold + 450 XP")
+		return _build_chapter_status(4, "The Velvet Circle", CHAPTER_4_TASKS, "chapter_4_complete", "$16,000 + 20 Diamonds + 450 XP")
 	if bool(missions["chapter_2_complete"]["completed"]):
-		return _build_chapter_status(3, "Blood in Northside", CHAPTER_3_TASKS, "chapter_3_complete", "$12,000 + 15 Gold + 350 XP")
+		return _build_chapter_status(3, "Blood in Northside", CHAPTER_3_TASKS, "chapter_3_complete", "$12,000 + 15 Diamonds + 350 XP")
 	if bool(missions["chapter_1_complete"]["completed"]):
-		return _build_chapter_status(2, "The City Pushes Back", CHAPTER_2_TASKS, "chapter_2_complete", "$9,000 + 10 Gold + 250 XP")
+		return _build_chapter_status(2, "The City Pushes Back", CHAPTER_2_TASKS, "chapter_2_complete", "$9,000 + 10 Diamonds + 250 XP")
 	return _build_chapter_status(1, "A Higher Kingdom", CHAPTER_1_TASKS, "chapter_1_complete", "$5,000 + 150 XP")
 
 

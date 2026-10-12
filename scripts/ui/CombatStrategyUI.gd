@@ -80,7 +80,7 @@ func _refresh() -> void:
 	if loadout.selected_consumable == &"intel_boost":
 		consumable_button.tooltip_text = "Costs Intel x1 at raid launch. +10% final damage."
 	elif loadout.selected_consumable == &"armor_plates":
-		consumable_button.tooltip_text = "Costs Parts x1 at raid launch. -35% injury severity."
+		consumable_button.tooltip_text = "Costs Supplies x1 at raid launch. -35% injury severity."
 	else:
 		consumable_button.tooltip_text = "No consumable cost."
 
@@ -98,5 +98,5 @@ func _refresh() -> void:
 func _format_cost(cost: Dictionary) -> String:
 	var parts := PackedStringArray()
 	for item_name in cost.keys():
-		parts.append("%s x%d" % [String(item_name), int(cost[item_name])])
+		parts.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), int(cost[item_name])])
 	return ", ".join(parts)

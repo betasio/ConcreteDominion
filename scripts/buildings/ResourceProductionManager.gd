@@ -67,7 +67,7 @@ func collect() -> Dictionary:
 
 
 func get_summary() -> String:
-	return "Parts +%d/hr • Intel +%d/hr • Bank P:%d I:%d" % [
+	return "Supplies +%d/hr • Intel +%d/hr • Bank S:%d I:%d" % [
 		get_parts_per_hour(),
 		get_intel_per_hour(),
 		floori(parts_bank),

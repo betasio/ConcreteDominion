@@ -109,12 +109,12 @@ theme_override_constants/separation = 8
 [node name="Force" type="Button" parent="Root/Panel/Margin/VBox/Approach"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "FORCE • $2,500 + Parts x2"
+text = "FORCE • $2,500 + Supplies x2"
 
 [node name="Intel" type="Button" parent="Root/Panel/Margin/VBox/Approach"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "INTEL • 3 Gold + Intel x2"
+text = "INTEL • 3 Diamonds + Intel x2"
 
 [node name="ChapterAction" type="Button" parent="Root/Panel/Margin/VBox"]
 visible = false

@@ -50,7 +50,7 @@ var fallback: Dictionary = {
 	"UI_RIVAL_ENCOUNTER": "RIVAL ENCOUNTER",
 	"UI_NO_THREAT": "No active threat.",
 	"UI_ALLIANCE_TASKS": "CREW OPERATIONS",
-	"UI_COLLECT_RESOURCES": "Collect Parts / Intel",
+	"UI_COLLECT_RESOURCES": "Collect Supplies / Intel",
 	"UI_REVEAL_INTEL": "Reveal with Intel",
 	"UI_CLEAR_PATROL": "Clear Patrol",
 	"UI_PROGRESSION": "Progression",

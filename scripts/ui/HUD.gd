@@ -229,8 +229,8 @@ func _refresh_all() -> void:
 	if economy == null:
 		return
 	cash_label.text = "Cash: $%s" % _format_number(economy.cash)
-	gold_label.text = "Gold: %d" % economy.gold
-	loot_label.text = "Loot P:%d I:%d C:%d" % [
+	gold_label.text = "Diamonds: %d" % economy.gold
+	loot_label.text = "Loot S:%d I:%d C:%d" % [
 		loot_inventory.get_count("Parts"),
 		loot_inventory.get_count("Intel"),
 		loot_inventory.get_count("Contraband")
@@ -339,7 +339,7 @@ func _refresh_construction() -> void:
 		String(job["label"]),
 		_format_time(float(job["seconds_remaining"]))
 	]
-	finish_button.text = "Finish Now (%d Gold)" % finish_cost
+	finish_button.text = "Finish Now (%d Diamonds)" % finish_cost
 	finish_button.disabled = economy.gold < finish_cost
 	_refresh_selection()
 
@@ -389,7 +389,7 @@ func _refresh_hospital() -> void:
 	if hospital_queue.wounded_queue.is_empty():
 		var slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
 		queue_label.text = "Clinic queue is empty. Your crew is ready.\nTreatment slots: %d" % slots
-		cost_label.text = "Instant heal cost: 0 Gold"
+		cost_label.text = "Instant heal cost: 0 Diamonds"
 		instant_button.disabled = true
 		return
 
@@ -407,7 +407,7 @@ func _refresh_hospital() -> void:
 	var clinic_slots: int = core_effects.get_clinic_slots() if core_effects != null else 1
 	queue_label.text = "Treatment slots: %d\n%s" % [clinic_slots, "\n".join(lines)]
 	var cost := hospital_queue.get_instant_heal_cost()
-	cost_label.text = "Instant heal cost: %d Gold" % cost
+	cost_label.text = "Instant heal cost: %d Diamonds" % cost
 	instant_button.disabled = economy.gold < cost
 
 
@@ -473,7 +473,7 @@ func _refresh_recruitment() -> void:
 			recruitment_queue.queued_jobs.size()
 		]
 		finish_recruitment_button.visible = true
-		finish_recruitment_button.text = "Finish Training (%d Gold)" % finish_cost
+		finish_recruitment_button.text = "Finish Training (%d Diamonds)" % finish_cost
 		finish_recruitment_button.disabled = economy.gold < finish_cost
 
 
@@ -845,7 +845,7 @@ func _format_loot(loot: Dictionary) -> String:
 
 	var parts: PackedStringArray = []
 	for item_name in loot.keys():
-		parts.append("%s x%d" % [String(item_name), int(loot[item_name])])
+		parts.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), int(loot[item_name])])
 	return ", ".join(parts)
 
 

@@ -80,5 +80,5 @@ func _first_offer_button() -> Button:
 func _format_contents(contents: Dictionary) -> String:
 	var parts := PackedStringArray()
 	for key in contents.keys():
-		parts.append("%s x%s" % [String(key), str(contents[key])])
+		parts.append("%s x%s" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(key)), str(contents[key])])
 	return text_catalog.text("UI_INCLUDES") + " " + ", ".join(parts)

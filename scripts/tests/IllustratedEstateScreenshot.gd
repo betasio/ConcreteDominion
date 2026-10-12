@@ -74,6 +74,16 @@ func _capture() -> void:
 		lot.complete_construction(1)
 	city.lot_d.begin_construction(2)
 	await _save_frame("turf_illustrated_built")
+	for layer in visible_layers:
+		layer.visible = true
+	await _save_frame("turf_illustrated_desktop_built_hud")
+	get_window().size = Vector2i(1920,1080)
+	await get_tree().process_frame
+	city.set_view_mode(&"base")
+	city.camera.reset_smoothing()
+	await _save_frame("turf_illustrated_desktop_1080p")
+	for layer in visible_layers:
+		layer.visible = false
 	get_window().size = Vector2i(720,1280)
 	await get_tree().process_frame
 	city.set_view_mode(&"base")

@@ -97,7 +97,7 @@ func _refresh() -> void:
 	comeback_button.visible = bool(comeback["available"])
 	if bool(comeback["available"]):
 		var reward: Dictionary = comeback["reward"]
-		comeback_button.text = "Welcome Back • %d days away — Claim $%s + %d Gold + %d XP" % [
+		comeback_button.text = "Welcome Back • %d days away — Claim $%s + %d Diamonds + %d XP" % [
 			int(comeback["gap_days"]),
 			_format_number(int(reward.get("cash", 0))),
 			int(reward.get("gold", 0)),
@@ -144,10 +144,10 @@ func _refresh() -> void:
 		weekly_button.text = "Weekly Rewards Claimed"
 		weekly_button.disabled = true
 
-	street_cache_button.text = "Craft Street Cache — Parts x3, Intel x1\nReward: $3,500 + 4 Gold + 60 XP"
+	street_cache_button.text = "Craft Street Cache — Supplies x3, Intel x1\nReward: $5,000 + 60 XP"
 	street_cache_button.disabled = not retention.can_craft_street_cache()
 
-	syndicate_crate_button.text = "Craft Syndicate Crate — Parts x5, Intel x3, Contraband x1\nReward: $9,000 + 12 Gold + 150 XP"
+	syndicate_crate_button.text = "Craft Syndicate Crate — Supplies x5, Intel x3, Contraband x1\nReward: $12,500 + 150 XP"
 	syndicate_crate_button.disabled = not retention.can_craft_syndicate_crate()
 
 	achievements_label.text = "ACHIEVEMENTS\n" + "\n".join(retention.get_achievement_lines())

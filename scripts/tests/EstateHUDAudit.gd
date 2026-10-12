@@ -117,14 +117,18 @@ func _audit() -> void:
 	game.settings.set_large_text(false)
 	var backdrop = game.city_map.get_node("GoldenBayBackdrop")
 	game.settings.set_reduced_motion(true)
+	var activity = game.city_map.get_node("EstateActivity")
+	var activity_before: float = activity.clock
 	var clock_before: float = backdrop.animation_time
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(backdrop.animation_time == clock_before, "Reduced Motion does not freeze scenery")
+	_check(activity.clock == activity_before, "Reduced Motion does not freeze traffic")
 	game.settings.set_reduced_motion(false)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(backdrop.animation_time > clock_before, "Scenery clock did not resume")
+	_check(activity.clock > activity_before, "Traffic did not resume")
 	game.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():

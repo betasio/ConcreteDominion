@@ -6,16 +6,16 @@ signal changed
 var catalog: Array[Dictionary] = [
 	{
 		"id": "gold_starter",
-		"title": "Gold Starter",
+		"title": "Diamond Starter",
 		"price_label": "$0.99 example",
-		"description": "80 Gold. Designed for small timer skips.",
+		"description": "80 Diamonds. Designed for small timer skips.",
 		"contents": {"Gold": 80}
 	},
 	{
 		"id": "builder_pack",
 		"title": "Builder Pack",
 		"price_label": "$4.99 example",
-		"description": "Gold plus Cash for construction progression.",
+		"description": "Diamonds plus Cash for construction progression.",
 		"contents": {"Gold": 160, "Cash": 15000}
 	},
 	{
@@ -29,7 +29,7 @@ var catalog: Array[Dictionary] = [
 		"id": "recovery_pack",
 		"title": "Recovery Pack",
 		"price_label": "$2.99 example",
-		"description": "Gold focused on Clinic and queue speed-ups.",
+		"description": "Diamonds focused on Clinic and queue speed-ups.",
 		"contents": {"Gold": 60}
 	}
 ]

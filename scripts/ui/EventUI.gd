@@ -85,14 +85,14 @@ func _reward_text(reward: Dictionary) -> String:
 	if int(reward.get("cash", 0)) > 0:
 		parts.append("$%d" % int(reward["cash"]))
 	if int(reward.get("gold", 0)) > 0:
-		parts.append("%d Gold" % int(reward["gold"]))
+		parts.append("%d Diamonds" % int(reward["gold"]))
 	if int(reward.get("xp", 0)) > 0:
 		parts.append("%d XP" % int(reward["xp"]))
 
 	var reward_loot = reward.get("loot", {})
 	if reward_loot is Dictionary:
 		for item_name in reward_loot.keys():
-			parts.append("%s x%d" % [String(item_name), int(reward_loot[item_name])])
+			parts.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), int(reward_loot[item_name])])
 
 	return ", ".join(parts)
 

@@ -214,3 +214,36 @@ GameplayRegressionAudit and the expanded EstateHUDAudit passed. Portrait HUD,
 events, rewards and small-landscape captures were reviewed. Disabled actions
 across dialogs use quieter cards with brighter text, avoiding the repeated
 heavy gold frames while keeping unavailable actions distinguishable.
+
+## World-aligned coast and estate activity
+
+The estate now sits against an original isometric coastal backplate with matching
+stone, vegetation and warm architectural lighting. The old eye-level sunset
+panorama is retained as an unused asset. The new coast keeps a fixed transform
+in estate world coordinates; panning and zooming no longer slide or rescale it
+independently. Water continues beyond the finite art with a restrained shader,
+while the coast's architecture remains static. The lower cliff silhouette adds
+a subtle animated shore wash. The legacy procedural shoreline is disabled in
+illustrated mode so unrelated ripple arcs cannot reappear on view changes.
+
+Two small decorative vehicles follow measured road lanes. They have no gameplay
+collision and share the scenery's Reduced Motion setting. Desktop framing is
+closer and raised to retain the HQ roof; portrait framing preserves the seven
+calibrated sites. This remains a layered 2.5D environment, not a free-rotation 3D
+world. The new water layer and shore samples add GPU work and need device profiling.
+
+The camera audit now verifies that the coast stays fixed during a pan; the HUD
+audit checks that Reduced Motion freezes and resumes both water and traffic.
+Resource changes and future purchase boundaries are documented in
+`docs/resource_economy.md`.
+
+Validation: all nine relevant audits passed (158-resource scan, smoke, data,
+balance/F2P viability, gameplay regression, illustrated estate, camera,
+responsive HUD and resource economy). Graphical captures were reviewed at
+720 × 1280, 1280 × 720 and 1920 × 1080. A two-frame water probe at animation
+times 0 and 12 changed 105,497 of 110,000 sampled water pixels and zero of
+71,500 sampled coastal architecture pixels. Desktop built-state artifacts are
+`turf_illustrated_desktop_built_hud.png` and `turf_illustrated_desktop_1080p.png`.
+Tests used Godot 4.7.2 and desktop OpenGL software rendering; physical Android
+performance is still unmeasured. Some full-scene shutdowns retain the previously
+observed ObjectDB warning; no script or shader errors remained in final checks.

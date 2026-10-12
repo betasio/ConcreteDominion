@@ -119,23 +119,23 @@ func _refresh() -> void:
 	chapter_action_button.text = "LAUNCH IRON SERPENT CONVOY INTERCEPT"
 	chapter_action_button.disabled = not missions.can_launch_chapter_6_convoy()
 	if int(chapter["chapter"]) == 6:
-		force_button.text = "BLOCKADE • $10,000 + Parts x5"
-		intel_button.text = "HIJACK • 8 Gold + Intel x3 + Parts x3"
+		force_button.text = "BLOCKADE • $10,000 + Supplies x5"
+		intel_button.text = "HIJACK • 8 Diamonds + Intel x3 + Supplies x3"
 	elif int(chapter["chapter"]) == 5:
-		force_button.text = "HOSTILE TAKEOVER • $8,000 + Parts x4"
-		intel_button.text = "MARKET LEAK • 6 Gold + Intel x5"
+		force_button.text = "HOSTILE TAKEOVER • $8,000 + Supplies x4"
+		intel_button.text = "MARKET LEAK • 6 Diamonds + Intel x5"
 	elif int(chapter["chapter"]) == 4:
-		force_button.text = "BUY IN • $6,000 + 3 Gold"
-		intel_button.text = "BLACKMAIL • 5 Gold + Intel x4"
+		force_button.text = "BUY IN • $6,000 + 3 Diamonds"
+		intel_button.text = "BLACKMAIL • 5 Diamonds + Intel x4"
 	elif int(chapter["chapter"]) == 3:
-		force_button.text = "PRESSURE • $4,000 + Parts x3"
-		intel_button.text = "PATIENCE • 4 Gold + Intel x3"
+		force_button.text = "PRESSURE • $4,000 + Supplies x3"
+		intel_button.text = "PATIENCE • 4 Diamonds + Intel x3"
 	else:
-		force_button.text = "FORCE • $2,500 + Parts x2"
-		intel_button.text = "INTEL • 3 Gold + Intel x2"
+		force_button.text = "FORCE • $2,500 + Supplies x2"
+		intel_button.text = "INTEL • 3 Diamonds + Intel x2"
 
 	if int(chapter["chapter"]) == 1:
-		milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Gold + 35 XP + Parts x1\n%s  4/5 — $3,500 + 5 Gold + 60 XP + Intel x1" % [
+		milestones_label.text = "CHAPTER PAYOUTS\n%s  2/5 — $2,000 + 3 Diamonds + 35 XP + Supplies x1\n%s  4/5 — $3,500 + 5 Diamonds + 60 XP + Intel x1" % [
 			"✓" if bool(chapter["milestone_2_claimed"]) else "○",
 			"✓" if bool(chapter["milestone_4_claimed"]) else "○"
 		]
@@ -231,6 +231,6 @@ func _format_cost(cost: Dictionary) -> String:
 	for item_name in cost.keys():
 		var amount := int(cost[item_name])
 		if amount > 0:
-			parts.append("%s x%d" % [String(item_name), amount])
+			parts.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), amount])
 
 	return ", ".join(parts)

@@ -370,11 +370,11 @@ func get_season_reward_summary(tier: String = "") -> String:
 	var reward_tier := tier if not tier.is_empty() else get_next_claimable_season_tier()
 	match reward_tier:
 		"PLATINUM":
-			return "$30,000 + 25 Gold + Parts x5 + Intel x5 + Contraband x2"
+			return "$30,000 + 25 Diamonds + Supplies x5 + Intel x5 + Contraband x2"
 		"GOLD":
-			return "$22,000 + 18 Gold + Parts x4 + Intel x4 + Contraband x1"
+			return "$22,000 + 18 Diamonds + Supplies x4 + Intel x4 + Contraband x1"
 		"SILVER":
-			return "$15,000 + 12 Gold + Parts x3 + Intel x3"
+			return "$15,000 + 12 Diamonds + Supplies x3 + Intel x3"
 		_:
 			return "Next tier unlocks at 250 seasonal influence."
 

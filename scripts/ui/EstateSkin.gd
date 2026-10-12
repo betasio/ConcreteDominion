@@ -27,6 +27,9 @@ static func icon(symbol: String) -> Texture2D:
 		var texture := AtlasTexture.new()
 		texture.atlas = load(ROOT+("estate_items.png" if ITEM_REGIONS.has(symbol) else "estate_icons.png"))
 		texture.region = ITEM_REGIONS[symbol] if ITEM_REGIONS.has(symbol) else REGIONS[symbol]
+		if symbol in ["gold","parts"]:
+			texture.atlas = load(ROOT+"estate_currency.png")
+			texture.region = Rect2(22,231,719,560) if symbol == "gold" else Rect2(777,220,751,638)
 		texture.filter_clip = true
 		icons[symbol] = texture
 	return icons[symbol]

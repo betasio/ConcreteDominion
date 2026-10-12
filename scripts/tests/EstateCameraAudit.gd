@@ -69,6 +69,17 @@ func _audit() -> void:
 			var release := InputEventScreenTouch.new()
 			release.index = index
 			camera.call("_unhandled_input", release)
+	# Backplate stays in the same world as the terrain during camera movement.
+	var backdrop = map.get_node("GoldenBayBackdrop")
+	var coast_transform: Transform2D = backdrop.panorama.transform
+	var original_position: Vector2 = camera.position
+	camera.position += Vector2(60,40)
+	await get_tree().process_frame
+	if backdrop.panorama.transform != coast_transform:
+		push_error("[CAMERA AUDIT] Coastline slides independently of terrain")
+		get_tree().quit(1)
+		return
+	camera.position = original_position
 	# Cursor zoom preserves the world point under the cursor away from limits.
 	camera.position = Vector2(118,350)
 	var pivot := get_viewport().get_visible_rect().size*0.5+Vector2(60,40)

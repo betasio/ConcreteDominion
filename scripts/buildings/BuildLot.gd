@@ -103,7 +103,7 @@ func get_effect_summary() -> String:
 				level * 5
 			]
 		"Scrapyard":
-			return "Parts production +%d/hr" % (level * 2)
+			return "Supplies production +%d/hr" % (level * 2)
 		"Data Hub":
 			return "Intel production +%d/hr" % level
 		_:

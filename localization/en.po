@@ -150,7 +150,7 @@ msgid "UI_ALLIANCE_TASKS"
 msgstr "ALLIANCE TASKS"
 
 msgid "UI_COLLECT_RESOURCES"
-msgstr "Collect Parts / Intel"
+msgstr "Collect Supplies / Intel"
 
 msgid "UI_REVEAL_INTEL"
 msgstr "Reveal with Intel"

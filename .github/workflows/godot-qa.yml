@@ -95,6 +95,13 @@ jobs:
           grep -F "[ESTATE HUD AUDIT] PASS" godot-estate-hud.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-estate-hud.log
 
+      - name: Audit resource identity and premium earning paths
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/ResourceEconomyAudit.tscn 2>&1 | tee godot-resource-economy.log
+          grep -F "[RESOURCE ECONOMY AUDIT] PASS" godot-resource-economy.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-resource-economy.log
+
       - name: Run gameplay regression audit
         run: |
           set -o pipefail

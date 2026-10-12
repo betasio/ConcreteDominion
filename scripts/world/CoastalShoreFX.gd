@@ -12,7 +12,7 @@ func _ready() -> void:
     set_process(true)
 
 func _on_view_mode_changed(mode: StringName) -> void:
-    visible = mode == &"base"
+    visible = mode == &"base" and not ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true)
     queue_redraw()
 
 func _process(delta: float) -> void:

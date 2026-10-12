@@ -25,6 +25,7 @@ var mail_badge: Label
 var modal_shade: ColorRect
 var inventory: PanelContainer
 var inventory_text: Label
+var resource_help: Label
 var panel_layout: Node
 var ui_scale := 1.0
 var safe_rect := Rect2()
@@ -65,8 +66,8 @@ func setup(game_root: Node) -> void:
 		for state in ["normal","hover","pressed"]:
 			slot.add_theme_stylebox_override(state,SKIN.frame("resource_"+key.to_lower()))
 		slot.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		slot.pressed.connect(func(): _navigate("Inventory"))
-		slot.tooltip_text = key
+		slot.pressed.connect(func(): _open_resource(key))
+		slot.tooltip_text = preload("res://scripts/core/ResourceIdentity.gd").display_name(key)
 		top.add_child(slot)
 		resource_cells.append(slot)
 		var glyph := TextureRect.new()
@@ -76,7 +77,7 @@ func setup(game_root: Node) -> void:
 		glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(glyph)
-		var resource_name := _label(slot,key.to_upper(),13,Color("#aab2b6"))
+		var resource_name := _label(slot,preload("res://scripts/core/ResourceIdentity.gd").display_name(key).to_upper(),13,Color("#aab2b6"))
 		resource_name.name = "ResourceName"
 		var value := _label(slot, key, 24)
 		value.name = key
@@ -205,7 +206,7 @@ func _layout() -> void:
 	_place(mission_button.get_node("ChapterIcon"),Rect2(14,10,36,48))
 	_place(mission_button.get_node("Arrow"),Rect2(mission_button.size.x-42,8,32,54))
 	_place(modal_shade,Rect2(Vector2.ZERO,root.size))
-	_place(inventory,Rect2(area.position+Vector2(24,area.size.y*0.3),Vector2(area.size.x-48,360)))
+	_place(inventory,Rect2(area.position+Vector2(24,area.size.y*0.20),Vector2(area.size.x-48,520)))
 	for button in navigation:
 		_place(button.get_node("Icon"),Rect2((button.size.x-78)*0.5,7,78,78))
 		_place(button.get_node("Caption"),Rect2(2,84,button.size.x-4,28))
@@ -236,7 +237,7 @@ func _refresh() -> void:
 	mission_button.visible = not game.construction_queue.is_busy()
 	if modal_shade.visible:
 		game.hud.construction_bar.hide()
-	inventory_text.text = "Cash               %s\nGold               %s\nParts              %s\nIntel               %s\nContraband     %s" % [game.economy.cash,game.economy.gold,game.loot_inventory.get_count("Parts"),game.loot_inventory.get_count("Intel"),game.loot_inventory.get_count("Contraband")]
+	inventory_text.text = "Cash               %s\nDiamonds       %s\nSupplies         %s\nIntel               %s\nContraband     %s" % [game.economy.cash,game.economy.gold,game.loot_inventory.get_count("Parts"),game.loot_inventory.get_count("Intel"),game.loot_inventory.get_count("Contraband")]
 	_refresh_event_status()
 
 
@@ -336,6 +337,9 @@ func _create_inventory() -> void:
 	_label(column,"INVENTORY",28,GOLD)
 	inventory_text = _label(column,"",24)
 	inventory_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	resource_help = _label(column,"",19,Color("#b8c5ce"))
+	resource_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	resource_help.text = "Supplies: facilities, raids and daily rewards. Intel: Data Hub and operations. Diamonds: login, objectives, events and chapters; optional timer skips. Purchases are not available yet."
 	var close := Button.new()
 	close.text = "Close"
 	SKIN.style_button(close)
@@ -441,3 +445,12 @@ func _refresh_event_status() -> void:
 	var daily: Dictionary = game.retention.get_daily_status()
 	var weekly: Dictionary = game.retention.get_weekly_status()
 	rewards_badge.visible = game.retention.can_claim_login_reward() or bool(game.retention.get_comeback_status().available) or (bool(daily.complete) and not bool(daily.claimed)) or (bool(daily.mastery_complete) and not bool(daily.mastery_claimed)) or (bool(weekly.complete) and not bool(weekly.claimed)) or (bool(weekly.mastery_complete) and not bool(weekly.mastery_claimed))
+
+
+func _open_resource(key: String) -> void:
+	_navigate("Inventory")
+	match key:
+		"Gold": resource_help.text = "Diamonds are optional: spend them to finish timers or heal instantly. Earn them from login rewards, daily and weekly objectives, events and chapters. Purchases are not available yet."
+		"Parts": resource_help.text = "Supplies support your facilities, specialist upgrades and operations. Earn them from the Scrapyard, raids and gameplay rewards."
+		"Intel": resource_help.text = "Intel unlocks information and supports operations. Collect it from the Data Hub, raids and gameplay rewards."
+		_: resource_help.text = "Cash funds building, recruitment and ordinary progression. Collect estate income, complete operations and claim gameplay rewards."

@@ -88,6 +88,12 @@ func _ready() -> void:
 			if layer != null:
 				layer.visible = false
 
+	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
+		var activity := Node2D.new()
+		activity.name = "EstateActivity"
+		activity.set_script(preload("res://scripts/world/EstateActivity.gd"))
+		add_child(activity)
+
 	downtown_bank.position = iso_to_screen(Vector2i(4, 6))
 	harbor_bank.position = iso_to_screen(Vector2i(19, 6))
 	northside_hq.position = iso_to_screen(Vector2i(19, 15))
@@ -126,7 +132,7 @@ func _estate_default_zoom() -> float:
 	var available: Rect2 = get_meta("estate_content_rect",get_viewport_rect())
 	var portrait := get_viewport_rect().size.y > get_viewport_rect().size.x
 	var horizontal_fill := 1.13 if portrait and has_meta("estate_content_rect") else 0.85
-	return minf(available.size.x * horizontal_fill / 860.0, available.size.y * 0.90 / 975.0)
+	return minf(available.size.x * horizontal_fill / 860.0, available.size.y * 0.90 / (975.0 if portrait else 800.0))
 
 
 func set_estate_content_rect(rect: Rect2) -> void:
@@ -149,7 +155,7 @@ func _base_composition_center() -> Vector2:
 	if ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		if has_meta("estate_content_rect"):
 			var content: Rect2 = get_meta("estate_content_rect")
-			return Vector2(118,440) + (get_viewport_rect().get_center()-content.get_center())/_estate_default_zoom()
+			return Vector2(118,440 if get_viewport_rect().size.y > get_viewport_rect().size.x else 390) + (get_viewport_rect().get_center()-content.get_center())/_estate_default_zoom()
 		return Vector2(118, 350)
 	# Frame the playable estate from its real building bounds rather than
 	# repeatedly hand-tuning offsets after each terrace rearrangement.

@@ -3,6 +3,7 @@ extends Node2D
 const LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 const IMAGE_PATH := "res://assets/environment/Black-and-Gold Isometric Estate Grounds.png"
 @onready var city_map: Node2D = get_parent()
+var shore: Sprite2D
 
 func _ready() -> void:
     visible = bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
@@ -23,6 +24,15 @@ func _ready() -> void:
     var mat := ShaderMaterial.new()
     mat.shader = load("res://shaders/backgrounds/illustrated_estate_alpha.gdshader") as Shader
     image.material = mat
+    shore = Sprite2D.new()
+    shore.name = "ShoreWash"
+    shore.texture = texture
+    shore.position = image.position + Vector2(0,5)
+    shore.scale = image.scale
+    var surf := ShaderMaterial.new()
+    surf.shader = load("res://shaders/backgrounds/estate_shore_wash.gdshader")
+    shore.material = surf
+    add_child(shore)
     add_child(image)
     # The short entrance bridge must cross the cliff edge onto the existing
     # drive, rather than disappearing behind the original island texture.
@@ -36,3 +46,8 @@ func _ready() -> void:
     add_child(annex)
     city_map.view_mode_changed.connect(func(mode: StringName) -> void: visible = mode == &"base")
     visible = city_map.get_view_mode() == &"base"
+
+func _process(_delta: float) -> void:
+    if visible and shore != null:
+        var backdrop = city_map.get_node("GoldenBayBackdrop")
+        shore.material.set_shader_parameter("animation_time",backdrop.animation_time)

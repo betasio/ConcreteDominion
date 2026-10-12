@@ -341,7 +341,7 @@ func craft_street_cache() -> bool:
 	if loot == null or not loot.spend_loot({"Parts": 3, "Intel": 1}):
 		return false
 
-	_apply_reward({"cash": 3500, "gold": 4, "xp": 60})
+	_apply_reward({"cash": 5000, "xp": 60})
 	changed.emit()
 	return true
 
@@ -362,7 +362,7 @@ func craft_syndicate_crate() -> bool:
 	}):
 		return false
 
-	_apply_reward({"cash": 9000, "gold": 12, "xp": 150})
+	_apply_reward({"cash": 12500, "xp": 150})
 	changed.emit()
 	return true
 
@@ -469,7 +469,7 @@ func get_tutorial_hint() -> String:
 		return "Tutorial: Complete missions and raids to reach Account Lv.2."
 
 	if progression.get_specialist_level(&"Driver") <= 1:
-		return "Tutorial: Earn Parts/Intel, then upgrade Driver support in Progression."
+		return "Tutorial: Earn Supplies/Intel, then upgrade Driver support in Progression."
 
 	return "Tutorial complete: choose the contracts you enjoy, strengthen your crew, and push higher-tier targets."
 

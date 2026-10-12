@@ -216,7 +216,7 @@ func _get_raid_reward_line(result: Dictionary) -> String:
 	var awarded_loot = result.get("loot", {})
 	if awarded_loot is Dictionary:
 		for item_name in awarded_loot.keys():
-			pieces.append("%s x%d" % [String(item_name), int(awarded_loot[item_name])])
+			pieces.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), int(awarded_loot[item_name])])
 	return " • ".join(pieces)
 
 
@@ -227,7 +227,7 @@ func _get_operation_reward_line(result: Dictionary) -> String:
 	var awarded_loot = result.get("loot", {})
 	if awarded_loot is Dictionary:
 		for item_name in awarded_loot.keys():
-			pieces.append("%s x%d" % [String(item_name), int(awarded_loot[item_name])])
+			pieces.append("%s x%d" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(item_name)), int(awarded_loot[item_name])])
 	return " • ".join(pieces)
 
 
