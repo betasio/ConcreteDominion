@@ -82,6 +82,12 @@ func _capture() -> void:
 	city.set_view_mode(&"base")
 	city.camera.reset_smoothing()
 	await _save_frame("turf_illustrated_desktop_1080p")
+	city.camera.position.y = 9999
+	city.camera.call("_clamp_camera_to_world")
+	city.camera.reset_smoothing()
+	await _save_frame("turf_illustrated_desktop_south_limit")
+	city.set_view_mode(&"base")
+	city.camera.reset_smoothing()
 	for layer in visible_layers:
 		layer.visible = false
 	get_window().size = Vector2i(720,1280)

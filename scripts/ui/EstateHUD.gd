@@ -61,7 +61,7 @@ func setup(game_root: Node) -> void:
 	identity = _label(profile_button, "", 20, GOLD)
 	_place(identity, Rect2(0,62,80,22))
 	identity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	for key in ["Cash", "Gold", "Parts", "Intel"]:
+	for key in ["Cash", "Parts", "Intel", "Gold"]:
 		var slot := Button.new()
 		for state in ["normal","hover","pressed"]:
 			slot.add_theme_stylebox_override(state,SKIN.frame("resource_"+key.to_lower()))
@@ -221,9 +221,9 @@ func _layout() -> void:
 func _refresh() -> void:
 	identity.text = "LV. %d" % game.progression.account_level
 	resources[0].text = "%s" % _compact(game.economy.cash)
-	resources[1].text = "%s" % _compact(game.economy.gold)
-	resources[2].text = "%s" % _compact(game.loot_inventory.get_count("Parts"))
-	resources[3].text = "%s" % _compact(game.loot_inventory.get_count("Intel"))
+	resources[1].text = "%s" % _compact(game.loot_inventory.get_count("Parts"))
+	resources[2].text = "%s" % _compact(game.loot_inventory.get_count("Intel"))
+	resources[3].text = "%s" % _compact(game.economy.gold)
 	top.get_node("Power").text = "POWER  %s" % _compact(game.player_profile.get_power_rating())
 	var chapter: Dictionary = game.mission_tracker.get_story_chapter_status()
 	mission_title.text = "Chapter %d · %s" % [chapter.chapter,chapter.title]

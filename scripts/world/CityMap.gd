@@ -141,6 +141,7 @@ func _estate_default_zoom() -> float:
 
 func set_estate_content_rect(rect: Rect2) -> void:
 	set_meta("estate_content_rect",rect)
+	camera.estate_content_rect = rect
 	if view_mode == &"base":
 		set_view_mode(&"base")
 
@@ -217,12 +218,14 @@ func set_view_mode(mode: StringName) -> void:
 	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
 	if mode == &"base" and illustrated:
 		camera.use_camera_limits = true
+		camera.estate_bottom = ESTATE_LAYOUT.artwork_to_world(Vector2(0,ESTATE_LAYOUT.TEXTURE_SIZE.y)).y
 		camera.camera_bounds = Rect2(Vector2(-310, -80), Vector2(860, 1380))
 		var factor := _estate_default_zoom() / 0.94
 		camera.min_zoom = 0.73 * factor
 		camera.max_zoom = 1.6 * factor
 	else:
 		camera.use_camera_limits = false
+		camera.estate_bottom = INF
 		camera.min_zoom = 0.45
 		camera.max_zoom = 2.0
 

@@ -1,6 +1,6 @@
 # Gated estate districts
 
-The estate now uses `expanded_estate.png`, a continuous land foundation with water behind HQ. `estate_hinterland.png` extends the forest and cliffs across wide PC windows; both images stay fixed in world coordinates. A narrow edge blend conceals the rectangular texture boundary. Water, road traffic and plot fog use the existing reduced-motion clock.
+The estate now uses `expanded_estate.png`, a continuous land foundation with water behind HQ. Animated open water surrounds the side cliffs on wide PC windows; small boats follow offshore routes with wakes. The surrounding forest backplate is no longer rendered. Terrain and water stay fixed in world coordinates, and a narrow edge blend conceals the texture boundary. Water, boats, road traffic and plot fog use the existing reduced-motion clock. The camera limits its visible southern edge to the terrain boundary at every zoom, accounting for the HUD, while preserving the portrait starting zoom. The top resource order is Cash, Supplies, Intel, Diamonds.
 
 ## Layout and progression
 

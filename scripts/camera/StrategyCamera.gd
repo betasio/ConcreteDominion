@@ -16,6 +16,8 @@ extends Camera2D
 @export var use_camera_limits: bool = false
 @export var camera_bounds := Rect2(Vector2(-3500, -2500), Vector2(7000, 5000))
 
+var estate_bottom := INF
+var estate_content_rect := Rect2()
 var controls_blocked := false
 var _mouse_dragging := false
 var _active_touches: Dictionary = {}
@@ -135,6 +137,7 @@ func _zoom_at_screen_point(value: float, screen_point: Vector2) -> void:
 func _set_camera_zoom(value: float) -> void:
 	var z := clampf(value, min_zoom, max_zoom)
 	zoom = Vector2(z, z)
+	_clamp_camera_to_world()
 
 
 func _get_current_pinch_distance() -> float:
@@ -149,6 +152,14 @@ func _clamp_camera_to_world() -> void:
 		return
 	position.x = clampf(position.x, camera_bounds.position.x, camera_bounds.end.x)
 	position.y = clampf(position.y, camera_bounds.position.y, camera_bounds.end.y)
+	if is_finite(estate_bottom):
+		var content := estate_content_rect if estate_content_rect.has_area() else get_viewport_rect()
+		var below_center := (content.end.y-get_viewport_rect().get_center().y)/zoom.y
+		var maximum_y := estate_bottom-below_center
+		position.y = minf(position.y,maximum_y)
+		# Smoothing must not expose water below the southern road after zoom/resize.
+		if get_screen_center_position().y > maximum_y:
+			reset_smoothing()
 
 
 func _ensure_input_actions() -> void:

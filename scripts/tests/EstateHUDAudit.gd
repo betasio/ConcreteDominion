@@ -13,7 +13,8 @@ func _audit() -> void:
 	var hud = game.get_node("EstateHUD")
 	await get_tree().process_frame
 	game.loot_inventory.add_item("Parts", 17)
-	_check(hud.resources[2].text.begins_with(str(game.loot_inventory.get_count("Parts"))), "Resource header did not update")
+	_check(hud.resources[1].text.begins_with(str(game.loot_inventory.get_count("Parts"))), "Resource header did not update")
+	_check(hud.resource_cells[3].tooltip_text == "Diamonds", "Diamonds must occupy the rightmost resource slot")
 	game.mailbox.add_mail("HUD audit", "Test reward", {"cash": 1})
 	_check(hud.mail_badge.visible and hud.mail_badge.text == str(game.mailbox.get_unclaimed_count()), "Mail count did not update")
 	# Resource counters open the actual balances, and event badges follow claims.
@@ -42,6 +43,19 @@ func _audit() -> void:
 		for frame in range(4):
 			await get_tree().process_frame
 		var viewport := get_viewport().get_visible_rect()
+		var camera = game.city_map.camera
+		var portrait_zoom: float = camera.zoom.x
+		for test_zoom in [camera.min_zoom,portrait_zoom,camera.max_zoom]:
+			camera._set_camera_zoom(test_zoom)
+			camera.position.y = 9999
+			camera._clamp_camera_to_world()
+			camera.reset_smoothing()
+			camera.force_update_scroll()
+			var visible_bottom: float = camera.get_screen_center_position().y+(camera.estate_content_rect.end.y-viewport.get_center().y)/camera.zoom.y
+			_check(visible_bottom <= camera.estate_bottom+0.1,"HUD-framed camera exposes southern map edge at %s" % dimensions)
+		game.city_map.set_view_mode(&"base")
+		_check(is_equal_approx(camera.zoom.x,portrait_zoom),"Default zoom changed during boundary clamp")
+
 		var tutorial_panel: Control = game.tutorial_ui.panel
 		var tutorial_bounds := tutorial_panel.get_global_transform_with_canvas()*Rect2(Vector2.ZERO,tutorial_panel.size)
 		_check(viewport.grow(1).encloses(tutorial_bounds), "Tutorial clipped at %s" % dimensions)
@@ -120,15 +134,18 @@ func _audit() -> void:
 	var activity = game.city_map.get_node("EstateActivity")
 	var activity_before: float = activity.clock
 	var clock_before: float = backdrop.animation_time
+	var boat_before: Vector2 = backdrop.boat_position(0)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(backdrop.animation_time == clock_before, "Reduced Motion does not freeze scenery")
 	_check(activity.clock == activity_before, "Reduced Motion does not freeze traffic")
+	_check(backdrop.boat_position(0) == boat_before, "Reduced Motion does not freeze boats")
 	game.settings.set_reduced_motion(false)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(backdrop.animation_time > clock_before, "Scenery clock did not resume")
 	_check(activity.clock > activity_before, "Traffic did not resume")
+	_check(backdrop.boat_position(0) != boat_before, "Boats did not resume")
 	game.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():

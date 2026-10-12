@@ -49,6 +49,20 @@ func _audit() -> void:
 				push_error("[CAMERA AUDIT] Site clipped at %s: %s" % [size, site.name])
 				get_tree().quit(1)
 				return
+		# At every zoom, the visible map must stop at the southern terrain edge.
+		for test_zoom in [camera.min_zoom,camera.zoom.x,camera.max_zoom]:
+			camera.call("_set_camera_zoom",test_zoom)
+			camera.position.y = 9999
+			camera.call("_clamp_camera_to_world")
+			camera.reset_smoothing()
+			camera.force_update_scroll()
+			var bottom: float = camera.get_screen_center_position().y+viewport_rect.size.y*0.5/camera.zoom.y
+			if bottom > camera.estate_bottom+0.1:
+				push_error("[CAMERA AUDIT] Southern terrain edge exposed at %s / %s" % [size,test_zoom])
+				get_tree().quit(1)
+				return
+		map.set_view_mode(&"base")
+		camera.reset_smoothing()
 		# Exercise the actual two-finger input handler at each aspect ratio.
 		var old_zoom: float = camera.zoom.x
 		for index in range(2):
@@ -71,11 +85,11 @@ func _audit() -> void:
 			camera.call("_unhandled_input", release)
 	# Backplate stays in the same world as the terrain during camera movement.
 	var backdrop = map.get_node("GoldenBayBackdrop")
-	var coast_transform: Transform2D = backdrop.panorama.transform
+	var coast_transform: Transform2D = backdrop.ocean.transform
 	var original_position: Vector2 = camera.position
 	camera.position += Vector2(60,40)
 	await get_tree().process_frame
-	if backdrop.panorama.transform != coast_transform:
+	if backdrop.ocean.transform != coast_transform:
 		push_error("[CAMERA AUDIT] Coastline slides independently of terrain")
 		get_tree().quit(1)
 		return
@@ -117,5 +131,5 @@ func _audit() -> void:
 		push_error("[CAMERA AUDIT] World mode did not restore camera freedom")
 		get_tree().quit(1)
 		return
-	print("[CAMERA AUDIT] PASS - three aspect ratios, all seven sites framed, pinch zoom, estate bounds and world view reset")
+	print("[CAMERA AUDIT] PASS - three aspect ratios, all seven sites framed, pinch zoom, viewport-aware southern edge and world view reset")
 	get_tree().quit(0)
