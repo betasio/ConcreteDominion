@@ -1,6 +1,8 @@
 # Gated estate districts
 
-The estate now uses `expanded_estate.png`, a continuous land foundation with water behind HQ. Animated open water surrounds the side cliffs on wide PC windows; small boats follow offshore routes with wakes. The surrounding forest backplate is no longer rendered. Terrain and water stay fixed in world coordinates, and a narrow edge blend conceals the texture boundary. Water, boats, road traffic and plot fog use the existing reduced-motion clock. The camera limits its visible southern edge to the terrain boundary at every zoom, accounting for the HUD, while preserving the portrait starting zoom. The top resource order is Cash, Supplies, Intel, Diamonds.
+The estate uses `complete_estate_coast.png` with complete rocky shorelines and `estate_south_approach.png` continuing the southern road beyond the playable grounds. Animated open water surrounds the side cliffs on wide PC windows; detailed yachts follow offshore routes with wakes. Terrain and water stay fixed in world coordinates. Only the open-water texture edges are feathered, preserving the cliff silhouettes. Water, boats, road traffic and plot fog use the existing reduced-motion clock. The camera keeps the **entire rendered frame**, including the translucent HUD area, above the end of the road. Minimum zoom equals the approved starting zoom for each viewport, preserving the portrait composition without allowing the estate to shrink into a small island. The top resource order is Cash, Supplies, Intel, Diamonds.
+
+Core facilities, district buildings and the gate share the elevated front-facing `estate_front_atlas.png`; the 3D HQ camera matches that direction. Ground anchors, artwork rectangles and selection footprints use `IllustratedEstateLayout.gd`. The gate badge sits above its facade to keep the outer Barracks unobscured.
 
 ## Layout and progression
 

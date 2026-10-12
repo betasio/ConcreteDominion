@@ -27,6 +27,10 @@ func _audit() -> void:
 	var terrain :=  city.get_node("IllustratedEstateTerrain/TerrainIllustration") as Sprite2D
 	var layout = preload("res://scripts/world/IllustratedEstateLayout.gd")
 	_check(terrain.texture != null, "Continuous estate artwork missing")
+	var approach := city.get_node("IllustratedEstateTerrain/SouthApproach") as Sprite2D
+	var road_end := approach.position.y + approach.texture.get_height() * approach.scale.y * 0.5
+	_check(is_equal_approx(road_end, layout.ROAD_END), "Camera road boundary drifted from approach artwork")
+	_check(city.camera.estate_bottom < road_end, "Camera can expose the end of the road")
 	_check(terrain.to_global(layout.PAD_CENTERS[&"BuildLotD"]-layout.TEXTURE_SIZE*0.5).distance_to(city.lot_d.global_position) < 0.1,
 			"Data Hub interaction no longer aligns with the estate pad")
 	for core in [city.safehouse,city.hospital,city.barracks]:

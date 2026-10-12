@@ -49,6 +49,10 @@ func _audit() -> void:
 				push_error("[CAMERA AUDIT] Site clipped at %s: %s" % [size, site.name])
 				get_tree().quit(1)
 				return
+		if not is_equal_approx(camera.min_zoom,map._estate_default_zoom()):
+			push_error("[CAMERA AUDIT] Zoom-out limit is below the approved estate framing")
+			get_tree().quit(1)
+			return
 		# At every zoom, the visible map must stop at the southern terrain edge.
 		for test_zoom in [camera.min_zoom,camera.zoom.x,camera.max_zoom]:
 			camera.call("_set_camera_zoom",test_zoom)

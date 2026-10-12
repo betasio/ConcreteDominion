@@ -51,7 +51,7 @@ func _ready() -> void:
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 1.78
-	camera.position = Vector3(3.5, 2.75, 6.2)
+	camera.position = Vector3(0, 4.8, 6.6) if get_parent().use_illustrated_pad else Vector3(3.5, 2.75, 6.2)
 	stage.add_child(camera)
 	camera.look_at(Vector3(0, 0.14, 0), Vector3.UP)
 	camera.current = true

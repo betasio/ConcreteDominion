@@ -12,12 +12,12 @@ var cash_bank := 0.0
 var tick := 0.0
 
 func _ready() -> void:
-	rally_hall = _new_plot("RallyHall",Vector2(300,319),0,"rally",true)
-	gate = _new_plot("EstateGate",Vector2(543,685),0,"gate",true)
-	gate.configure_illustrated_pad(Vector2(68,24))
+	rally_hall = _new_plot("RallyHall",Vector2(387,265),0,"rally",true)
+	gate = _new_plot("EstateGate",Vector2(580,588),0,"gate",true)
+	gate.configure_illustrated_pad(Vector2(85,28))
 	for row in range(2):
 		for col in range(3):
-			_new_plot("District%d%d" % [row,col],Vector2([218,543,856][col],[990,1185][row]),2 if row == 0 else 4,"empty",false)
+			_new_plot("District%d%d" % [row,col],Vector2(([313,580,850] if row == 0 else [300,580,854])[col],[850,1010][row]),2 if row == 0 else 4,"empty",false)
 	get_parent().view_mode_changed.connect(func(mode): visible = mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain",true))
 
 func setup(root: Node) -> void:
@@ -56,15 +56,8 @@ func configure(lot: BuildLot, kind: String, restoring: bool = false) -> bool:
 	lot.base_upgrade_cash_cost = 5000
 	lot.base_upgrade_duration = 90
 	lot.description = effect_summary(kind,1)
-	if kind in ["gate","rally"]:
-		var texture := AtlasTexture.new()
-		texture.atlas = load("res://assets/premium/buildings/estate_command_atlas.png")
-		texture.region = Rect2(889,267,641,568) if kind == "gate" else Rect2(9,124,870,715)
-		lot.art_texture = texture
-	else:
-		var art: String = {"cash":"garage","supplies":"scrapyard","intel":"data_hub","hospital":"hospital","barracks":"barracks"}.get(kind,"")
-		var path := "res://assets/premium/buildings/%s.png" % art
-		lot.art_texture = load(path) if ResourceLoader.exists(path) else null
+	var art: String = {"cash":"garage","supplies":"scrapyard","intel":"data_hub"}.get(kind,kind)
+	lot.art_texture = preload("res://scripts/buildings/EstateFacadeArt.gd").texture(art)
 	lot.queue_redraw()
 	return true
 

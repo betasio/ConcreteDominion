@@ -28,6 +28,9 @@ var illustrated_footprint := Vector2(94,46)
 
 func configure_illustrated_pad(half_size: Vector2) -> void:
 	use_illustrated_pad = true
+	var facade := preload("res://scripts/buildings/EstateFacadeArt.gd").texture(String(building_type))
+	if facade != null:
+		art_texture = facade
 	illustrated_footprint = half_size
 	var shape := ConvexPolygonShape2D.new()
 	shape.points = _pad_outline()

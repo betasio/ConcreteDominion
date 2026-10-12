@@ -27,6 +27,9 @@ var illustrated_footprint := Vector2(78, 41)
 
 func configure_illustrated_pad(half_size: Vector2) -> void:
 	use_illustrated_pad = true
+	var facade := preload("res://scripts/buildings/EstateFacadeArt.gd").texture(building_name)
+	if facade != null:
+		art_texture = facade
 	illustrated_footprint = half_size
 	# Replace this instance's oversized legacy rectangle, never the shared
 	# scene resource. The whole stone pad remains selectable in every state.
@@ -231,7 +234,10 @@ func _draw_illustrated_site() -> void:
 		if is_built and is_constructing:
 			status += " → %d" % pending_level
 		title += " · " + status
-	MAP_LABEL.draw_badge(self,title,18.0 if not is_built else illustrated_footprint.y*0.45,16)
+	var badge_y := 18.0 if not is_built else illustrated_footprint.y*0.45
+	if building_name == "Estate Gate":
+		badge_y = -156.0
+	MAP_LABEL.draw_badge(self,title,badge_y,16)
 
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

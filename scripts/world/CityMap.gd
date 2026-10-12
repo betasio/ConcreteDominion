@@ -151,7 +151,7 @@ func _on_viewport_size_changed() -> void:
 		return
 	var relative_zoom: float = camera.zoom.x / camera.min_zoom
 	var factor := _estate_default_zoom() / 0.94
-	camera.min_zoom = 0.73 * factor
+	camera.min_zoom = 0.94 * factor
 	camera.max_zoom = 1.6 * factor
 	camera.call("_set_camera_zoom", relative_zoom * camera.min_zoom)
 
@@ -218,10 +218,10 @@ func set_view_mode(mode: StringName) -> void:
 	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
 	if mode == &"base" and illustrated:
 		camera.use_camera_limits = true
-		camera.estate_bottom = ESTATE_LAYOUT.artwork_to_world(Vector2(0,ESTATE_LAYOUT.TEXTURE_SIZE.y)).y
+		camera.estate_bottom = ESTATE_LAYOUT.ROAD_END - 12.0
 		camera.camera_bounds = Rect2(Vector2(-310, -80), Vector2(860, 1380))
 		var factor := _estate_default_zoom() / 0.94
-		camera.min_zoom = 0.73 * factor
+		camera.min_zoom = 0.94 * factor
 		camera.max_zoom = 1.6 * factor
 	else:
 		camera.use_camera_limits = false
@@ -239,6 +239,7 @@ func set_view_mode(mode: StringName) -> void:
 		camera.position = destination
 		camera.zoom = destination_zoom
 
+	camera.call("_clamp_camera_to_world")
 	view_mode_changed.emit(view_mode)
 	queue_redraw()
 

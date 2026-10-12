@@ -51,8 +51,8 @@ func _audit() -> void:
 			camera._clamp_camera_to_world()
 			camera.reset_smoothing()
 			camera.force_update_scroll()
-			var visible_bottom: float = camera.get_screen_center_position().y+(camera.estate_content_rect.end.y-viewport.get_center().y)/camera.zoom.y
-			_check(visible_bottom <= camera.estate_bottom+0.1,"HUD-framed camera exposes southern map edge at %s" % dimensions)
+			var visible_bottom: float = camera.get_screen_center_position().y+viewport.size.y*0.5/camera.zoom.y
+			_check(visible_bottom <= camera.estate_bottom+0.1,"Full viewport exposes water beneath southern road at %s" % dimensions)
 		game.city_map.set_view_mode(&"base")
 		_check(is_equal_approx(camera.zoom.x,portrait_zoom),"Default zoom changed during boundary clamp")
 

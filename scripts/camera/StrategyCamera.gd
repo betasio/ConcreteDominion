@@ -30,6 +30,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if controls_blocked:
+		_clamp_camera_to_world()
 		return
 	var ui_has_focus := get_viewport().gui_get_focus_owner() != null
 	if not ui_has_focus:
@@ -153,11 +154,10 @@ func _clamp_camera_to_world() -> void:
 	position.x = clampf(position.x, camera_bounds.position.x, camera_bounds.end.x)
 	position.y = clampf(position.y, camera_bounds.position.y, camera_bounds.end.y)
 	if is_finite(estate_bottom):
-		var content := estate_content_rect if estate_content_rect.has_area() else get_viewport_rect()
-		var below_center := (content.end.y-get_viewport_rect().get_center().y)/zoom.y
+		var below_center := get_viewport_rect().size.y*0.5/zoom.y
 		var maximum_y := estate_bottom-below_center
 		position.y = minf(position.y,maximum_y)
-		# Smoothing must not expose water below the southern road after zoom/resize.
+		# Include the translucent HUD: the southern road must continue beyond the screen.
 		if get_screen_center_position().y > maximum_y:
 			reset_smoothing()
 

@@ -2,19 +2,21 @@ extends Node2D
 ## World-anchored open water and small ambient boats beyond the estate cliffs.
 const SHADER_PATH := "res://shaders/backgrounds/golden_bay_distance.gdshader"
 @onready var city_map: Node2D = get_parent()
+var yacht: Texture2D
 var ocean: Polygon2D
 var motion_enabled := true
 var animation_time := 0.0
 var redraw_time := 0.0
 # Every route stays outside the artwork, including its widest southern pads.
 const ROUTES := [
-	[Vector2(-610,60),Vector2(-740,860)],
-	[Vector2(830,120),Vector2(970,980)],
+	[Vector2(-770,60),Vector2(-900,860)],
+	[Vector2(970,120),Vector2(1090,980)],
 	[Vector2(-1000,650),Vector2(-1140,-140)]
 ]
 
 func _ready() -> void:
 	z_index = -90
+	yacht = preload("res://scripts/buildings/EstateFacadeArt.gd").texture("yacht")
 	ocean = Polygon2D.new()
 	ocean.name = "OpenWater"
 	ocean.polygon = PackedVector2Array([Vector2(-6000,-4000),Vector2(6000,-4000),Vector2(6000,5000),Vector2(-6000,5000)])
@@ -58,14 +60,7 @@ func _draw() -> void:
 			draw_polyline(wake,Color(0.55,0.79,0.82,0.20),2.0,true)
 			draw_line(Vector2(-22,side*4),Vector2(-45,side*7),Color(0.73,0.87,0.84,0.2),3.0,true)
 		draw_ellipse_shadow()
-		draw_colored_polygon(PackedVector2Array([Vector2(29,0),Vector2(13,-8),Vector2(-22,-8),Vector2(-25,0),Vector2(-22,8),Vector2(13,8)]),Color("#c6c5b9"))
-		draw_colored_polygon(PackedVector2Array([Vector2(22,0),Vector2(10,-5),Vector2(-20,-5),Vector2(-20,5),Vector2(10,5)]),Color("#ece3cb"))
-		draw_rect(Rect2(-11,-5,20,10),Color("#354c56"))
-		draw_rect(Rect2(-9,-4,13,8),Color("#e0d9c4"))
-		draw_line(Vector2(-18,-6),Vector2(-18,6),Color("#8e7149"),2,true)
-		draw_line(Vector2(1,0),Vector2(-2,-8),Color("#eee7d8"),1,true)
-		draw_circle(Vector2(11,-7),1.1,Color("#b96854"))
-		draw_circle(Vector2(11,7),1.1,Color("#6cba9e"))
+		draw_texture_rect(yacht,Rect2(-31,-13,62,26),false)
 	draw_set_transform(Vector2.ZERO)
 
 func draw_ellipse_shadow() -> void:
