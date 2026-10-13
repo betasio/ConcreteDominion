@@ -8,6 +8,7 @@ signal battle_resolved(result: Dictionary)
 @export var launch_countdown_seconds: float = 5.0
 @export_range(0.0, 1.0, 0.05) var equal_reward_pool_share: float = 0.50
 
+var skins: StoreManager
 var economy: PlayerEconomy
 var roster: TroopRoster
 var hospital: HospitalQueue
@@ -105,11 +106,13 @@ func preview_battle(target: RaidTarget, local_driver_count: int, local_spy_count
 	damage *= loadout.get_consumable_damage_multiplier()
 	damage *= weakness_multiplier
 	damage *= equipment_multiplier
+	damage *= skins.attack_multiplier() if skins != null else 1.0
 
 	var target_hp := float(target_data.get("hp", target.get_max_hp()))
 
 	return {
 		"damage": damage,
+		"skin_damage_multiplier": skins.attack_multiplier() if skins != null else 1.0,
 		"target_hp": target_hp,
 		"raid_math": raid_math,
 		"participants": participants,
@@ -246,6 +249,7 @@ func _resolve_active_battle() -> void:
 		"target_name": String(active_battle["target_name"]),
 		"target_hp": target_hp,
 		"damage": damage,
+		"skin_damage_multiplier": skins.attack_multiplier() if skins != null else 1.0,
 		"reward_pool": reward_pool,
 		"local_cash_reward": local_cash_reward,
 		"xp_reward": xp_reward,

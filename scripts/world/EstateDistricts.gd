@@ -85,9 +85,9 @@ func total_levels(kind: String) -> int:
 
 func effect_summary(kind: String, level: int) -> String:
 	match kind:
-		"cash": return "Cash +%d/hr • six-hour storage" % (1200*level)
-		"supplies": return "Supplies +%d/hr • six-hour storage" % (2*level)
-		"intel": return "Intel +%d/hr • six-hour storage" % level
+		"cash": return "Cash +%d/hr • six-hour storage" % (1200*level*production_multiplier())
+		"supplies": return "Supplies +%.1f/hr • six-hour storage" % (2*level*production_multiplier())
+		"intel": return "Intel +%.1f/hr • six-hour storage" % (level*production_multiplier())
 		"hospital": return "+%d casualty beds • +1 treatment lane" % (25*level)
 		"barracks": return "+%d training batch • +1 queue slot • training -%d%%" % [10*level,3*level]
 		"gate": return "Local war defence +%d%% • guards reduce local raid injuries" % (level*4)
@@ -97,8 +97,8 @@ func effect_summary(kind: String, level: int) -> String:
 func _process(delta: float) -> void:
 	if game == null:
 		return
-	var rate := total_levels("cash")*1200
-	cash_bank = minf(float(rate*6),cash_bank+float(rate)*delta/3600.0)
+	var rate := get_cash_per_hour()
+	cash_bank = minf(maxf(float(rate*6),cash_bank),cash_bank+float(rate)*delta/3600.0)
 	tick += delta
 	if tick >= 5.0:
 		tick = 0
@@ -129,5 +129,12 @@ func load_save_data(data: Dictionary, offline: float) -> void:
 		lot.is_built = false
 		configure(lot,String(state.get("kind","empty")),true)
 		lot.restore_progress(bool(state.get("built",false)),int(state.get("level",1)))
-	cash_bank = clampf(float(data.get("cash_bank",0))+float(total_levels("cash")*1200)*minf(21600,maxf(0,offline))/3600.0,0,float(total_levels("cash")*7200))
+	cash_bank = clampf(float(data.get("cash_bank",0)),0,total_levels("cash")*7200.0*1.1)
+	cash_bank = minf(maxf(cash_bank,get_cash_per_hour()*6.0),cash_bank+get_cash_per_hour()*minf(21600,maxf(0,offline))/3600.0)
 	changed.emit()
+
+func get_cash_per_hour() -> float:
+	return total_levels("cash")*1200.0 * production_multiplier()
+
+func production_multiplier() -> float:
+	return game.store_manager.production_multiplier() if game != null else 1.0

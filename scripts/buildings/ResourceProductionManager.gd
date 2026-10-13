@@ -6,6 +6,7 @@ signal collected(resources: Dictionary)
 
 const CAP_SECONDS := 6.0 * 60.0 * 60.0
 
+var skins: StoreManager
 var districts: Node
 var scrap_yard: BuildLot
 var data_hub: BuildLot
@@ -37,19 +38,19 @@ func _process(delta: float) -> void:
 	var old_parts := floori(parts_bank)
 	var old_intel := floori(intel_bank)
 	elapsed = minf(CAP_SECONDS, elapsed + delta)
-	parts_bank = minf(_parts_cap(), parts_bank + float(get_parts_per_hour()) * delta / 3600.0)
-	intel_bank = minf(_intel_cap(), intel_bank + float(get_intel_per_hour()) * delta / 3600.0)
+	parts_bank = minf(maxf(_parts_cap(),parts_bank), parts_bank + float(get_parts_per_hour()) * delta / 3600.0)
+	intel_bank = minf(maxf(_intel_cap(),intel_bank), intel_bank + float(get_intel_per_hour()) * delta / 3600.0)
 
 	if floori(parts_bank) != old_parts or floori(intel_bank) != old_intel:
 		changed.emit()
 
 
-func get_parts_per_hour() -> int:
-	return (2 * scrap_yard.level if scrap_yard != null and scrap_yard.is_built else 0) + (2 * districts.total_levels("supplies") if districts != null else 0)
+func get_parts_per_hour() -> float:
+	return ((2 * scrap_yard.level if scrap_yard != null and scrap_yard.is_built else 0) + (2 * districts.total_levels("supplies") if districts != null else 0)) * (skins.production_multiplier() if skins != null else 1.0)
 
 
-func get_intel_per_hour() -> int:
-	return (data_hub.level if data_hub != null and data_hub.is_built else 0) + (districts.total_levels("intel") if districts != null else 0)
+func get_intel_per_hour() -> float:
+	return ((data_hub.level if data_hub != null and data_hub.is_built else 0) + (districts.total_levels("intel") if districts != null else 0)) * (skins.production_multiplier() if skins != null else 1.0)
 
 
 func collect() -> Dictionary:
@@ -74,7 +75,7 @@ func collect() -> Dictionary:
 
 
 func get_summary() -> String:
-	return ("Cash +%d/hr • Bank $%d\n" % [districts.total_levels("cash")*1200,floori(districts.cash_bank)] if districts != null else "") + "Supplies +%d/hr • Intel +%d/hr • Bank S:%d I:%d" % [
+	return ("Cash +%d/hr • Bank $%d\n" % [districts.get_cash_per_hour(),floori(districts.cash_bank)] if districts != null else "") + "Supplies +%.1f/hr • Intel +%.1f/hr • Bank S:%d I:%d" % [
 		get_parts_per_hour(),
 		get_intel_per_hour(),
 		floori(parts_bank),
@@ -91,13 +92,13 @@ func get_save_data() -> Dictionary:
 
 
 func load_save_data(data: Dictionary, offline_seconds: float = 0.0) -> void:
-	parts_bank = maxf(0.0, float(data.get("parts_bank", 0.0)))
-	intel_bank = maxf(0.0, float(data.get("intel_bank", 0.0)))
+	parts_bank = clampf(float(data.get("parts_bank", 0.0)),0.0,_parts_cap() / (skins.production_multiplier() if skins != null else 1.0) * 1.1)
+	intel_bank = clampf(float(data.get("intel_bank", 0.0)),0.0,_intel_cap() / (skins.production_multiplier() if skins != null else 1.0) * 1.1)
 	elapsed = minf(CAP_SECONDS, float(data.get("elapsed", 0.0)) + maxf(0.0, offline_seconds))
 
 	var offline := minf(CAP_SECONDS, maxf(0.0, offline_seconds))
-	parts_bank = minf(_parts_cap(), parts_bank + float(get_parts_per_hour()) * offline / 3600.0)
-	intel_bank = minf(_intel_cap(), intel_bank + float(get_intel_per_hour()) * offline / 3600.0)
+	parts_bank = minf(maxf(_parts_cap(),parts_bank), parts_bank + float(get_parts_per_hour()) * offline / 3600.0)
+	intel_bank = minf(maxf(_intel_cap(),intel_bank), intel_bank + float(get_intel_per_hour()) * offline / 3600.0)
 	changed.emit()
 
 

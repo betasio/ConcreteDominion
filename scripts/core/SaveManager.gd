@@ -6,7 +6,7 @@ signal load_completed(found_save: bool)
 
 const SAVE_PATH := "user://concrete_dominion_save.json"
 const BACKUP_PATH := "user://concrete_dominion_save.backup.json"
-const SAVE_VERSION := 35
+const SAVE_VERSION := 36
 
 var economy: PlayerEconomy
 var loot_inventory: LootInventory
@@ -32,6 +32,7 @@ var resource_production: ResourceProductionManager
 var achievements: AchievementManager
 var tutorial: TutorialManager
 var city_map: Node
+var skins: StoreManager
 
 var _autosave_timer := 0.0
 var last_loaded_version: int = SAVE_VERSION
@@ -91,6 +92,8 @@ func setup(
 	achievements = achievement_manager
 	tutorial = tutorial_manager
 	city_map = world
+	skins = get_parent().get_node("StoreManager")
+	skins.changed.connect(mark_dirty)
 
 	economy.changed.connect(mark_dirty)
 	loot_inventory.changed.connect(mark_dirty)
@@ -170,6 +173,7 @@ func save_game() -> bool:
 		"resource_production": resource_production.get_save_data(),
 		"achievements": achievements.get_save_data(),
 		"tutorial": tutorial.get_save_data(),
+		"turf_skin": skins.get_save_data(),
 		"world": city_map.get_save_data()
 	}
 
@@ -218,6 +222,7 @@ func load_game() -> bool:
 	endgame.load_save_data(data.get("endgame", {}))
 	battle_reports.load_save_data(data.get("battle_reports", {}))
 	roster.load_save_data(data.get("roster", {}))
+	skins.load_save_data(data.get("turf_skin", {}))
 	city_map.load_save_data(data.get("world", {}), elapsed)
 	world_control.load_save_data(data.get("world_control", {}), elapsed)
 	resource_production.load_save_data(data.get("resource_production", {}), elapsed)

@@ -126,3 +126,21 @@ class WorldTests(unittest.TestCase):
         with self.assertRaises(ApiError): self.api.call('GET','/v1/world',{},'')
         with self.assertRaises(ApiError): self.order(receipt='invalid')
         self.assertEqual(self.api.execute('SELECT COUNT(*) FROM landmark_orders').fetchone()[0],0)
+
+    def test_premium_ownership_is_private_revocable_and_cannot_boost_contests(self):
+        self.assertEqual(self.call(0)['skin_entitlements'], [])
+        self.api.execute('INSERT INTO skin_entitlements VALUES(?,?,?,0)',
+                         (self.players[0]['player_id'],'crimson','verified-provider-receipt'))
+        self.api.db.commit()
+        self.assertEqual(self.call(0)['skin_entitlements'], ['crimson'])
+        self.assertEqual(self.call(1)['skin_entitlements'], [])
+        result = self.call(0,'POST','/v1/world/order',
+                           {'site':'city_hall','strategy':'intel','request_id':uuid.uuid4().hex,
+                            'skin':'crimson','attack_multiplier':1.1,'skin_entitlements':['emerald']})
+        self.assertEqual(result['order_result']['points'], 150)
+        with self.assertRaises(ApiError):
+            self.call(1,'POST','/v1/skins/purchase',{'skin':'crimson','paid':True})
+        self.api.db.close(); self.api = Store(self.path)
+        self.assertEqual(self.call(0)['skin_entitlements'], ['crimson'])
+        self.api.execute('UPDATE skin_entitlements SET revoked=1')
+        self.assertEqual(self.call(0)['skin_entitlements'], [])

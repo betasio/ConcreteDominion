@@ -21,12 +21,12 @@ func _draw() -> void:
 	if city_map == null or city_map.get_view_mode() != &"world":
 		return
 	var world: bool = city_map.get_view_mode() == &"world"
-	for y in range(2, 20, 5):
-		for x in range(2, 24, 5):
+	for y in range(2, city_map._world_grid().y, 5):
+		for x in range(2, city_map._world_grid().x, 5):
 			var pos: Vector2 = city_map.iso_to_screen(Vector2i(x, y))
 			_draw_intersection(pos)
-	for y in range(2, 20, 5):
-		for x in range(4, 24, 5):
+	for y in range(2, city_map._world_grid().y, 5):
+		for x in range(4, city_map._world_grid().x, 5):
 			var road: Vector2 = city_map.iso_to_screen(Vector2i(x, y))
 			var phase: float = fmod(tick * (17.0 + float((x + y) % 3) * 5.0), 110.0)
 			_draw_car(road + Vector2(phase - 55.0, (phase - 55.0) * 0.5), (x + y) % 3 == 0)

@@ -50,6 +50,12 @@ jobs:
           godot --headless --path . res://scenes/tests/ProjectResourceAudit.tscn 2>&1 | tee godot-resources.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-resources.log
 
+      - name: Validate turf appearances and gameplay bonuses
+        run: |
+          set -o pipefail
+          godot --headless --path . res://scenes/tests/TurfSkinAudit.tscn 2>&1 | tee godot-skins.log
+          ! grep -E "SCRIPT ERROR:|^ERROR:" godot-skins.log
+
       - name: Validate game data
         run: |
           set -o pipefail

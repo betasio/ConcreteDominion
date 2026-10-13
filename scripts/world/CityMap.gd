@@ -457,11 +457,11 @@ func _draw() -> void:
 		_draw_estate_backdrop()
 		return
 	_draw_world_surroundings()
-	for y in range(grid_height):
-		for x in range(grid_width):
+	for y in range(_world_grid().y):
+		for x in range(_world_grid().x):
 			var center := iso_to_screen(Vector2i(x, y))
 			var is_road := x % 5 == 2 or y % 5 == 2
-			var color := _road_color if is_road else (_lot_color_a if (x + y) % 2 == 0 else _lot_color_b)
+			var color := (Color("#414744") if territory.active else _road_color) if is_road else (_lot_color_a if (x + y) % 2 == 0 else _lot_color_b)
 			_draw_diamond(center, color)
 			if not is_road:
 				var polygon := PackedVector2Array([center+Vector2(0,-32),center+Vector2(64,0),center+Vector2(0,32),center+Vector2(-64,0)])
@@ -501,9 +501,9 @@ func _draw_world_surroundings() -> void:
 	draw_rect(Rect2(-12000, -12000, 24000, 24000), Color("#0c1d2a"))
 	var outline := PackedVector2Array([
 		iso_to_screen(Vector2i(0, 0)) + Vector2(0, -32),
-		iso_to_screen(Vector2i(grid_width - 1, 0)) + Vector2(64, 0),
-		iso_to_screen(Vector2i(grid_width - 1, grid_height - 1)) + Vector2(0, 32),
-		iso_to_screen(Vector2i(0, grid_height - 1)) + Vector2(-64, 0),
+		iso_to_screen(Vector2i(_world_grid().x - 1, 0)) + Vector2(64, 0),
+		iso_to_screen(Vector2i(_world_grid().x - 1, _world_grid().y - 1)) + Vector2(0, 32),
+		iso_to_screen(Vector2i(0, _world_grid().y - 1)) + Vector2(-64, 0),
 		iso_to_screen(Vector2i(0, 0)) + Vector2(0, -32)])
 	draw_polyline(outline, Color("#08131d"), 52.0, true)
 	draw_polyline(outline, Color("#53626a"), 22.0, true)
@@ -514,12 +514,21 @@ func _draw_world_surroundings() -> void:
 
 
 func _draw_street_art() -> void:
+	if territory.active:
+		for axis in [0,1]:
+			var limit := _world_grid().x if axis == 0 else _world_grid().y
+			for lane in range(2,limit,5):
+				var a := iso_to_screen(Vector2i(lane,0) if axis == 0 else Vector2i(0,lane))
+				var b := iso_to_screen(Vector2i(lane,_world_grid().y-1) if axis == 0 else Vector2i(_world_grid().x-1,lane))
+				var offset := Vector2(23,12) if axis == 0 else Vector2(-23,12)
+				for side in [-1,1]:
+					draw_line(a+offset*side,b+offset*side,Color("#858b78"),4.0,true)
 	# Continuous lane markings follow the actual grid, without atlas cutouts
 	# that resembled isolated buildings at intersections.
-	for x in range(2, grid_width, 5):
-		draw_dashed_line(iso_to_screen(Vector2i(x, 0)), iso_to_screen(Vector2i(x, grid_height - 1)), Color("#a89467", 0.48), 1.5, 12.0)
-	for y in range(2, grid_height, 5):
-		draw_dashed_line(iso_to_screen(Vector2i(0, y)), iso_to_screen(Vector2i(grid_width - 1, y)), Color("#a89467", 0.48), 1.5, 12.0)
+	for x in range(2, _world_grid().x, 5):
+		draw_dashed_line(iso_to_screen(Vector2i(x, 0)), iso_to_screen(Vector2i(x, _world_grid().y - 1)), Color("#a89467", 0.48), 1.5, 12.0)
+	for y in range(2, _world_grid().y, 5):
+		draw_dashed_line(iso_to_screen(Vector2i(0, y)), iso_to_screen(Vector2i(_world_grid().x - 1, y)), Color("#a89467", 0.48), 1.5, 12.0)
 
 
 func iso_to_screen(cell: Vector2i) -> Vector2:
@@ -633,6 +642,9 @@ func _draw_diamond(center: Vector2, fill: Color) -> void:
 func set_territory_mode(enabled: bool) -> void:
 	if territory == null: return
 	territory.active = enabled
+	queue_redraw()
+	if view_mode == &"world":
+		camera.camera_bounds = Rect2(-1850,-350,4200,2500) if enabled else Rect2(-1000,-300,2500,1700)
 	territory.queue_redraw()
 	raid_targets_layer.visible = view_mode == &"world" and not enabled
 	turf_overlay.visible = not enabled
@@ -640,3 +652,6 @@ func set_territory_mode(enabled: bool) -> void:
 	get_node("DistrictScenery").visible = view_mode == &"world" and not enabled
 	convoy_layer.visible = view_mode == &"world" and not enabled
 	effects_layer.visible = view_mode == &"world" and not enabled
+
+func _world_grid() -> Vector2i:
+	return Vector2i(36,31) if territory != null and territory.active else Vector2i(grid_width,grid_height)

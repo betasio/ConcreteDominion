@@ -2,6 +2,10 @@ class_name StoreUI
 extends CanvasLayer
 
 var store: StoreManager
+@onready var heading: Label = $Root/Panel/Margin/VBox/Title
+@onready var close_button: Button = $Root/Panel/Margin/VBox/Close
+var skin_buttons: Dictionary = {}
+var heritage_preview: TextureRect
 var text_catalog: LocalizedText
 
 @onready var panel: PanelContainer = $Root/Panel
@@ -12,24 +16,28 @@ func setup(store_manager: StoreManager, localized_text: LocalizedText) -> void:
 	store = store_manager
 	text_catalog = localized_text
 	$Root/Shortcut.text = text_catalog.text("UI_STORE")
-	$Root/Panel/Margin/VBox/Title.text = text_catalog.text("UI_STORE_TITLE")
-	$Root/Panel/Margin/VBox/Notice.text = text_catalog.text("UI_STORE_NOTICE")
+	heading.text = "TURF COLLECTION"
+	heading.focus_mode = Control.FOCUS_ALL
+	$Root/Panel/Margin/VBox/Notice.text = "One active bonus. Earn equal strength through HQ upgrades. Premium checkout coming later."
 	$Root/Panel/Margin/VBox/Close.text = text_catalog.text("UI_CLOSE")
 	$Root/Shortcut.pressed.connect(_toggle)
 	$Root/Panel/Margin/VBox/Close.pressed.connect(_toggle)
 	_build_offers()
+	store.changed.connect(_refresh_skins)
+	_refresh_skins()
 
 
 func _toggle() -> void:
 	panel.visible = not panel.visible
 	if panel.visible:
-		$Root/Panel/Margin/VBox/Close.grab_focus.call_deferred()
+		heading.grab_focus.call_deferred()
 
 
 func _build_offers() -> void:
 	for child in offers.get_children():
 		child.queue_free()
 
+	_build_skins()
 	for offer in store.get_catalog():
 		var card := PanelContainer.new()
 		card.custom_minimum_size = Vector2(0, 105)
@@ -82,3 +90,40 @@ func _format_contents(contents: Dictionary) -> String:
 	for key in contents.keys():
 		parts.append("%s x%s" % [preload("res://scripts/core/ResourceIdentity.gd").display_name(String(key)), str(contents[key])])
 	return text_catalog.text("UI_INCLUDES") + " " + ", ".join(parts)
+
+func _build_skins() -> void:
+	var notice := Label.new()
+	notice.text = "APPEARANCES\nBonuses apply to NPC raids or facility production, not PvP or landmark scores."
+	notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	offers.add_child(notice)
+	for skin in StoreManager.SKINS:
+		var card := HBoxContainer.new()
+		offers.add_child(card)
+		var preview := TextureRect.new()
+		preview.custom_minimum_size = Vector2(112,112)
+		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		preview.texture = preload("res://scripts/world/CityArt.gd").turf(int(skin.art) if int(skin.art)>=0 else store.appearance())
+		if skin.id == "default": heritage_preview = preview
+		card.add_child(preview)
+		var box := VBoxContainer.new()
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.add_child(box)
+		var label := Label.new()
+		label.text = skin.title + "\n" + skin.description
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(label)
+		var button := Button.new()
+		button.custom_minimum_size.y = 44
+		button.pressed.connect(func(): store.equip_skin(skin.id))
+		box.add_child(button)
+		skin_buttons[skin.id] = button
+
+func _refresh_skins() -> void:
+	if heritage_preview != null:
+		heritage_preview.texture = preload("res://scripts/world/CityArt.gd").turf(preload("res://scripts/world/CityArt.gd").tier(int(store.game.city_map.safehouse.level)))
+	for id in skin_buttons:
+		var button: Button = skin_buttons[id]
+		var skin := store.skin_info(id)
+		button.disabled = not store.owns_skin(id) or store.active_skin() == id
+		button.text = "Equipped" if store.active_skin() == id else ("Equip" if store.owns_skin(id) else ("Checkout unavailable" if int(skin.level)==0 else "Unlock at HQ %d" % skin.level))

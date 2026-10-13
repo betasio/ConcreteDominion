@@ -9,7 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from server import pvp, seasons, profiles, rivalries, challenges, rallies, progression, world
+from server import pvp, seasons, profiles, rivalries, challenges, rallies, progression, world, skin_entitlements
 from server.security import RateLimiter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -79,6 +79,7 @@ class Store:
             self.db.execute("UPDATE pvp_matches SET created_at=unixepoch() WHERE created_at=0")
         progression.initialize(self)
         world.initialize(self)
+        self.db.executescript(skin_entitlements.SCHEMA)
         self.db.commit()
 
     def execute(self, query, params=()):

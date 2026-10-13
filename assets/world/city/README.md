@@ -15,3 +15,16 @@ the reference screenshots. Labels, colors and contest status are runtime UI.
 - Both imports generate mipmaps to prevent shimmer at map scale. Geometry,
   road markings, traffic, ownership plates and input targets remain separate
   from the artwork. Estate/home assets are not replaced.
+
+## Expanded collection (2026-10-13)
+
+- `turf_collection.png`: original transparent 1536×1024 sheet, generated in one
+  batch. Villa, mansion and palace above; Crimson Citadel, Emerald Exchange and
+  landscaped park below. Runtime atlas regions follow the individual foundations.
+- `civic_landmarks.png`: original transparent 1881×836 sheet. Underground Exchange,
+  monumental City Hall and Port Authority. These use 570-world-unit footprints;
+  player turfs use 260. Screen-space reservations prevent the taller architecture
+  from obscuring nearby player buildings. No reference-game artwork is embedded.
+- Mipmapped atlas textures are shared and cached. The existing ground and neutral
+  neighborhood atlas are reused. Asphalt, verges, lane markings and moving traffic
+  remain runtime layers. Home-estate artwork and placements are unchanged.

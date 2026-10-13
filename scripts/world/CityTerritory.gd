@@ -3,9 +3,9 @@ signal site_selected(id: String)
 signal estate_selected(estate: Dictionary)
 const ART := preload("res://scripts/world/CityArt.gd")
 const SITES := [
-	{"id":"exchange", "name":"Underground Exchange", "day":30, "cell":Vector2i(9,14), "art":3},
-	{"id":"port", "name":"Port Authority", "day":45, "cell":Vector2i(19,14), "art":4},
-	{"id":"city_hall", "name":"City Hall", "day":60, "cell":Vector2i(14,9), "art":2}]
+	{"id":"exchange", "name":"Underground Exchange", "day":30, "cell":Vector2i(9,21), "art":3},
+	{"id":"port", "name":"Port Authority", "day":45, "cell":Vector2i(29,21), "art":4},
+	{"id":"city_hall", "name":"City Hall", "day":60, "cell":Vector2i(19,9), "art":2}]
 const COLORS := {"self":Color("#78d96c"), "ally":Color("#64c5ff"), "other":Color("#eda65b")}
 var city_map: Node2D
 var world_state: Dictionary = {}
@@ -18,15 +18,16 @@ func _ready() -> void:
 	city_map = get_parent()
 	font = ThemeDB.fallback_font.duplicate() as FontFile
 	font.multichannel_signed_distance_field = true
-	for y in [1,4,9,14,18]:
-		for x in [1,4,9,14,19,23]:
+	for y in [4,9,14,19,24,29]:
+		for x in [4,9,14,19,24,29,34]:
 			var cell := Vector2i(x,y)
 			var reserved := false
 			for site in SITES:
-				reserved = reserved or cell == site.cell
+				var footprint := Rect2(city_map.iso_to_screen(cell)+Vector2(-145,-220),Vector2(290,285))
+				reserved = reserved or footprint.intersects(site_rect(site))
 			if not reserved and cells.size() < 24:
 				cells.append(cell)
-	cells.sort_custom(func(a,b): return Vector2(a).distance_squared_to(Vector2(12,10)) < Vector2(b).distance_squared_to(Vector2(12,10)))
+	cells.sort_custom(func(a,b): return Vector2(a).distance_squared_to(Vector2(18,16)) < Vector2(b).distance_squared_to(Vector2(18,16)))
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	city_map.view_mode_changed.connect(func(_mode): queue_redraw())
 
@@ -54,24 +55,25 @@ func _draw() -> void:
 	for estate in get_estates():
 		var pos := estate_position(estate)
 		occupied[(int(estate.slot)-1)%24] = true
-		entries.append({"pos":pos,"art":0 if estate.relation == "self" else 1,"estate":estate})
+		entries.append({"pos":pos,"art":estate_art(estate),"estate":estate})
 	for i in range(cells.size()):
 		if not occupied.has(i):
-			entries.append({"pos":city_map.iso_to_screen(cells[i]),"art":5})
+			entries.append({"pos":city_map.iso_to_screen(cells[i]),"art":5 if i % 3 == 0 else -1})
 	for site in SITES:
 		entries.append({"pos":city_map.iso_to_screen(site.cell),"art":site.art,"site":site})
 	entries.sort_custom(func(a,b): return a.pos.y < b.pos.y)
 	for entry in entries:
 		var p: Vector2 = entry.pos
-		var width := 320.0 if entry.has("site") else (248.0 if entry.has("estate") else 216.0)
-		var texture := ART.texture(entry.art)
+		var width := 570.0 if entry.has("site") else (260.0 if entry.has("estate") else 245.0)
+		var texture: Texture2D = ART.landmark(entry.site.id) if entry.has("site") else (ART.texture(5) if entry.art == -1 else ART.turf(entry.art))
 		var size := Vector2(width, width * texture.get_height()/texture.get_width())
 		draw_texture_rect(texture, Rect2(p+Vector2(-width/2,50-size.y),size),false)
 		if entry.has("estate"):
 			var estate: Dictionary = entry.estate
 			var relation := String(estate.relation)
 			var label := ("[%s] " % estate.tag if not String(estate.tag).is_empty() else "") + String(estate.display_name)
-			if relation == "self": label = "MY TURF · " + String(estate.display_name) if estate.id != "local" else "MY TURF"
+			if estate.has("hq_level"): label += " · HQ %d" % estate_level(estate)
+			if relation == "self": label = "MY TURF · HQ %d" % estate_level(estate)
 			_plate(p+Vector2(0,55), label, COLORS.get(relation,COLORS.other))
 		elif entry.has("site"):
 			var site: Dictionary = entry.site
@@ -121,7 +123,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		tap=Vector2.INF
 		var p: Vector2 = get_global_transform_with_canvas().affine_inverse()*event.position
 		for site in SITES:
-			if p.distance_to(city_map.iso_to_screen(site.cell)+Vector2(0,-30))<110:
+			if site_rect(site).has_point(p):
 				site_selected.emit(site.id)
 				get_viewport().set_input_as_handled()
 				return
@@ -130,3 +132,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				estate_selected.emit(estate)
 				get_viewport().set_input_as_handled()
 				return
+
+func estate_level(estate: Dictionary) -> int:
+	if estate.relation == "self": return int(city_map.safehouse.level)
+	return maxi(1,int(estate.get("hq_level",1)))
+
+func estate_art(estate: Dictionary) -> int:
+	if estate.relation == "self": return city_map.get_parent().store_manager.appearance()
+	return ART.tier(estate_level(estate))
+
+func site_rect(site: Dictionary) -> Rect2:
+	var pos: Vector2 = city_map.iso_to_screen(site.cell)
+	return Rect2(pos+Vector2(-285,-677),Vector2(570,752))

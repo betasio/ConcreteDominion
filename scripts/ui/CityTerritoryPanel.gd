@@ -53,6 +53,7 @@ func setup(owner_game: Node) -> void:
 	SKIN.style_button(candidates)
 	mayor_row.add_child(candidates)
 	_button(mayor_row,"Appoint mayor",_appoint)
+	_button(self,"Turf collection · appearances & bonuses",func(): game.get_node("EstateHUD")._open_panel("StoreUI"))
 	refresh_button = _button(self,"Connect city",_refresh_or_connect)
 	game.city_map.territory.site_selected.connect(func(id: String):
 		for i in range(3):
@@ -234,6 +235,12 @@ func reframe() -> void:
 		desired = Vector2((rect.end.x+viewport.x-92*hud.ui_scale)/2,(108*hud.ui_scale+lower)/2)
 	var camera = game.city_map.camera
 	game.city_map._focus_camera(target)
-	camera.position = target+Vector2(0,-100)-(desired-viewport/2)/camera.zoom.x
+	var art_center := -100.0
+	if not selected_id.is_empty():
+		art_center = -290.0
+		var available_height: float = lower - (rect.end.y+16*hud.ui_scale) if viewport.x <= viewport.y else lower-108*hud.ui_scale
+		var fit_zoom := minf(game.city_map._world_default_zoom(),available_height/760.0)
+		camera.zoom = Vector2.ONE * maxf(camera.min_zoom,fit_zoom)
+	camera.position = target+Vector2(0,art_center)-(desired-viewport/2)/camera.zoom.x
 	camera._clamp_camera_to_world()
 	camera.reset_smoothing()

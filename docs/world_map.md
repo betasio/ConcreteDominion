@@ -103,3 +103,51 @@ authoritative order scoring and replay, local economy isolation, account clearin
 NPC/online mode separation and responsive layouts. Test-only clock advancement
 opens City Hall; there is no public clock-advance API. CI runs both the server
 checks and Godot probe, and uploads the rendered city screenshots.
+
+## Turf collection and larger landmarks
+
+The city now uses a 36×31 grid with 24 stable player slots and reserved civic
+compounds. New landmark artwork is about 2.2 times the width of a player turf.
+The camera fits selected landmarks beside desktop controls or below portrait
+controls. The expanded grid is only for faction-city mode; NPC districts and
+home-estate placement retain their existing coordinates.
+
+Open **World → Faction city → Turf collection** (also available through Store).
+The default Heritage appearance follows the local HQ: villa at levels 1–2,
+mansion at 3–4, palace at 5+. Other players use the starter appearance until the
+server supplies authoritative HQ progression; their levels are not fabricated.
+The local equipped appearance is not yet synchronized to other clients.
+
+| Skin | Availability | Equipped bonus |
+| --- | --- | --- |
+| Heritage Estate | Free | HQ-dependent appearance |
+| Vanguard Estate | HQ 3, free | +10% NPC raid damage |
+| Founder's Estate | HQ 5, free | +10% facility production |
+| Crimson Citadel | Future verified purchase | +10% NPC raid damage |
+| Emerald Exchange | Future verified purchase | +10% facility production |
+
+Only the equipped, unlocked skin grants its bonus. Owning extra skins never stacks
+power. Raid damage is captured when the raid starts. Production applies to Cash
+businesses, Supplies facilities and Intel facilities, including offline accrual;
+it never produces Diamonds or boosts reward payouts. Fractions survive collection
+(e.g. 1 Intel/hour becomes 1.1). Accrual stops at six hours of the current rate;
+changing skins preserves already-earned stock. Save version 36 stores the selected
+skin, not purchase ownership. Existing saves default to Heritage.
+
+Paid skins are previews, **not purchasable yet**. There is no billing provider,
+receipt-verification webhook, refund integration or client purchase/grant API.
+The authenticated world response reads active `skin_entitlements` belonging to
+that account; nothing in a local save grants premium ownership. Logout, invalid
+credentials and refreshed revocations remove access. Premium skins require an
+online ownership refresh after restart, so they do not grant offline-load bonuses.
+Verified billing and durable offline entitlements remain release prerequisites.
+
+This first skin implementation intentionally affects local NPC combat and
+facility production only. Online PvP and equal-strength landmark orders receive
+no skin multiplier. Defence/HP skins need real combat-health and defensive-army
+models before they can be sold with those claims.
+
+Validation: `TurfSkinAudit.tscn` checks HQ transitions, actual raid damage, exclusive
+bonuses, fractional offline production, preserved stored resources, save/load,
+forged ownership rejection and account clearing. The server world suite checks
+receipt ownership isolation, persistence, revocation and unchanged contest scores.

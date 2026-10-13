@@ -57,6 +57,9 @@ extends Node
 
 
 func _ready() -> void:
+	store_manager.setup(self)
+	resource_production.skins = store_manager
+	raid_battle.skins = store_manager
 	city_map.get_node("EstateDistricts").setup(self)
 	core_building_effects.districts = city_map.get_node("EstateDistricts")
 	faction_manager.districts = city_map.get_node("EstateDistricts")

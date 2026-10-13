@@ -4,7 +4,7 @@ Equal command budgets; no client power, premium boosts or offline-save inputs.
 Campaigns are independent of the matched-faction war economy.
 """
 import time
-from server import pvp
+from server import pvp, skin_entitlements
 
 DAY = 86400
 PERIOD = 7 * DAY
@@ -13,9 +13,9 @@ COOLDOWN = 300
 MEMBERS = 6
 ORDERS = 3
 SITES = {
-    'exchange': {'name': 'Underground Exchange', 'unlock_day': 30, 'cell': [9, 14], 'art': 3},
-    'port': {'name': 'Port Authority', 'unlock_day': 45, 'cell': [19, 14], 'art': 4},
-    'city_hall': {'name': 'City Hall', 'unlock_day': 60, 'cell': [14, 9], 'art': 2},
+    'exchange': {'name': 'Underground Exchange', 'unlock_day': 30, 'cell': [9, 21], 'art': 3},
+    'port': {'name': 'Port Authority', 'unlock_day': 45, 'cell': [29, 21], 'art': 4},
+    'city_hall': {'name': 'City Hall', 'unlock_day': 60, 'cell': [19, 9], 'art': 2},
 }
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS world_clock(id INTEGER PRIMARY KEY CHECK(id=1), opened_at INTEGER NOT NULL);
@@ -98,7 +98,7 @@ def snapshot(store, actor):
             mayor=mayor[0] if mayor else '', orders_left=remaining, next_order_at=next_order,
             defense=defense, blocker=blocker, rankings=_rankings(store,site,cycle),
             can_appoint=bool(site=='city_hall' and phase!='contested' and last and last['winner'] and last['winner']==actor['faction_id'] and store.execute('SELECT 1 FROM factions WHERE id=? AND leader_id=?',(actor['faction_id'],actor['id'])).fetchone())))
-    return {'server_time':now,'opened_at':store.execute('SELECT opened_at FROM world_clock').fetchone()[0],
+    return {'skin_entitlements':skin_entitlements.owned(store,actor['id']),'server_time':now,'opened_at':store.execute('SELECT opened_at FROM world_clock').fetchone()[0],
             'faction_members':[dict(m) for m in store.execute('SELECT p.id AS player_id,p.display_name FROM players p JOIN memberships m ON m.player_id=p.id WHERE m.faction_id=? ORDER BY p.display_name',(actor['faction_id'],))],
             'sector':sector,'players':players,'landmarks':landmarks,'member_cap':MEMBERS,'orders_per_member':ORDERS}
 
