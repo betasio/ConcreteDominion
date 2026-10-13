@@ -1,0 +1,8 @@
+**
+!server/
+!server/**
+server/**/__pycache__/
+server/**/*.pyc
+server/**/*.sqlite*
+server/**/*.db*
+server/**/*.log

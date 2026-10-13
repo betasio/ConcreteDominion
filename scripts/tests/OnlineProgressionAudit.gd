@@ -15,7 +15,14 @@ func _audit() -> void:
 	game.save_manager.set_process(false)
 	var hub := game.get_node("OnlineFactionUI") as OnlineFactionUI
 	hub.set_process(false)
-	hub.client.base_url = OS.get_environment("CD_AUDIT_URL")
+	_check(not hub.client.configure_server("http://example.com", ""), "Client accepted cleartext remote credentials")
+	_check(not hub.client.configure_server("https://example.com?key=secret", ""), "Client accepted credentials in a server URL")
+	_check(hub.client._http.max_redirects == 0, "Authenticated requests may follow redirects")
+	_check(hub.client.configure_server(OS.get_environment("CD_AUDIT_URL"), OS.get_environment("CD_AUDIT_KEY")), "Server connection configuration failed")
+	if not OS.get_environment("CD_AUDIT_CA").is_empty():
+		var certificate := X509Certificate.new()
+		_check(certificate.load(OS.get_environment("CD_AUDIT_CA")) == OK, "Test CA could not load")
+		hub.client._http.set_tls_options(TLSOptions.client(certificate))
 	hub.client.set_session(OS.get_environment("CD_AUDIT_TOKEN"))
 	var cash_before: int = game.economy.cash
 	var loot_before: Dictionary = game.loot_inventory.get_save_data()
@@ -48,6 +55,12 @@ func _audit() -> void:
 	await _idle(hub.client)
 	_check(int(hub.online_progression.get("hall_level",0)) == 2 and not hub.upgrade_uncertain, "Retry was not reconciled to authoritative level")
 	_check(game.economy.cash == cash_before and game.loot_inventory.get_save_data() == loot_before, "Online progression modified offline balances")
+	if DisplayServer.get_name() != "headless":
+		hub._select_hub_section("Account")
+		for i in range(8):
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("res://build/previews/online_server_connection.png")
 	hub.client.get_progression()
 	hub._disconnect()
 	_check(not hub.client.is_busy(), "Disconnect did not cancel in-flight account request")

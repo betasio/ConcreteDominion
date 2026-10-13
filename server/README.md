@@ -2,6 +2,13 @@
 
 The main estate uses **local Faction simulation**. The **opt-in Faction Hub** connects to this private development backend for shared PvP, timed rallies, a persistent faction war chest, Rally Hall upgrades and personal command XP. It does not automatically activate public multiplayer in shipped builds. Open it from **Faction → Online Faction Hub**; connect a development account in the Account tab.
 
+## Prepare a private hosted playtest
+
+See [deploy/README.md](../deploy/README.md) for the tested single-server Docker
+stack: Caddy HTTPS, Waitress, a required playtest key, persistent storage, health
+checks and verified backup/restore. The original `server.app` command below stays
+a loopback development tool. Public launch and verified identity remain separate.
+
 ## Run locally
 
 From the repository root with Python 3.11+:

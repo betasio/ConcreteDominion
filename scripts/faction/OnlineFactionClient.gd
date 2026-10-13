@@ -7,6 +7,7 @@ signal connection_failed(action: String, reason: String)
 # Development-only endpoint. Production must use HTTPS and verified identity.
 @export var base_url := "http://127.0.0.1:8765"
 var session_token := ""
+var playtest_key := ""
 var _busy := false
 var _http: HTTPRequest
 var _pending_action := ""
@@ -18,8 +19,26 @@ var _rally_key := ""
 
 func _ready() -> void:
 	_http = HTTPRequest.new()
+	_http.max_redirects = 0
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
+
+
+func configure_server(endpoint: String, access_key: String) -> bool:
+	var url := endpoint.strip_edges().trim_suffix("/")
+	var allowed := RegEx.new()
+	allowed.compile("^(https://[A-Za-z0-9.-]+(:[0-9]{1,5})?|http://127\\.0\\.0\\.1:[0-9]{1,5})$")
+	if allowed.search(url) == null:
+		connection_failed.emit("server", "Use an HTTPS server address without a path, query or embedded credentials.")
+		return false
+	var key := access_key.strip_edges()
+	if key.contains("\r") or key.contains("\n"):
+		connection_failed.emit("server", "Invalid playtest key.")
+		return false
+	clear_session()
+	base_url = url
+	playtest_key = key
+	return true
 
 
 func set_session(token: String) -> void:
@@ -249,6 +268,8 @@ func _request(action: String, method: int, path: String, body: Dictionary, authe
 		return false
 
 	var headers := PackedStringArray(["Content-Type: application/json"])
+	if not playtest_key.is_empty():
+		headers.append("X-Playtest-Key: " + playtest_key)
 	if authenticated:
 		headers.append("Authorization: Bearer %s" % session_token)
 	var payload := JSON.stringify(body) if method == HTTPClient.METHOD_POST else ""

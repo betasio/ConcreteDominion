@@ -1,6 +1,8 @@
 class_name OnlineFactionUI
 extends CanvasLayer
 
+var server_address: LineEdit
+var server_key: LineEdit
 var client: OnlineFactionClient
 var online_player: Dictionary = {}
 var online_faction: Dictionary = {}
@@ -26,7 +28,7 @@ var viewed_identity: Dictionary = {}
 var status_message := "Disconnected"
 var hub_section := "Identity"
 const HUB_GROUPS := {
-	"Account": ["Warning", "DisplayName", "Register", "SessionToken", "UseSession",
+	"Account": ["ServerConnection", "Warning", "DisplayName", "Register", "SessionToken", "UseSession",
 		"ClearSession", "RecoveryPlayer", "RecoveryKey", "RecoverAccount",
 		"FactionName", "FactionTag", "CreateFaction", "TargetPlayer", "Invite",
 		"Invitations", "Accept", "Refresh"],
@@ -57,6 +59,7 @@ func _ready() -> void:
 	add_child(client)
 	client.request_completed.connect(_on_completed)
 	client.connection_failed.connect(_on_failed)
+	_setup_server_connection()
 	for section in HUB_GROUPS.keys():
 		var tab := $Root/Panel/Margin/Scroll/VBox.get_node(_hub_tab_path(section)) as Button
 		tab.pressed.connect(_select_hub_section.bind(section))
@@ -779,3 +782,34 @@ func _refresh_progression() -> void:
 		hall_upgrade_button.text = "Rally Hall fully upgraded"
 	hall_upgrade_button.disabled = client.is_busy() or upgrade_uncertain or not bool(state.get("can_upgrade",false)) or client.session_token.is_empty()
 	hall_upgrade_button.tooltip_text = blocker
+
+
+func _setup_server_connection() -> void:
+	var body := $Root/Panel/Margin/Scroll/VBox
+	var box := VBoxContainer.new()
+	box.name = "ServerConnection"
+	body.add_child(box)
+	body.move_child(box, body.get_node("Warning").get_index())
+	var hint := Label.new()
+	hint.text = "PRIVATE PLAYTEST SERVER\nEnter the address and access key from your host, then connect your account below. These connection details stay in memory."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(hint)
+	server_address = LineEdit.new()
+	server_address.placeholder_text = "https://multiplayer.example.com"
+	server_address.text = client.base_url
+	box.add_child(server_address)
+	server_key = LineEdit.new()
+	server_key.placeholder_text = "Playtest access key"
+	server_key.secret = true
+	box.add_child(server_key)
+	var apply := Button.new()
+	apply.text = "Use this server"
+	apply.custom_minimum_size.y = 64
+	apply.pressed.connect(func():
+		if client.configure_server(server_address.text, server_key.text):
+			_disconnect()
+			server_key.clear()
+			token_edit.clear()
+			status_message = "Server selected. Connect or create your playtest account below."
+			_refresh())
+	box.add_child(apply)

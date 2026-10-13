@@ -19,3 +19,15 @@ Thumbs.db
 # Python test caches
 __pycache__/
 *.pyc
+
+# Multiplayer deployment credentials, databases and backups
+.env
+.env.*
+!.env.example
+deploy/secrets/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+backups/
+server/wheels/*.whl

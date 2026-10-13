@@ -1,0 +1,27 @@
+name: Multiplayer deployment
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', 'deploy/**', 'tools/deployment_probe.py', '.dockerignore', '.github/workflows/server-deployment.yml']
+  pull_request:
+    branches: [main]
+    paths: ['server/**', 'deploy/**', 'tools/deployment_probe.py', '.dockerignore', '.github/workflows/server-deployment.yml']
+permissions:
+  contents: read
+jobs:
+  private-deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test server and operational helpers
+        run: python -m unittest discover -s server -t . -v
+      - name: Download verified deployment dependency
+        run: python -m pip download --require-hashes --only-binary=:all: -r server/requirements-deploy.txt --dest server/wheels
+      - name: Build non-root API image
+        run: docker build -f server/Dockerfile -t concrete-dominion-api:local .
+      - name: Verify HTTPS, access control, persistence and backup
+        run: python tools/deployment_probe.py
