@@ -24,7 +24,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	phase = fmod(phase + delta, 7.0)
-	if city_map != null and city_map.get_view_mode() == &"world":
+	if city_map != null and city_map.get_view_mode() == &"world" and int(phase * 8.0) != int((phase - delta) * 8.0):
 		queue_redraw()
 
 
@@ -86,8 +86,8 @@ func _draw_tower(base: Vector2, height: float, seed: int, world: bool) -> void:
 		var offset: float = float(floor_index) * 12.0
 		var lit: bool = (seed + floor_index) % 3 == 0
 		var alpha: float = 0.74 if lit else 0.23
-		draw_line(top + Vector2(5, depth - offset),
-				top + Vector2(width - 4, 3 - offset),
+		draw_line(top + Vector2(5, depth + offset),
+				top + Vector2(width - 4, 3 + offset),
 				(LIGHT if lit else Color("#8198a4")) * Color(1, 1, 1, alpha), 1.8)
 	if world and seed == 6:
 		draw_line(top + Vector2(0, -depth), top + Vector2(0, -depth - 18),

@@ -29,6 +29,7 @@ var resource_help: Label
 var panel_layout: Node
 var ui_scale := 1.0
 var safe_rect := Rect2()
+var world_navigator: PanelContainer
 
 
 func setup(game_root: Node) -> void:
@@ -141,6 +142,10 @@ func setup(game_root: Node) -> void:
 	var arrow := _label(mission_button, "›", 42, GOLD)
 	arrow.name = "Arrow"
 
+	world_navigator = preload("res://scripts/ui/WorldNavigator.gd").new()
+	root.add_child(world_navigator)
+	world_navigator.setup(game)
+
 	modal_shade = ColorRect.new()
 	modal_shade.color = Color(0.02,0.04,0.06,0.72)
 	modal_shade.visible = false
@@ -159,7 +164,7 @@ func setup(game_root: Node) -> void:
 		source.changed.connect(_refresh)
 	game.construction_queue.queue_changed.connect(_refresh)
 	game.recruitment_queue.queue_changed.connect(_refresh)
-	game.city_map.view_mode_changed.connect(func(_mode): _hide_legacy_chrome(); _refresh())
+	game.city_map.view_mode_changed.connect(func(_mode): _hide_legacy_chrome(); _refresh(); _layout(false))
 	game.settings.changed.connect(_apply_text_size)
 	get_viewport().size_changed.connect(_layout)
 	_refresh()
@@ -167,7 +172,7 @@ func setup(game_root: Node) -> void:
 	_apply_text_size()
 
 
-func _layout() -> void:
+func _layout(update_camera: bool = true) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	ui_scale = minf(viewport_size.x, viewport_size.y) / 720.0
 	if viewport_size.x > viewport_size.y:
@@ -191,7 +196,7 @@ func _layout() -> void:
 	_place(top.get_node("Power"), Rect2(area.size.x*0.62,61,area.size.x*0.36-12,25))
 	for i in range(left_actions.size()):
 		_place(left_actions[i], Rect2(area.position + Vector2(10,106+i*102),Vector2(88,96)))
-	faction_banner.visible = area.size.y > area.size.x
+	faction_banner.visible = area.size.y > area.size.x and game.city_map.get_view_mode() == &"base"
 	_place(faction_banner,Rect2(area.position+Vector2(area.size.x-258,104),Vector2(248,82)))
 	var right_top := 198.0 if faction_banner.visible else 106.0
 	for i in range(right_actions.size()):
@@ -213,9 +218,14 @@ func _layout() -> void:
 	for button in left_actions+right_actions:
 		_place(button.get_node("Icon"),Rect2((button.size.x-74)*0.5,0,74,74))
 		_place(button.get_node("Caption"),Rect2(0,72,button.size.x,24))
+	var navigator_width := minf(550.0, area.size.x - 216.0)
+	world_navigator.position = area.position + Vector2((area.size.x - navigator_width) * 0.5, 106)
+	world_navigator.size = Vector2(navigator_width, 0)
+	world_navigator.fit(area.size.y > area.size.x)
 	panel_layout.fit()
 	# Give the playable estate the space between the resource and mission bars.
-	game.city_map.set_estate_content_rect(Rect2((area.position+Vector2(0,96))*ui_scale,Vector2(area.size.x,area.size.y-296)*ui_scale))
+	if update_camera:
+		game.city_map.set_estate_content_rect(Rect2((area.position+Vector2(0,96))*ui_scale,Vector2(area.size.x,area.size.y-296)*ui_scale))
 
 
 func _refresh() -> void:

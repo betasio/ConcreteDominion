@@ -42,10 +42,10 @@ var view_mode: StringName = &"base"
 var progression: PlayerProgression
 var presentation: PresentationCatalog
 
-var _road_color := Color(0.17, 0.19, 0.21)
-var _lot_color_a := Color(0.22, 0.25, 0.23)
-var _lot_color_b := Color(0.25, 0.28, 0.26)
-var _line_color := Color(0.38, 0.42, 0.39, 0.55)
+var _road_color := Color("#121d27")
+var _lot_color_a := Color("#26383c")
+var _lot_color_b := Color("#293c40")
+var _line_color := Color("#53656b", 0.14)
 
 
 func setup_progression(player_progression: PlayerProgression) -> void:
@@ -148,7 +148,18 @@ func set_estate_content_rect(rect: Rect2) -> void:
 		set_view_mode(&"base")
 
 
+func _world_default_zoom() -> float:
+	var viewport_size := get_viewport_rect().size
+	return viewport_size.x / 900.0 if viewport_size.y > viewport_size.x else 0.72
+
+
 func _on_viewport_size_changed() -> void:
+	if view_mode == &"world":
+		var relative: float = camera.zoom.x / camera.min_zoom
+		camera.min_zoom = _world_default_zoom() * 0.625
+		camera.max_zoom = _world_default_zoom() * 2.78
+		camera.call("_set_camera_zoom", relative * camera.min_zoom)
+		return
 	if view_mode != &"base" or not ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		return
 	var relative_zoom: float = camera.zoom.x / camera.min_zoom
@@ -191,7 +202,7 @@ func set_view_mode(mode: StringName) -> void:
 	view_mode = mode
 	_clear_selection()
 	var destination: Vector2 = _base_composition_center() if mode == &"base" else Vector2(0, 140)
-	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2(0.72, 0.72)
+	var destination_zoom := Vector2(1.02, 1.02) if mode == &"base" else Vector2.ONE * _world_default_zoom()
 	if mode == &"base" and ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true):
 		destination_zoom = Vector2.ONE * _estate_default_zoom()
 	# Preserve immediate initialization and save restoration; animate user switches.
@@ -214,9 +225,12 @@ func set_view_mode(mode: StringName) -> void:
 		effects_layer.visible = true
 		# Camera is moved after visibility changes.
 
+	for layer_name in ["DistrictScenery", "StreetLife"]:
+		get_node(layer_name).visible = mode == &"world"
+
 	# Estate camera stays close enough to the painted island that mouse drag,
 	# keyboard pan and mobile pinch cannot lose the entire playable compound.
-	# World mode retains the original unrestricted navigation behavior.
+	# World navigation stays within reach of the seven playable districts.
 	var illustrated := bool(ProjectSettings.get_setting("concrete_dominion/preview_illustrated_terrain", true))
 	if mode == &"base" and illustrated:
 		camera.use_camera_limits = true
@@ -226,10 +240,11 @@ func set_view_mode(mode: StringName) -> void:
 		camera.min_zoom = 0.94 * factor
 		camera.max_zoom = 1.6 * factor
 	else:
-		camera.use_camera_limits = false
+		camera.use_camera_limits = mode == &"world"
+		camera.camera_bounds = Rect2(-1000, -300, 2500, 1700)
 		camera.estate_bottom = INF
-		camera.min_zoom = 0.45
-		camera.max_zoom = 2.0
+		camera.min_zoom = _world_default_zoom() * 0.625
+		camera.max_zoom = _world_default_zoom() * 2.78
 
 	if animate_camera:
 		camera.set_meta("view_destination_zoom", destination_zoom)
@@ -434,6 +449,7 @@ func _draw() -> void:
 	if view_mode == &"base":
 		_draw_estate_backdrop()
 		return
+	_draw_world_surroundings()
 	for y in range(grid_height):
 		for x in range(grid_width):
 			var center := iso_to_screen(Vector2i(x, y))
@@ -470,49 +486,30 @@ func _draw_estate_backdrop() -> void:
 		draw_circle(Vector2(float(x) + 55.0, y - 30.0), 72.0, Color("#375348", 0.25))
 
 
+func _draw_world_surroundings() -> void:
+	# A dark harbor and a continuous quay replace the editor-gray void.
+	draw_rect(Rect2(-12000, -12000, 24000, 24000), Color("#0c1d2a"))
+	var outline := PackedVector2Array([
+		iso_to_screen(Vector2i(0, 0)) + Vector2(0, -32),
+		iso_to_screen(Vector2i(grid_width - 1, 0)) + Vector2(64, 0),
+		iso_to_screen(Vector2i(grid_width - 1, grid_height - 1)) + Vector2(0, 32),
+		iso_to_screen(Vector2i(0, grid_height - 1)) + Vector2(-64, 0),
+		iso_to_screen(Vector2i(0, 0)) + Vector2(0, -32)])
+	draw_polyline(outline, Color("#08131d"), 52.0, true)
+	draw_polyline(outline, Color("#53626a"), 22.0, true)
+	draw_polyline(outline, Color("#b79862"), 2.0, true)
+	for i in range(60):
+		var point := Vector2(-2800 + (i * 193) % 5600, -1000 + (i * 137) % 3200)
+		draw_line(point, point + Vector2(30 + i % 40, 0), Color("#294659", 0.3), 1.0)
+
+
 func _draw_street_art() -> void:
-	if presentation == null:
-		return
-
-	var intersection := presentation.get_decor_texture("road_intersection")
-	var straight := presentation.get_decor_texture("road_straight")
-	if intersection == null:
-		return
-
-	# Decorative overlays sit on top of the procedural road diamonds. This keeps
-	# navigation readable while adding the approved asphalt/crosswalk language.
+	# Continuous lane markings follow the actual grid, without atlas cutouts
+	# that resembled isolated buildings at intersections.
+	for x in range(2, grid_width, 5):
+		draw_dashed_line(iso_to_screen(Vector2i(x, 0)), iso_to_screen(Vector2i(x, grid_height - 1)), Color("#a89467", 0.48), 1.5, 12.0)
 	for y in range(2, grid_height, 5):
-		for x in range(2, grid_width, 5):
-			var center := iso_to_screen(Vector2i(x, y))
-			draw_texture_rect(
-				intersection,
-				Rect2(center - Vector2(60, 40), Vector2(120, 80)),
-				false,
-				Color(1, 1, 1, 0.92)
-			)
-
-	if straight == null:
-		return
-
-	for x in range(7, grid_width, 10):
-		var center := iso_to_screen(Vector2i(x, 2))
-		draw_texture_rect(
-			straight,
-			Rect2(center - Vector2(54, 33), Vector2(108, 66)),
-			false,
-			Color(1, 1, 1, 0.72)
-		)
-
-	for y in range(7, grid_height, 10):
-		var center := iso_to_screen(Vector2i(2, y))
-		draw_set_transform(center, PI * 0.5, Vector2.ONE)
-		draw_texture_rect(
-			straight,
-			Rect2(Vector2(-54, -33), Vector2(108, 66)),
-			false,
-			Color(1, 1, 1, 0.72)
-		)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_dashed_line(iso_to_screen(Vector2i(0, y)), iso_to_screen(Vector2i(grid_width - 1, y)), Color("#a89467", 0.48), 1.5, 12.0)
 
 
 func iso_to_screen(cell: Vector2i) -> Vector2:

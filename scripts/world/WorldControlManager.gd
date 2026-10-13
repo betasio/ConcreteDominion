@@ -318,16 +318,17 @@ func discover_with_intel(target_id: String) -> bool:
 	return true
 
 
-func command_scan() -> bool:
+func command_scan(target_id: String = "") -> bool:
 	if command_scan_remaining > 0.0:
 		return false
-	var next_id := _get_next_discoverable_target()
-	if next_id == "":
+	var next_id := _get_next_discoverable_target() if target_id.is_empty() else target_id
+	if not can_discover(next_id):
 		return false
 
-	_discover(next_id)
+	# Commit the cooldown before discovery signals can trigger another scan.
 	var safehouse_level := core_effects.safehouse.level if core_effects != null and core_effects.safehouse != null else 1
 	command_scan_remaining = maxf(180.0, COMMAND_SCAN_COOLDOWN_SECONDS - float(safehouse_level - 1) * 60.0)
+	_discover(next_id)
 	changed.emit()
 	return true
 

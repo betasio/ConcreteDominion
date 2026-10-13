@@ -18,24 +18,12 @@ func _ready() -> void:
 func _draw() -> void:
 	if city_map == null or city_map.get_view_mode() != &"world":
 		return
-	_mark_district(Vector2i(4, 6), "DOWNTOWN", GOLD)
-	_mark_district(Vector2i(19, 6), "HARBOR", CYAN)
-	_mark_district(Vector2i(4, 15), "ENTERTAINMENT", CRIMSON)
-	_mark_district(Vector2i(22, 17), "INDUSTRIAL", STEEL)
-	_mark_district(Vector2i(19, 15), "NORTHSIDE", CRIMSON)
 	_draw_cranes(Vector2i(17, 4))
 	_draw_tanks(Vector2i(20, 18))
 	_draw_marquee(Vector2i(2, 16))
 	_draw_financial_plaza(Vector2i(9, 3))
 	_draw_northside_checkpoint(Vector2i(17, 17))
 	_draw_harbor_containers(Vector2i(16, 5))
-
-func _mark_district(cell: Vector2i, label: String, accent: Color) -> void:
-	var pos: Vector2 = city_map.iso_to_screen(cell) + Vector2(0, -175)
-	draw_rect(Rect2(pos + Vector2(-79, -20), Vector2(158, 28)), Color("#101a26", 0.86))
-	draw_line(pos + Vector2(-78, 8), pos + Vector2(78, 8), accent, 2.5)
-	draw_string(ThemeDB.fallback_font, pos, label,
-			HORIZONTAL_ALIGNMENT_CENTER, 158, 17, accent)
 
 func _draw_cranes(cell: Vector2i) -> void:
 	var p: Vector2 = city_map.iso_to_screen(cell)

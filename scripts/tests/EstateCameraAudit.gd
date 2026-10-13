@@ -131,8 +131,8 @@ func _audit() -> void:
 		return
 	camera.set_controls_blocked(false)
 	map.set_view_mode(&"world")
-	if camera.use_camera_limits or camera.min_zoom > 0.5:
-		push_error("[CAMERA AUDIT] World mode did not restore camera freedom")
+	if not camera.use_camera_limits or camera.min_zoom >= map._world_default_zoom() or is_finite(camera.estate_bottom):
+		push_error("[CAMERA AUDIT] World mode did not restore independent city bounds and zoom")
 		get_tree().quit(1)
 		return
 	print("[CAMERA AUDIT] PASS - three aspect ratios, all seven sites framed, pinch zoom, viewport-aware southern edge and world view reset")

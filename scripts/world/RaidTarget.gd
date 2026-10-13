@@ -7,6 +7,7 @@ signal changed
 @export var data: RaidTargetData
 @export var art_texture: Texture2D
 
+var map_font: FontFile
 var cooldown_remaining := 0.0
 var is_selected := false
 var _last_displayed_second := -1
@@ -26,6 +27,8 @@ func _on_progression_changed() -> void:
 
 
 func _ready() -> void:
+	map_font = ThemeDB.fallback_font.duplicate() as FontFile
+	map_font.multichannel_signed_distance_field = true
 	input_event.connect(_on_input_event)
 	queue_redraw()
 
@@ -182,7 +185,7 @@ func _draw() -> void:
 		_draw_status_bar(accent)
 		if is_selected:
 			draw_arc(Vector2(0, -38), 114.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
-		draw_string(ThemeDB.fallback_font, Vector2(-82, 65), get_display_name().to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 164, 17, Color(0.95, 0.91, 0.78))
+		draw_string(map_font, Vector2(-82, 65), get_display_name().to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 164, 17, Color(0.95, 0.91, 0.78))
 		return
 	var id := get_target_id()
 	var unlocked := is_unlocked()
@@ -212,16 +215,16 @@ func _draw() -> void:
 
 	if id.contains("bank") or id.contains("vault") or id.contains("tower"):
 		draw_rect(Rect2(-34, -92, 68, 36), accent.darkened(0.25), true)
-		draw_string(ThemeDB.fallback_font, Vector2(-20, -66), "$", HORIZONTAL_ALIGNMENT_CENTER, 40, 24, Color.WHITE)
+		draw_string(map_font, Vector2(-20, -66), "$", HORIZONTAL_ALIGNMENT_CENTER, 40, 24, Color.WHITE)
 	else:
 		draw_rect(Rect2(-34, -93, 68, 38), accent.darkened(0.3), true)
-		draw_string(ThemeDB.fallback_font, Vector2(-28, -66), "HQ", HORIZONTAL_ALIGNMENT_CENTER, 56, 20, Color.WHITE)
+		draw_string(map_font, Vector2(-28, -66), "HQ", HORIZONTAL_ALIGNMENT_CENTER, 56, 20, Color.WHITE)
 
 	_draw_status_bar(accent)
 
 	if not unlocked:
 		draw_string(
-			ThemeDB.fallback_font,
+			map_font,
 			Vector2(-70, 12),
 			"LOCKED • LV.%d" % get_required_account_level(),
 			HORIZONTAL_ALIGNMENT_CENTER,
@@ -231,7 +234,7 @@ func _draw() -> void:
 		)
 	elif cooldown_remaining > 0.0:
 		draw_string(
-			ThemeDB.fallback_font,
+			map_font,
 			Vector2(-70, 12),
 			"RESPAWN %02d" % ceili(cooldown_remaining),
 			HORIZONTAL_ALIGNMENT_CENTER,
@@ -244,7 +247,7 @@ func _draw() -> void:
 		draw_arc(Vector2(0, -38), 114.0, 0.0, TAU, 48, Color(1.0, 0.82, 0.32), 5.0)
 
 	draw_string(
-		ThemeDB.fallback_font,
+		map_font,
 		Vector2(-82, 65),
 		get_display_name().to_upper(),
 		HORIZONTAL_ALIGNMENT_CENTER,
@@ -261,7 +264,7 @@ func _draw_status_bar(accent: Color) -> void:
 	if not is_unlocked():
 		draw_rect(Rect2(bar_rect.position + Vector2(2, 2), Vector2(140, 8)), Color(0.28, 0.29, 0.31), true)
 		draw_string(
-			ThemeDB.fallback_font,
+			map_font,
 			Vector2(-68, -172),
 			"LV.%d • %s" % [get_required_account_level(), get_district_name().to_upper()],
 			HORIZONTAL_ALIGNMENT_LEFT,
@@ -272,7 +275,7 @@ func _draw_status_bar(accent: Color) -> void:
 	elif cooldown_remaining <= 0.0:
 		draw_rect(Rect2(bar_rect.position + Vector2(2, 2), Vector2(140, 8)), accent, true)
 		draw_string(
-			ThemeDB.fallback_font,
+			map_font,
 			Vector2(-68, -172),
 			"%s HP  %s" % [_format_number(roundi(get_max_hp())), get_difficulty().to_upper()],
 			HORIZONTAL_ALIGNMENT_LEFT,
@@ -289,7 +292,7 @@ func _draw_status_bar(accent: Color) -> void:
 			true
 		)
 		draw_string(
-			ThemeDB.fallback_font,
+			map_font,
 			Vector2(-68, -172),
 			"RECOVERING",
 			HORIZONTAL_ALIGNMENT_LEFT,

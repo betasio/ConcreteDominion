@@ -6,6 +6,7 @@ var city_map: Node
 var resources: ResourceProductionManager
 var text_catalog: LocalizedText
 var presentation_catalog: PresentationCatalog
+var revealed_district_id := ""
 
 @onready var panel: PanelContainer = $Root/Panel
 @onready var income_label: Label = $Root/Panel/Margin/VBox/Income
@@ -88,6 +89,7 @@ func _collect_resources() -> void:
 
 
 func _show_boss_intro(district_id: String) -> void:
+	revealed_district_id = district_id
 	_apply_campaign_art(district_id, true)
 	var dossier := control.get_faction_dossier(district_id)
 	if dossier.is_empty():
@@ -112,6 +114,7 @@ func _show_boss_intro(district_id: String) -> void:
 
 
 func _show_district_victory(district_id: String) -> void:
+	revealed_district_id = ""
 	_apply_campaign_art(district_id, false)
 	var summary := control.get_capture_victory_summary(district_id)
 	if summary.is_empty():
@@ -145,7 +148,15 @@ func _apply_campaign_art(district_id: String, boss_intro: bool) -> void:
 
 func _close_victory_panel() -> void:
 	victory_panel.visible = false
-	panel.visible = true
+	if not revealed_district_id.is_empty():
+		panel.visible = false
+		var target := city_map.get_raid_target_by_id(revealed_district_id) as RaidTarget
+		city_map.set_view_mode(&"world")
+		if target != null:
+			city_map._focus_camera(target.position)
+		revealed_district_id = ""
+	else:
+		panel.visible = true
 	_refresh()
 
 
