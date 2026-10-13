@@ -36,6 +36,7 @@ const ESTATE_LAYOUT := preload("res://scripts/world/IllustratedEstateLayout.gd")
 @onready var midtown_exchange: RaidTarget = $RaidTargets/MidtownExchange
 @onready var industrial_depot: RaidTarget = $RaidTargets/IndustrialDepot
 
+var territory: Node2D
 var selected_target: Node
 var active_convoy: ConvoyVisual
 var view_mode: StringName = &"base"
@@ -60,6 +61,7 @@ func setup_presentation(catalog: PresentationCatalog) -> void:
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	# Upper prestige terrace, middle security/medical terrace and lower
 	# service yards. Position changes only: node identity/save keys stay intact.
 	safehouse.position = iso_to_screen(Vector2i(10, 7)) + Vector2(0, -60)
@@ -128,6 +130,9 @@ func _ready() -> void:
 	for target in get_raid_targets():
 		target.selected.connect(_select_raid_target)
 
+	territory = preload("res://scripts/world/CityTerritory.gd").new()
+	territory.name = "CityTerritory"
+	add_child(territory)
 	set_view_mode(&"base")
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	queue_redraw()
@@ -258,6 +263,8 @@ func set_view_mode(mode: StringName) -> void:
 		camera.zoom = destination_zoom
 
 	camera.call("_clamp_camera_to_world")
+	if territory != null:
+		set_territory_mode(territory.active)
 	view_mode_changed.emit(view_mode)
 	queue_redraw()
 
@@ -456,6 +463,9 @@ func _draw() -> void:
 			var is_road := x % 5 == 2 or y % 5 == 2
 			var color := _road_color if is_road else (_lot_color_a if (x + y) % 2 == 0 else _lot_color_b)
 			_draw_diamond(center, color)
+			if not is_road:
+				var polygon := PackedVector2Array([center+Vector2(0,-32),center+Vector2(64,0),center+Vector2(0,32),center+Vector2(-64,0)])
+				draw_polygon(polygon,PackedColorArray([Color(0.55,0.68,0.55)]),PackedVector2Array([Vector2(0,0),Vector2(1,0),Vector2(1,1),Vector2(0,1)]),preload("res://scripts/world/CityArt.gd").GROUND)
 
 	_draw_street_art()
 
@@ -593,6 +603,7 @@ func _select_lot(lot: BuildLot) -> void:
 
 
 func _select_raid_target(target: RaidTarget) -> void:
+	set_territory_mode(false)
 	if view_mode != &"world":
 		return
 
@@ -617,3 +628,15 @@ func _draw_diamond(center: Vector2, fill: Color) -> void:
 		_line_color,
 		1.5
 	)
+
+
+func set_territory_mode(enabled: bool) -> void:
+	if territory == null: return
+	territory.active = enabled
+	territory.queue_redraw()
+	raid_targets_layer.visible = view_mode == &"world" and not enabled
+	turf_overlay.visible = not enabled
+	get_node("CityAtmosphere").visible = not enabled
+	get_node("DistrictScenery").visible = view_mode == &"world" and not enabled
+	convoy_layer.visible = view_mode == &"world" and not enabled
+	effects_layer.visible = view_mode == &"world" and not enabled

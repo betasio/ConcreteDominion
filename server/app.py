@@ -9,7 +9,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from server import pvp, seasons, profiles, rivalries, challenges, rallies, progression
+from server import pvp, seasons, profiles, rivalries, challenges, rallies, progression, world
 from server.security import RateLimiter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -78,6 +78,7 @@ class Store:
             self.db.execute("ALTER TABLE pvp_matches ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
             self.db.execute("UPDATE pvp_matches SET created_at=unixepoch() WHERE created_at=0")
         progression.initialize(self)
+        world.initialize(self)
         self.db.commit()
 
     def execute(self, query, params=()):
@@ -256,6 +257,9 @@ class Store:
             if not actor["faction_id"]:
                 raise ApiError(403, "Faction membership required")
             return 200, seasons.leaderboard(self, actor["faction_id"])
+        world_result = world.route(self, method, path, data, actor)
+        if world_result is not None:
+            return world_result
         challenge_result = challenges.route(self, method, path, data, actor)
         if challenge_result is not None:
             return challenge_result
@@ -348,6 +352,7 @@ def main():
     def rally_clock():
         while not stop.wait(1.0):
             rallies.settle_due(store)
+            world.settle_due(store)
     worker = threading.Thread(target=rally_clock, daemon=True)
     worker.start()
     try:

@@ -10,7 +10,7 @@ import time
 from http import HTTPStatus
 from server.app import Store, ApiError
 from server.security import RateLimiter
-from server import rallies
+from server import rallies, world
 
 
 class Runtime:
@@ -32,6 +32,7 @@ class Runtime:
         while not self.stop.is_set():
             try:
                 rallies.settle_due(self.store)
+                world.settle_due(self.store)
                 self.last_tick = time.monotonic()
             except Exception as exc:
                 logging.error('Rally worker failed (%s)', type(exc).__name__)

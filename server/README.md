@@ -196,3 +196,30 @@ The probe creates two real completed matches in a disposable database, starts a
 loopback HTTP server, and exercises the Godot account → chest → upgrade → rally
 capacity path. It checks retry reconciliation and that offline balances do not
 change. It never prints fixture credentials or uses an existing player save.
+
+## World city and landmark campaigns
+
+`GET /v1/world` returns the authenticated player's 24-slot sector, server-derived
+self/ally/other relationships, faction members and the three landmark schedules,
+owners, standings and command blockers. Tokens and recovery credentials are never
+included. Stable slots and the original world-opening timestamp persist in SQLite.
+
+`POST /v1/world/order` takes `site` (`exchange`, `port`, `city_hall`), `strategy`
+(`muscle`, `convoy`, `intel`) and a 32-character hexadecimal `request_id`. It checks
+membership, server age/window, a six-commander faction cap, three commands per
+player and a five-minute cooldown. Receipts make identical retries idempotent;
+changing parameters with a receipt is rejected. Switching factions cannot reset
+that round's player budget. Client timestamps, power and premium resources do
+not determine eligibility or points. This is a command-score contest, separate
+from troop marching/rallies and the faction war treasury.
+
+`POST /v1/world/mayor` takes `player_id`. Only City Hall's winning faction leader
+can appoint a current member, during peace. A settled subsequent contest resets
+the title. Ties grant no owner. Titles are currently prestige-only.
+
+The existing single-process lock serializes commands and settlement. Both runtime
+workers settle due campaigns without requiring a connected client, and reads also
+catch up after restart. Windows start 30/45/60 days after the timestamp persisted
+by this migration, last two hours and recur weekly. Production exposes no clock
+reset or acceleration endpoint. Existing private-playtest identity limitations
+still apply. See [world map rules](../docs/world_map.md) for scope and validation.

@@ -1,6 +1,7 @@
 class_name OnlineFactionClient
 extends Node
 
+signal session_changed
 signal request_completed(action: String, status: int, data: Dictionary)
 signal connection_failed(action: String, reason: String)
 
@@ -49,8 +50,10 @@ func set_session(token: String) -> void:
 		_rally_receipt = ""
 		_retry_id = ""
 		_retry_strategy = ""
+	var changed_session := session_token != next_token
 	session_token = next_token
 	_load_retry_receipt()
+	if changed_session: session_changed.emit()
 
 
 func clear_session() -> void:
@@ -332,3 +335,13 @@ func get_progression() -> bool:
 func upgrade_online_hall(expected_level: int) -> bool:
 	return _request("hall_upgrade", HTTPClient.METHOD_POST, "/v1/progression/hall",
 		{"expected_level":expected_level}, true)
+
+
+func get_world() -> bool:
+	return _request("world",HTTPClient.METHOD_GET,"/v1/world",{},true)
+
+func world_order(site: String, strategy: String, receipt: String) -> bool:
+	return _request("world_order",HTTPClient.METHOD_POST,"/v1/world/order",{"site":site,"strategy":strategy,"request_id":receipt},true)
+
+func appoint_mayor(player_id: String) -> bool:
+	return _request("world_mayor",HTTPClient.METHOD_POST,"/v1/world/mayor",{"player_id":player_id},true)

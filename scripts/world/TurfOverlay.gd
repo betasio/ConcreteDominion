@@ -87,7 +87,7 @@ func _draw() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if control == null or city_map.get_view_mode() != &"world" or city_map.camera.controls_blocked:
+	if not visible or control == null or city_map.get_view_mode() != &"world" or city_map.camera.controls_blocked:
 		_tap_position = Vector2.INF
 		return
 	if event is InputEventScreenDrag or event is InputEventMouseMotion:

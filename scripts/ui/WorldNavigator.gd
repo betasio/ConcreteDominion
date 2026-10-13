@@ -12,6 +12,13 @@ var primary: Button
 var intel: Button
 var income: Button
 var refresh_elapsed := 0.0
+var npc_column: VBoxContainer
+var city_panel: VBoxContainer
+var mode_buttons: Array[Button] = []
+var city_selected := true
+var content: VBoxContainer
+var body_scroll: ScrollContainer
+var max_panel_height := 700.0
 
 
 func setup(game_root: Node) -> void:
@@ -20,9 +27,23 @@ func setup(game_root: Node) -> void:
 	size = Vector2(550, 0)
 	minimum_size_changed.connect(func(): size.y = get_combined_minimum_size().y)
 	add_theme_stylebox_override("panel", SKIN.frame("panel"))
-	var column := VBoxContainer.new()
+	body_scroll = ScrollContainer.new()
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(body_scroll)
+	content = VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.add_child(content)
+	content.minimum_size_changed.connect(func(): _fit_height.call_deferred())
+	var modes := HBoxContainer.new()
+	content.add_child(modes)
+	for title in ["Faction city","NPC districts"]:
+		var mode_button := _button(modes,func(): show_city(title == "Faction city"))
+		mode_button.text = title
+		mode_buttons.append(mode_button)
+	npc_column = VBoxContainer.new()
+	var column := npc_column
 	column.add_theme_constant_override("separation", 7)
-	add_child(column)
+	content.add_child(column)
 	var heading := Label.new()
 	heading.text = "CITY OPERATIONS  /  NPC DISTRICTS"
 	heading.add_theme_font_size_override("font_size", 16)
@@ -47,6 +68,10 @@ func setup(game_root: Node) -> void:
 	primary = _button(actions, _primary_action)
 	intel = _button(actions, _intel_action)
 	income = _button(column, func(): game.world_control.collect_income(); refresh())
+	city_panel = preload("res://scripts/ui/CityTerritoryPanel.gd").new()
+	content.add_child(city_panel)
+	city_panel.setup(game)
+	show_city(true, false)
 	game.city_map.view_mode_changed.connect(_on_view_changed)
 	game.world_control.changed.connect(refresh)
 	game.world_control.district_discovered.connect(func(id: String): select_district(district_ids.find(id)))
@@ -54,6 +79,7 @@ func setup(game_root: Node) -> void:
 	game.loot_inventory.changed.connect(refresh)
 	game.progression.changed.connect(refresh)
 	game.city_map.raid_target_selected.connect(func(target: RaidTarget):
+		show_city(false,false)
 		selected_id = target.get_target_id()
 		selector.select(district_ids.find(selected_id))
 		refresh()
@@ -93,12 +119,14 @@ func _process(delta: float) -> void:
 func _on_view_changed(mode: StringName) -> void:
 	visible = mode == &"world"
 	if visible:
-		select_district(district_ids.find(selected_id))
+		if city_selected: city_panel.activate()
+		else: select_district(district_ids.find(selected_id))
 
 
 func select_district(index: int) -> void:
 	if index < 0 or index >= district_ids.size():
 		return
+	show_city(false,false)
 	selected_id = district_ids[index]
 	selector.select(index)
 	selector.release_focus()
@@ -166,9 +194,29 @@ func _intel_action() -> void:
 	refresh()
 
 
-func fit(portrait: bool) -> void:
-	for button in [selector, primary, intel, income]:
+func fit(portrait: bool, available_height: float = 700.0) -> void:
+	max_panel_height = available_height
+	_fit_height.call_deferred()
+	city_panel.fit(portrait)
+	for button in [selector, primary, intel, income]+mode_buttons:
 		button.custom_minimum_size.y = 88 if portrait else 48
 		button.add_theme_font_size_override("font_size", 24 if portrait else 20)
 	for label in [summary, status]:
 		label.add_theme_font_size_override("font_size", 24 if portrait else 18)
+
+
+func show_city(enabled: bool, focus: bool = true) -> void:
+	city_selected = enabled
+	npc_column.visible = not enabled
+	city_panel.visible = enabled
+	game.city_map.set_territory_mode(enabled)
+	for i in range(mode_buttons.size()):
+		mode_buttons[i].add_theme_color_override("font_color",Color("#e8c782") if (i==0)==enabled else Color("#acb6bc"))
+	if focus:
+		if enabled: city_panel.activate()
+		else: select_district(district_ids.find(selected_id))
+
+
+func _fit_height() -> void:
+	body_scroll.custom_minimum_size.y = minf(content.get_combined_minimum_size().y, maxf(100.0,max_panel_height-32.0))
+	size.y = get_combined_minimum_size().y

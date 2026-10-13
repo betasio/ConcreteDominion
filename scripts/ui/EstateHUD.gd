@@ -219,9 +219,11 @@ func _layout(update_camera: bool = true) -> void:
 		_place(button.get_node("Icon"),Rect2((button.size.x-74)*0.5,0,74,74))
 		_place(button.get_node("Caption"),Rect2(0,72,button.size.x,24))
 	var navigator_width := minf(550.0, area.size.x - 216.0)
-	world_navigator.position = area.position + Vector2((area.size.x - navigator_width) * 0.5, 106)
+	world_navigator.position = area.position + Vector2((area.size.x - navigator_width) * 0.5 if area.size.y > area.size.x else 108.0, 106)
 	world_navigator.size = Vector2(navigator_width, 0)
-	world_navigator.fit(area.size.y > area.size.x)
+	world_navigator.fit(area.size.y > area.size.x,area.size.y-314.0)
+	if update_camera:
+		world_navigator.city_panel.reframe.call_deferred()
 	panel_layout.fit()
 	# Give the playable estate the space between the resource and mission bars.
 	if update_camera:

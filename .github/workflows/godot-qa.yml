@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Test multiplayer API authorization and persistence
-        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency server.test_rallies server.test_progression tools.test_premium_assets -v
+        run: python3 -m unittest server.test_app server.test_security server.test_http server.test_pvp_concurrency server.test_rallies server.test_progression server.test_world tools.test_premium_assets -v
 
       - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
@@ -70,6 +70,9 @@ jobs:
 
       - name: Test live online progression client and server
         run: python3 tools/online_progression_probe.py
+
+      - name: Test live city ownership and landmark client
+        run: python3 tools/online_world_probe.py
 
       - name: Audit estate camera limits
         run: |
@@ -138,6 +141,16 @@ jobs:
         with:
           name: concrete-dominion-turf-screenshot
           path: build/previews/turf_*.png
+          if-no-files-found: error
+
+      - name: Capture connected city map
+        run: xvfb-run -a python3 tools/online_world_probe.py --render
+
+      - name: Upload connected city previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: concrete-dominion-online-city
+          path: build/previews/online_city_*.png
           if-no-files-found: error
 
       - name: Capture imported HQ 3D render

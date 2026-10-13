@@ -30,7 +30,7 @@ func _draw() -> void:
 			var road: Vector2 = city_map.iso_to_screen(Vector2i(x, y))
 			var phase: float = fmod(tick * (17.0 + float((x + y) % 3) * 5.0), 110.0)
 			_draw_car(road + Vector2(phase - 55.0, (phase - 55.0) * 0.5), (x + y) % 3 == 0)
-	if world:
+	if world and not city_map.territory.active:
 		for cell in [Vector2i(8, 3), Vector2i(15, 8), Vector2i(9, 18)]:
 			_draw_neon_sign(city_map.iso_to_screen(cell))
 
