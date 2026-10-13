@@ -44,34 +44,36 @@ jobs:
           godot --headless --path . --import --quit 2>&1 | tee godot-import.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-import.log
 
+      # Each scene gets its own save directory: audits may persist max-level HQs
+      # or active jobs. Render captures use Dummy audio on runners without sound.
       - name: Compile/load all project resources
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/ProjectResourceAudit.tscn 2>&1 | tee godot-resources.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/ProjectResourceAudit.tscn 2>&1 | tee godot-resources.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-resources.log
 
       - name: Validate turf appearances and gameplay bonuses
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/TurfSkinAudit.tscn 2>&1 | tee godot-skins.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/TurfSkinAudit.tscn 2>&1 | tee godot-skins.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-skins.log
 
       - name: Validate game data
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/DataValidation.tscn 2>&1 | tee godot-data.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/DataValidation.tscn 2>&1 | tee godot-data.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-data.log
 
       - name: Run deterministic balance audit
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/BalanceAudit.tscn 2>&1 | tee godot-balance.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/BalanceAudit.tscn 2>&1 | tee godot-balance.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-balance.log
 
       - name: Run smoke test
         run: |
           set -o pipefail
-          timeout --signal=TERM --kill-after=10s 120s godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout --signal=TERM --kill-after=10s 120s godot --headless --path . res://scenes/tests/SmokeTest.tscn 2>&1 | tee godot-smoke.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-smoke.log
 
       - name: Test live online progression client and server
@@ -83,20 +85,20 @@ jobs:
       - name: Audit estate camera limits
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/EstateCameraAudit.tscn 2>&1 | tee godot-camera-audit.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/EstateCameraAudit.tscn 2>&1 | tee godot-camera-audit.log
           grep -F "[CAMERA AUDIT] PASS" godot-camera-audit.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-camera-audit.log
 
       - name: Audit runtime art coverage
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/ArtCoverageAudit.tscn 2>&1 | tee godot-art.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/ArtCoverageAudit.tscn 2>&1 | tee godot-art.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-art.log
 
       - name: Audit illustrated estate interactions and construction
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/IllustratedEstateAudit.tscn 2>&1 | tee godot-estate.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/IllustratedEstateAudit.tscn 2>&1 | tee godot-estate.log
           grep -F "[ESTATE AUDIT] PASS" godot-estate.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-estate.log
 
@@ -130,7 +132,7 @@ jobs:
       - name: Run gameplay regression audit
         run: |
           set -o pipefail
-          godot --headless --path . res://scenes/tests/GameplayRegressionAudit.tscn 2>&1 | tee godot-regression.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path . res://scenes/tests/GameplayRegressionAudit.tscn 2>&1 | tee godot-regression.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-regression.log
 
       - name: Capture real turf screenshot
@@ -138,7 +140,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y xvfb
           mkdir -p build/previews
-          xvfb-run -a godot --path . --rendering-driver opengl3 res://scenes/tests/TurfScreenshot.tscn
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --path . --audio-driver Dummy --rendering-driver opengl3 res://scenes/tests/TurfScreenshot.tscn
           test -s build/previews/turf_actual.png
           test -s build/previews/turf_map_only.png
 
@@ -162,7 +164,7 @@ jobs:
       - name: Capture imported HQ 3D render
         run: |
           set -o pipefail
-          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/HQ3DScreenshot.tscn 2>&1 | tee godot-hq3d.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --audio-driver Dummy --rendering-driver opengl3 res://scenes/tests/HQ3DScreenshot.tscn 2>&1 | tee godot-hq3d.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-hq3d.log
           test -s build/previews/hq_mobile_3d.png
 
@@ -176,7 +178,7 @@ jobs:
       - name: Capture hybrid 3D Safehouse in playable turf
         run: |
           set -o pipefail
-          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/TurfHybridScreenshot.tscn 2>&1 | tee godot-hybrid-hq.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --audio-driver Dummy --rendering-driver opengl3 res://scenes/tests/TurfHybridScreenshot.tscn 2>&1 | tee godot-hybrid-hq.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-hybrid-hq.log
           test -s build/previews/turf_hybrid_hq.png
           test -s build/previews/turf_hybrid_map_only.png
@@ -191,7 +193,7 @@ jobs:
       - name: Capture animated coastal backdrop
         run: |
           set -o pipefail
-          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/CoastalBackdropScreenshot.tscn 2>&1 | tee godot-coastal.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --audio-driver Dummy --rendering-driver opengl3 res://scenes/tests/CoastalBackdropScreenshot.tscn 2>&1 | tee godot-coastal.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-coastal.log
           test -s build/previews/coastal_estate_animated.png
 
@@ -211,9 +213,11 @@ jobs:
       - name: Capture illustrated terrain alignment
         run: |
           set -o pipefail
-          xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --rendering-driver opengl3 res://scenes/tests/IllustratedEstateScreenshot.tscn 2>&1 | tee godot-illustrated.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a timeout --signal=TERM --kill-after=10s 120s godot --path . --audio-driver Dummy --rendering-driver opengl3 res://scenes/tests/IllustratedEstateScreenshot.tscn 2>&1 | tee godot-illustrated.log
           ! grep -E "SCRIPT ERROR:|^ERROR:" godot-illustrated.log
           test -s build/previews/turf_illustrated_map_only.png
+          test -s build/previews/turf_illustrated_portrait_construction_hud.png
+          test -s build/previews/turf_illustrated_district_upgrade.png
 
       - name: Upload illustrated terrain comparison
         uses: actions/upload-artifact@v4
